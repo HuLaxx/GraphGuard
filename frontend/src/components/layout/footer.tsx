@@ -63,7 +63,7 @@ export function Footer() {
                             {footerLinks.product.map((link) => (
                                 <li key={link.label}>
                                     <Link
-                                        href={link.href}
+                                        href={link.href as any}
                                         className="text-sm text-zinc-500 hover:text-zinc-300 transition-colors"
                                     >
                                         {link.label}
@@ -79,7 +79,7 @@ export function Footer() {
                             {footerLinks.resources.map((link) => (
                                 <li key={link.label}>
                                     <Link
-                                        href={link.href}
+                                        href={link.href as any}
                                         className="text-sm text-zinc-500 hover:text-zinc-300 transition-colors"
                                     >
                                         {link.label}
@@ -95,7 +95,7 @@ export function Footer() {
                             {footerLinks.company.map((link) => (
                                 <li key={link.label}>
                                     <Link
-                                        href={link.href}
+                                        href={link.href as any}
                                         className="text-sm text-zinc-500 hover:text-zinc-300 transition-colors"
                                     >
                                         {link.label}
@@ -112,8 +112,8 @@ export function Footer() {
                         © {new Date().getFullYear()} GraphGuard. Portfolio Project.
                     </p>
                     <div className="flex items-center gap-6 text-sm text-zinc-600">
-                        <Link href="#" className="hover:text-zinc-400 transition-colors">Privacy</Link>
-                        <Link href="#" className="hover:text-zinc-400 transition-colors">Terms</Link>
+                        <Link href={"#" as any} className="hover:text-zinc-400 transition-colors">Privacy</Link>
+                        <Link href={"#" as any} className="hover:text-zinc-400 transition-colors">Terms</Link>
                     </div>
                 </div>
             </div>
