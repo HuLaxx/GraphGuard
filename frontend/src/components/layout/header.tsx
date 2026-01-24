@@ -59,7 +59,7 @@ export function Header() {
                                 return (
                                     <Link
                                         key={link.href}
-                                        href={link.href}
+                                        href={link.href as any}
                                         className="ml-2 flex items-center gap-2 px-5 py-2 text-sm font-medium bg-gradient-to-r from-zinc-100 to-zinc-400 text-zinc-950 rounded-full hover:from-white hover:to-zinc-300 transition-all shadow-lg shadow-white/10 hover:shadow-white/20 hover:scale-[1.02]"
                                     >
                                         <Play className="w-3 h-3 fill-current" />
@@ -72,7 +72,7 @@ export function Header() {
                             return (
                                 <Link
                                     key={link.href}
-                                    href={link.href}
+                                    href={link.href as any}
                                     className={`px-4 py-2 text-sm transition-all rounded-full hover:bg-zinc-800/50 ${isActive
                                         ? 'text-zinc-100 font-medium'
                                         : 'text-zinc-400 hover:text-zinc-200'
@@ -113,7 +113,7 @@ export function Header() {
                             {navLinks.map((link) => (
                                 <Link
                                     key={link.href}
-                                    href={link.href}
+                                    href={link.href as any}
                                     onClick={() => setMobileMenuOpen(false)}
                                     className={`px-4 py-3 text-sm rounded-lg transition-colors ${pathname === link.href
                                         ? 'text-zinc-100 bg-zinc-800'
