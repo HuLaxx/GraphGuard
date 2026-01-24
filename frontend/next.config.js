@@ -2,6 +2,9 @@
 const nextConfig = {
     reactStrictMode: true,
 
+    // Enable typed routes (stable in Next.js 16)
+    typedRoutes: true,
+
     // API rewrites for backend proxy
     async rewrites() {
         return [
@@ -16,14 +19,14 @@ const nextConfig = {
         ];
     },
 
-    // Enable experimental features
-    experimental: {
-        typedRoutes: true,
-    },
-
     // Image optimization
     images: {
-        domains: ['localhost'],
+        remotePatterns: [
+            {
+                protocol: 'http',
+                hostname: 'localhost',
+            },
+        ],
     },
 };
 
