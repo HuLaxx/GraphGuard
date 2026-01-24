@@ -1,3 +1,5 @@
+﻿"use client";
+
 import Link from 'next/link';
 import { Github, Linkedin, Mail } from 'lucide-react';
 
@@ -48,7 +50,7 @@ export function Footer() {
                                 {pageLinks.map((link) => (
                                     <li key={link.href}>
                                         <Link
-                                            href={link.href}
+                                            href={link.href as any}
                                             className="hover:text-zinc-200 transition-colors"
                                         >
                                             {link.label}
