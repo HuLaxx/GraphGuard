@@ -1,4 +1,11 @@
 /** @type {import('next').NextConfig} */
+const apiPort = process.env.NEXT_PUBLIC_API_PORT || process.env.API_PORT || '8000';
+const apiBase =
+    (process.env.NEXT_PUBLIC_API_BASE || process.env.API_BASE || `http://localhost:${apiPort}`).replace(
+        /\/$/,
+        ''
+    );
+
 const nextConfig = {
     reactStrictMode: true,
 
@@ -10,11 +17,11 @@ const nextConfig = {
         return [
             {
                 source: '/api/:path*',
-                destination: 'http://localhost:8000/:path*',
+                destination: `${apiBase}/:path*`,
             },
             {
                 source: '/graphql',
-                destination: 'http://localhost:8000/graphql',
+                destination: `${apiBase}/graphql`,
             },
         ];
     },

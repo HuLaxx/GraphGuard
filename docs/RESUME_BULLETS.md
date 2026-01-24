@@ -1,61 +1,32 @@
-# GraphGuard - Resume Bullet Points
+# GraphGuard - Resume Bullets (Evidence-based)
 
-## Project Title
-**GraphGuard: Real-Time Transaction Fraud Detection with Explainable Graph AI**
-
----
+These bullets only describe what is implemented in the repo today. No performance or scale claims are included.
 
 ## Data Engineer
-
-- Built a **Kafka → Flink → Neo4j/Feast** streaming pipeline to materialize 200+ graph/temporal features with sub-100ms freshness.
-- Implemented **point-in-time joins** in Feast to prevent feature leakage across offline/online stores.
-- Automated **S3/Parquet/Delta partitioning** and backfills via Airflow DAGs for daily model retraining.
-- Added **Great Expectations** data quality checks to enforce schema validation and anomaly detection on transaction streams.
-
----
+- Built Kafka ingestion and consumer pipelines with schema-backed payloads and Neo4j graph writes.
+- Implemented Flink CEP fraud pattern detectors and Spark-based feature engineering jobs.
+- Added Feast feature repo, Airflow DAG scaffolding, and Great Expectations checks.
 
 ## Data Scientist
-
-- Developed **XGBoost + Graph Attention Network (GAT)** baselines, achieving +35% fraud catch rate with 60% fewer false positives.
-- Optimized for **AUC-PR** using temporal validation splits, SMOTE oversampling, and class-imbalance weighting.
-- Delivered **SHAP-based explanations** to satisfy GDPR/FCRA "right to explanation" requirements for model decisions.
-- Detected novel fraud rings via **Louvain community detection** and PageRank centrality analysis on transaction graphs.
-
----
+- Implemented XGBoost baseline training and a GAT model training script for fraud detection.
+- Logged experiments with MLflow and added SHAP-based explanation utilities.
+- Created graph feature extraction and visualization helpers for investigation workflows.
 
 ## AI/ML Engineer
-
-- Productionized **ensemble inference** in FastAPI with Redis feature caching for <50ms P95 latency.
-- Implemented **MLflow model registry**, versioning, and A/B testing with consistent-hash traffic splitting.
-- Scaled **GNN training** with PyTorch Geometric to handle 100M+ transaction graphs.
-- Monitored **data drift** and model latency with Evidently AI and Prometheus, triggering automated retraining alerts.
-
----
+- Built a FastAPI scoring service with feature caching and API key auth.
+- Added drift detection and retraining pipeline templates (not fully wired end-to-end).
+- Implemented a local RAG assistant with indexing and retrieval endpoints.
 
 ## Full Stack Developer
-
-- Built an **investigator console** in Next.js 14 + D3.js with interactive subgraph views and SHAP explanation dashboards.
-- Implemented **GraphQL + FastAPI** APIs with Strawberry typed schemas and role-based access control.
-- Integrated **case management workflows** with audit trail views for compliance reviews.
-- Optimized UI for **high-volume alert triage**, reducing investigator decision time with priority-based queuing.
-
----
+- Built a Next.js dashboard with D3 network graphs and SHAP chart components.
+- Implemented GraphQL schema and resolvers for the investigator experience.
+- Added a RAG assistant UI panel and API integration hooks.
 
 ## Software Engineer
+- Containerized the local stack with Docker Compose and added Prometheus config.
+- Set up CI to run Python and frontend tests and captured evidence logs.
+- Maintained a Terraform template for future infrastructure work.
 
-- Designed **containerized microservices** with Docker Compose and Terraform for reproducible multi-environment deployments.
-- Built **high-throughput Neo4j queries** with composite indexes achieving sub-50ms graph traversals.
-- Implemented **structured logging** (structlog) and Prometheus metrics for full-stack observability.
-- Automated **CI/CD pipelines** and infrastructure provisioning with Terraform modules for local/cloud parity.
-
----
-
-## One-Liner Summary (for LinkedIn/Headline)
-
-> Built an enterprise fraud detection platform combining XGBoost, Graph Neural Networks, and real-time streaming (Kafka/Flink) to detect 35% more fraud with 60% fewer false positives.
-
----
-
-## Technical Keywords (ATS Optimization)
-
-`Python` `TypeScript` `Kafka` `Flink` `Neo4j` `GraphQL` `FastAPI` `Next.js` `React` `D3.js` `XGBoost` `PyTorch` `Graph Neural Networks` `SHAP` `MLflow` `Feast` `Airflow` `Redis` `Docker` `Terraform` `Prometheus` `PostgreSQL`
+## Optional (future / not yet verified)
+- Add end-to-end benchmarks and publish verified performance metrics.
+- Wire production metrics and tracing with evidence artifacts.

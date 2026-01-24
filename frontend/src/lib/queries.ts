@@ -18,8 +18,8 @@ export const GET_DASHBOARD_DATA = gql`
         transactionId
         userId
         merchantName
-        amount_val
-        currency_code
+        amountVal
+        currencyCode
         fraudScore
         priority
         status
@@ -36,8 +36,8 @@ export const GET_CASE_DETAILS = gql`
       id
       transactionId
       userId
-      amount_val
-      currency_code
+      amountVal
+      currencyCode
       fraudScore
       status
       priority

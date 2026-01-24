@@ -1,0 +1,58 @@
+# HELP python_gc_objects_collected_total Objects collected during gc
+# TYPE python_gc_objects_collected_total counter
+python_gc_objects_collected_total{generation="0"} 7131.0
+python_gc_objects_collected_total{generation="1"} 10952.0
+python_gc_objects_collected_total{generation="2"} 1267.0
+# HELP python_gc_objects_uncollectable_total Uncollectable objects found during GC
+# TYPE python_gc_objects_uncollectable_total counter
+python_gc_objects_uncollectable_total{generation="0"} 0.0
+python_gc_objects_uncollectable_total{generation="1"} 0.0
+python_gc_objects_uncollectable_total{generation="2"} 0.0
+# HELP python_gc_collections_total Number of times this generation was collected
+# TYPE python_gc_collections_total counter
+python_gc_collections_total{generation="0"} 448.0
+python_gc_collections_total{generation="1"} 40.0
+python_gc_collections_total{generation="2"} 3.0
+# HELP python_info Python platform information
+# TYPE python_info gauge
+python_info{implementation="CPython",major="3",minor="10",patchlevel="0",version="3.10.0"} 1.0
+# HELP fraud_predictions_total Total predictions made
+# TYPE fraud_predictions_total counter
+fraud_predictions_total{decision="REVIEW",model_version="xgb_only"} 1.0
+# HELP fraud_predictions_created Total predictions made
+# TYPE fraud_predictions_created gauge
+fraud_predictions_created{decision="REVIEW",model_version="xgb_only"} 1.7692868251730857e+09
+# HELP fraud_prediction_latency_seconds Prediction latency in seconds
+# TYPE fraud_prediction_latency_seconds histogram
+fraud_prediction_latency_seconds_bucket{le="0.01",model_version="xgb_only"} 1.0
+fraud_prediction_latency_seconds_bucket{le="0.025",model_version="xgb_only"} 1.0
+fraud_prediction_latency_seconds_bucket{le="0.05",model_version="xgb_only"} 1.0
+fraud_prediction_latency_seconds_bucket{le="0.075",model_version="xgb_only"} 1.0
+fraud_prediction_latency_seconds_bucket{le="0.1",model_version="xgb_only"} 1.0
+fraud_prediction_latency_seconds_bucket{le="0.15",model_version="xgb_only"} 1.0
+fraud_prediction_latency_seconds_bucket{le="0.2",model_version="xgb_only"} 1.0
+fraud_prediction_latency_seconds_bucket{le="0.3",model_version="xgb_only"} 1.0
+fraud_prediction_latency_seconds_bucket{le="0.5",model_version="xgb_only"} 1.0
+fraud_prediction_latency_seconds_bucket{le="1.0",model_version="xgb_only"} 1.0
+fraud_prediction_latency_seconds_bucket{le="+Inf",model_version="xgb_only"} 1.0
+fraud_prediction_latency_seconds_count{model_version="xgb_only"} 1.0
+fraud_prediction_latency_seconds_sum{model_version="xgb_only"} 0.0
+# HELP fraud_prediction_latency_seconds_created Prediction latency in seconds
+# TYPE fraud_prediction_latency_seconds_created gauge
+fraud_prediction_latency_seconds_created{model_version="xgb_only"} 1.7692868251730857e+09
+# HELP fraud_rate Current fraud rate (rolling window)
+# TYPE fraud_rate gauge
+fraud_rate 0.0
+# HELP feature_cache_hit_rate Feature cache hit rate
+# TYPE feature_cache_hit_rate gauge
+feature_cache_hit_rate 0.0
+# HELP fraud_model_info Model information
+# TYPE fraud_model_info gauge
+# HELP fraud_decision_distribution Distribution of decisions
+# TYPE fraud_decision_distribution gauge
+fraud_decision_distribution{decision="AUTO_APPROVE"} 0.0
+fraud_decision_distribution{decision="REVIEW"} 1.0
+fraud_decision_distribution{decision="AUTO_DECLINE"} 0.0
+# HELP fraud_active_requests Currently processing requests
+# TYPE fraud_active_requests gauge
+fraud_active_requests 0.0

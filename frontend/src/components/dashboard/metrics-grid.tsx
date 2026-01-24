@@ -48,9 +48,10 @@ interface MetricsGridProps {
     metrics: {
         totalTransactions: number;
         fraudRate: number;
-        casesPending: number;
-        casesResolved: number;
-        avgLatencyMs: number;
+        pendingReview: number;
+        autoApproved: number;
+        autoDeclined: number;
+        p99LatencyMs: number;
         modelAccuracy: number;
     };
 }
@@ -66,43 +67,53 @@ function formatPercent(value: number): string {
 }
 
 export function MetricsGrid({ metrics }: MetricsGridProps) {
+    const safeMetrics = {
+        totalTransactions: metrics.totalTransactions ?? 0,
+        fraudRate: metrics.fraudRate ?? 0,
+        pendingReview: metrics.pendingReview ?? 0,
+        autoApproved: metrics.autoApproved ?? 0,
+        autoDeclined: metrics.autoDeclined ?? 0,
+        p99LatencyMs: metrics.p99LatencyMs ?? 0,
+        modelAccuracy: metrics.modelAccuracy ?? 0,
+    };
+
     const cards = [
         {
             title: "Transactions",
-            value: formatNumber(metrics.totalTransactions),
+            value: formatNumber(safeMetrics.totalTransactions),
             icon: Activity,
             color: "cyan" as const,
             trend: { value: "12.5% from last hour", isPositive: true },
         },
         {
             title: "Fraud Rate",
-            value: formatPercent(metrics.fraudRate),
+            value: formatPercent(safeMetrics.fraudRate),
             icon: AlertTriangle,
             color: "red" as const,
             trend: { value: "0.3% decrease", isPositive: true },
         },
         {
-            title: "Pending Cases",
-            value: metrics.casesPending.toString(),
+            title: "Pending Review",
+            value: safeMetrics.pendingReview.toString(),
             icon: Clock,
             color: "amber" as const,
         },
         {
-            title: "Resolved Today",
-            value: metrics.casesResolved.toString(),
+            title: "Auto Decisions",
+            value: (safeMetrics.autoApproved + safeMetrics.autoDeclined).toString(),
             icon: CheckCircle2,
             color: "green" as const,
             trend: { value: "8 more than yesterday", isPositive: true },
         },
         {
             title: "Latency p99",
-            value: `${metrics.avgLatencyMs}ms`,
+            value: `${safeMetrics.p99LatencyMs}ms`,
             icon: Zap,
             color: "purple" as const,
         },
         {
             title: "Model Accuracy",
-            value: formatPercent(metrics.modelAccuracy),
+            value: formatPercent(safeMetrics.modelAccuracy),
             icon: XCircle,
             color: "blue" as const,
         },

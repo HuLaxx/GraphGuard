@@ -61,7 +61,9 @@ FEATURE_COLUMNS = [
     'pagerank', 'community_id', 'betweenness',
     'degree', 'out_degree', 'in_degree',
     # Velocity features
-    'rapid_fire_flag', 'high_value_flag', 'amount_pct_of_daily'
+    'rapid_fire_flag', 'high_value_flag', 'amount_pct_of_daily',
+    # Raw transaction amount
+    'amount',
 ]
 
 
@@ -174,11 +176,34 @@ class XGBoostFraudModel:
         
         Gotcha: Only apply SMOTE to training data, not test data.
         """
+        if self.smote_ratio <= 0:
+            logger.info("SMOTE skipped", reason="smote_ratio<=0")
+            return X_train, y_train
+
+        minority = int((y_train == 1).sum())
+        majority = int((y_train == 0).sum())
+        current_ratio = minority / max(majority, 1)
+
+        if minority < 2 or majority < 1:
+            logger.info("SMOTE skipped", reason="insufficient class samples", minority=minority, majority=majority)
+            return X_train, y_train
+
+        # If requested ratio is below current, treat it as a boost amount.
+        target_ratio = self.smote_ratio
+        if target_ratio < current_ratio:
+            target_ratio = min(1.0, current_ratio + self.smote_ratio)
+
+        k_neighbors = min(5, minority - 1)
+        if k_neighbors < 1:
+            logger.info("SMOTE skipped", reason="k_neighbors<1", minority=minority)
+            return X_train, y_train
+
         smote = SMOTE(
-            sampling_strategy=self.smote_ratio,
-            random_state=self.random_state
+            sampling_strategy=target_ratio,
+            random_state=self.random_state,
+            k_neighbors=k_neighbors
         )
-        
+
         X_balanced, y_balanced = smote.fit_resample(X_train, y_train)
         
         logger.info(

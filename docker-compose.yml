@@ -52,7 +52,7 @@ services:
       - neo4j_data:/data
       - neo4j_logs:/logs
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:7474" ]
+      test: [ "CMD-SHELL", "wget -qO- http://localhost:7474 >/dev/null 2>&1 || exit 1" ]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -98,7 +98,7 @@ services:
     depends_on:
       - kafka
     ports:
-      - "8081:8081"
+      - "8082:8081"
     environment:
       SCHEMA_REGISTRY_HOST_NAME: schema-registry
       SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: kafka:29092

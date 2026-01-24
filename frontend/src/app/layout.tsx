@@ -11,7 +11,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
     title: "GraphGuard | Real-Time Fraud Intelligence",
-    description: "Enterprise-grade transaction fraud detection with graph analytics, ML ensemble models, and real-time explainability.",
+    description: "Portfolio-grade fraud detection with graph analytics, ML training pipelines, and an investigator RAG assistant.",
     keywords: ["fraud detection", "graph analytics", "machine learning", "real-time", "financial security"],
 };
 

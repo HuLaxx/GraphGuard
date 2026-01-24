@@ -4,12 +4,13 @@ GraphGuard API - Test Client
 Test the deployed fraud detection API
 """
 
+import os
 import requests
 import json
 from datetime import datetime
 
 API_URL = "http://localhost:8000"
-API_KEY = "gguard_dev_key_9x7k2p4m1n8q6r5t3w0z"
+API_KEY = os.getenv("API_KEY", "change-me")
 
 def test_health():
     """Test health endpoint"""
@@ -135,7 +136,10 @@ def main():
     print("GraphGuard API Test Suite")
     print("="*60)
     print(f"API URL: {API_URL}")
-    print(f"Using API Key: {API_KEY[:20]}...")
+    if API_KEY == "change-me":
+        print("⚠️  API_KEY not set. Update your environment or .env file.")
+    else:
+        print(f"Using API Key: {API_KEY[:20]}...")
     
     try:
         # Test 1: Health

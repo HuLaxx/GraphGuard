@@ -1,0 +1,1 @@
+{"transaction_id":"demo_001","fraud_score":0.5,"decision":"REVIEW","latency_ms":26,"model_version":"xgb_only","explanation":{"top_features":[{"feature":"device_age_days","value":0.0,"importance":0.2,"impact":"increases"}],"graph_reasoning":"PageRank: 0.0000","plain_english":"Flagged due to: new device"},"cached":false}

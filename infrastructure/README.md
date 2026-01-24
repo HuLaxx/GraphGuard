@@ -1,25 +1,22 @@
 # GraphGuard - Infrastructure
 
-Infrastructure as Code and Kubernetes manifests.
+Infrastructure as Code and local observability configs.
 
 ## Structure
 
 ```
 infrastructure/
-├── terraform/        # AWS/GCP resources
-│   ├── main.tf
-│   ├── variables.tf
-│   └── outputs.tf
-├── k8s/              # Kubernetes manifests
-│   ├── base/
-│   └── monitoring/
-└── helm/             # Helm value overrides
-    ├── kafka-values.yaml
-    ├── neo4j-values.yaml
-    └── redis-values.yaml
+├── terraform/        # AWS resources (template)
+│   └── main.tf
+├── prometheus/       # Prometheus config
+│   └── prometheus.yml
+├── neo4j/            # Index scripts
+│   └── indexes.cypher
+└── backup/           # Backup scripts
+    └── backup_strategy.py
 ```
 
-## Cloud Resources (from Specification.md Lines 95-118)
+## Cloud Resources (Template)
 - VPC + Subnets
 - EKS Kubernetes Cluster
 - RDS Aurora PostgreSQL
@@ -28,4 +25,4 @@ infrastructure/
 - S3 Buckets (data lake, models, logs)
 
 ## Reference
-See [Specification.md Lines 83-118](../Specification.md) for cloud services details.
+See `terraform/main.tf` for the current template.

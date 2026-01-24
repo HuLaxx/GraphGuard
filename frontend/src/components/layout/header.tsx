@@ -38,16 +38,36 @@ export function Header() {
             >
                 <div className="px-6 flex items-center justify-between h-14">
                     {/* Logo Section */}
-                    <Link href="/" className="flex items-center gap-3 group">
-                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-zinc-200 to-zinc-400 flex items-center justify-center shadow-lg shadow-white/5 group-hover:shadow-white/20 group-hover:scale-105 transition-all border border-white/10">
-                            <Shield className="w-5 h-5 text-zinc-950" />
+                    <div className="flex items-center gap-4">
+                        <Link href="/" className="flex items-center gap-3 group">
+                            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-zinc-200 to-zinc-400 flex items-center justify-center shadow-lg shadow-white/5 group-hover:shadow-white/20 group-hover:scale-105 transition-all border border-white/10">
+                                <Shield className="w-5 h-5 text-zinc-950" />
+                            </div>
+                            <div className="flex flex-col">
+                                <span className="text-lg font-bold bg-gradient-to-r from-zinc-100 to-zinc-400 bg-clip-text text-transparent">
+                                    GraphGuard
+                                </span>
+                            </div>
+                        </Link>
+
+                        {/* Credit (Desktop only) */}
+                        <div className="hidden lg:flex items-center gap-3">
+                            <span className="text-zinc-600">|</span>
+                            <a
+                                href="https://hulax.vercel.app"
+                                target="_blank"
+                                rel="noreferrer"
+                                className="group flex flex-col items-start leading-tight"
+                            >
+                                <span className="text-[0.55rem] text-white/50 transition-all group-hover:text-white/70">
+                                    A Project By
+                                </span>
+                                <span className="text-[0.85rem] text-white/70 transition-all group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-zinc-200 group-hover:via-zinc-100 group-hover:to-white group-hover:font-semibold">
+                                    HuLaX
+                                </span>
+                            </a>
                         </div>
-                        <div className="flex flex-col">
-                            <span className="text-lg font-bold bg-gradient-to-r from-zinc-100 to-zinc-400 bg-clip-text text-transparent">
-                                GraphGuard
-                            </span>
-                        </div>
-                    </Link>
+                    </div>
 
                     {/* Desktop Navigation */}
                     <nav className="hidden md:flex items-center gap-1">

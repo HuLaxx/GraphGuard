@@ -6,11 +6,9 @@ import {
     Monitor,
     Cpu,
     Cloud,
-    Layers,
     ArrowRight,
     ArrowDown,
-    Brain,
-    Network
+    Brain
 } from 'lucide-react';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
@@ -19,7 +17,7 @@ import Link from 'next/link';
 const getLogoUrl = (name: string) => {
     const slugMap: Record<string, string> = {
         'Next.js': 'nextdotjs',
-        'React': 'react',
+        'React 18': 'react',
         'D3.js': 'd3dotjs',
         'Tailwind': 'tailwindcss',
         'FastAPI': 'fastapi',
@@ -34,8 +32,8 @@ const getLogoUrl = (name: string) => {
         'MLflow': 'mlflow',
         'PostgreSQL': 'postgresql',
         'Neo4j': 'neo4j',
-        'TimescaleDB': 'timescale',
-        'Docker': 'docker',
+        'pgvector': 'postgresql',
+        'Docker Compose': 'docker',
         'Prometheus': 'prometheus',
         'Grafana': 'grafana',
     };
@@ -52,7 +50,7 @@ const layers = [
         borderColor: 'border-zinc-500/30',
         components: [
             { name: 'Next.js', full: 'Next.js 16 App Router' },
-            { name: 'React', full: 'React 19 with hooks' },
+            { name: 'React 18', full: 'React 18 with hooks' },
             { name: 'D3.js', full: 'Network visualization' },
             { name: 'Tailwind', full: 'Utility-first CSS' },
         ],
@@ -65,7 +63,7 @@ const layers = [
         borderColor: 'border-zinc-500/30',
         components: [
             { name: 'FastAPI', full: 'High-performance Python API' },
-            { name: 'GraphQL', full: 'Strawberry + subscriptions' },
+            { name: 'GraphQL', full: 'Strawberry schema + resolvers' },
             { name: 'Redis', full: 'Response caching & sessions' },
         ],
     },
@@ -103,8 +101,8 @@ const layers = [
         components: [
             { name: 'PostgreSQL', full: 'Transactional data' },
             { name: 'Neo4j', full: 'Graph database' },
-            { name: 'TimescaleDB', full: 'Time-series metrics' },
             { name: 'Redis', full: 'Feature cache' },
+            { name: 'pgvector', full: 'Vector search (Postgres extension)' },
         ],
     },
     {
@@ -114,7 +112,7 @@ const layers = [
         bgColor: 'bg-zinc-500/10',
         borderColor: 'border-zinc-500/30',
         components: [
-            { name: 'Docker', full: '8 containerized services' },
+            { name: 'Docker Compose', full: 'Local compose stack (12 services)' },
             { name: 'Prometheus', full: 'Metrics collection' },
             { name: 'Grafana', full: 'Dashboards & alerts' },
         ],
@@ -134,8 +132,8 @@ export default function ArchitecturePage() {
                             System Architecture
                         </h1>
                         <p className="text-xl text-zinc-400">
-                            A modern, scalable architecture designed for real-time fraud detection
-                            with ML-powered decision making.
+                            A local-first architecture that keeps evidence close to the code.
+                            Heavy services run locally; the demo is intentionally lightweight.
                         </p>
                     </div>
                 </div>
@@ -163,7 +161,7 @@ export default function ArchitecturePage() {
                             <div className="flex justify-center">
                                 <div className="px-8 py-4 bg-zinc-500/10 border border-zinc-500/30 rounded-xl text-center">
                                     <p className="text-zinc-300 font-semibold">Kafka + Flink CEP</p>
-                                    <p className="text-zinc-500 text-sm">Event streaming & pattern detection</p>
+                                    <p className="text-zinc-500 text-sm">Event streaming & pattern detection (local)</p>
                                 </div>
                             </div>
 
@@ -176,15 +174,15 @@ export default function ArchitecturePage() {
                             <div className="flex justify-center gap-8 flex-wrap">
                                 <div className="px-6 py-3 bg-zinc-500/10 border border-zinc-500/30 rounded-xl text-center">
                                     <p className="text-zinc-300 font-medium">Feature Store</p>
-                                    <p className="text-zinc-500 text-xs">Feast + Redis</p>
+                                    <p className="text-zinc-500 text-xs">Feast + Redis cache</p>
                                 </div>
                                 <div className="px-6 py-3 bg-zinc-500/10 border border-zinc-500/30 rounded-xl text-center">
                                     <p className="text-zinc-300 font-medium">ML Scoring</p>
-                                    <p className="text-zinc-500 text-xs">XGBoost + GAT</p>
+                                    <p className="text-zinc-500 text-xs">XGBoost serving, GAT training</p>
                                 </div>
                                 <div className="px-6 py-3 bg-zinc-500/10 border border-zinc-500/30 rounded-xl text-center">
                                     <p className="text-zinc-300 font-medium">Neo4j Analysis</p>
-                                    <p className="text-zinc-500 text-xs">PageRank + communities</p>
+                                    <p className="text-zinc-500 text-xs">PageRank + communities (local)</p>
                                 </div>
                             </div>
 
@@ -193,8 +191,8 @@ export default function ArchitecturePage() {
                             {/* Output */}
                             <div className="flex justify-center">
                                 <div className="px-8 py-4 bg-zinc-500/10 border border-zinc-500/30 rounded-xl text-center">
-                                    <p className="text-zinc-300 font-semibold">Dashboard + SHAP</p>
-                                    <p className="text-zinc-500 text-sm">Case queue + explainability</p>
+                                    <p className="text-zinc-300 font-semibold">Dashboard + SHAP + RAG</p>
+                                    <p className="text-zinc-500 text-sm">Case queue, explainability, copilot</p>
                                 </div>
                             </div>
                         </div>
@@ -247,6 +245,77 @@ export default function ArchitecturePage() {
                                 )}
                             </div>
                         ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* Role Coverage */}
+            <section className="py-16 bg-zinc-900/30">
+                <div className="max-w-7xl mx-auto px-6">
+                    <h2 className="text-2xl font-bold text-zinc-100 mb-10 text-center">Capabilities by Role</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        {[
+                            {
+                                title: 'Data Engineering',
+                                icon: Cpu,
+                                items: ['Kafka ingestion flow', 'Flink CEP patterns', 'Spark feature jobs'],
+                            },
+                            {
+                                title: 'ML Engineering',
+                                icon: Brain,
+                                items: ['XGBoost scoring', 'GAT training scripts', 'SHAP explainability'],
+                            },
+                            {
+                                title: 'Full Stack',
+                                icon: Monitor,
+                                items: ['Next.js dashboard', 'GraphQL queries', 'D3 network graphs'],
+                            },
+                            {
+                                title: 'MLOps',
+                                icon: Cloud,
+                                items: ['MLflow tracking', 'Prometheus metrics', 'Docker Compose stack'],
+                            },
+                        ].map((role) => (
+                            <div key={role.title} className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-6">
+                                <div className="w-10 h-10 rounded-xl bg-zinc-800 flex items-center justify-center mb-4">
+                                    <role.icon className="w-5 h-5 text-zinc-200" />
+                                </div>
+                                <h3 className="text-lg font-semibold text-zinc-100 mb-3">{role.title}</h3>
+                                <ul className="text-sm text-zinc-400 space-y-2">
+                                    {role.items.map((item) => (
+                                        <li key={item}>- {item}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* Free-tier Demo Targets */}
+            <section className="py-16">
+                <div className="max-w-6xl mx-auto px-6">
+                    <div className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-8">
+                        <div className="flex items-center gap-3 mb-6">
+                            <Cloud className="w-6 h-6 text-zinc-200" />
+                            <h3 className="text-xl font-semibold text-zinc-100">Free-tier Demo Targets</h3>
+                            <span className="ml-auto text-xs text-zinc-500">Planned deployment map</span>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {[
+                                { name: 'Supabase', desc: 'Postgres + pgvector for hosted demo data' },
+                                { name: 'Upstash', desc: 'Serverless Redis for cache and rate limits' },
+                                { name: 'Railway', desc: 'API + frontend hosting on free tier' },
+                            ].map((item) => (
+                                <div key={item.name} className="rounded-xl border border-zinc-800 bg-zinc-950/40 p-4">
+                                    <p className="text-zinc-100 font-medium">{item.name}</p>
+                                    <p className="text-sm text-zinc-500 mt-1">{item.desc}</p>
+                                </div>
+                            ))}
+                        </div>
+                        <p className="text-xs text-zinc-500 mt-4">
+                            Heavy services (Kafka, Neo4j, Flink) stay local for the full pipeline.
+                        </p>
                     </div>
                 </div>
             </section>

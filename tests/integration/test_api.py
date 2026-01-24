@@ -174,11 +174,11 @@ class TestGraphQL:
         os.environ["API_KEY"] = "test-key"
         from strawberry.fastapi import GraphQLRouter
         from backend.graphql.resolvers import schema
-        from fastapi import FastAPI
+        from fastapi import FastAPI, Request
         from fastapi.testclient import TestClient
         
         app = FastAPI()
-        def graphql_context_getter(request):
+        def graphql_context_getter(request: Request):
             return {"request": request}
 
         graphql_app = GraphQLRouter(schema, context_getter=graphql_context_getter)

@@ -1,120 +1,110 @@
 import Link from 'next/link';
-import { Shield, Github, Linkedin, Twitter } from 'lucide-react';
+import { Github, Linkedin, Mail } from 'lucide-react';
 
-const footerLinks = {
-    product: [
-        { label: 'Home', href: '/' },
-        { label: 'Live Demo', href: '/demo' },
-    ],
-    resources: [
-        { label: 'Architecture', href: '/architecture' },
-        { label: 'Tech Stack', href: '/stack' },
-    ],
-    company: [
-        { label: 'GitHub', href: 'https://github.com' },
-    ],
-};
+const pageLinks = [
+    { label: 'Home', href: '/' },
+    { label: 'Architecture', href: '/architecture' },
+    { label: 'Tech Stack', href: '/stack' },
+    { label: 'Demo', href: '/demo' },
+];
 
-const socialLinks = [
-    { icon: Github, href: 'https://github.com', label: 'GitHub' },
-    { icon: Linkedin, href: 'https://linkedin.com', label: 'LinkedIn' },
-    { icon: Twitter, href: 'https://twitter.com', label: 'Twitter' },
+const connectLinks = [
+    { icon: Github, label: 'GitHub', href: 'https://github.com/HuLaxx' },
+    { icon: Linkedin, label: 'LinkedIn', href: 'https://linkedin.com/in/rahul-khanke' },
+    { icon: Mail, label: 'Email', href: 'mailto:rahulkhanke02@gmail.com' },
 ];
 
 export function Footer() {
+    const currentYear = new Date().getFullYear();
+
     return (
-        <footer className="bg-zinc-950 border-t border-zinc-800">
-            <div className="max-w-7xl mx-auto px-6 py-20 pb-24">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12">
-                    {/* Brand */}
-                    <div className="lg:col-span-2">
-                        <Link href="/" className="flex items-center gap-3 mb-4 group">
-                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-zinc-200 to-zinc-400 flex items-center justify-center shadow-lg shadow-white/5 group-hover:shadow-white/20 group-hover:scale-105 transition-all">
-                                <Shield className="w-5 h-5 text-zinc-950" />
-                            </div>
-                            <span className="text-xl font-bold text-zinc-100">
-                                GraphGuard
-                            </span>
-                        </Link>
-                        <p className="text-zinc-500 text-sm max-w-sm mb-6">
-                            Enterprise-grade real-time fraud detection platform.
-                            Graph analytics, ML ensemble models, and explainable AI.
-                        </p>
-                        <div className="flex gap-4">
-                            {socialLinks.map((social) => (
-                                <a
-                                    key={social.label}
-                                    href={social.href}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="w-10 h-10 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-500 hover:text-zinc-100 hover:border-zinc-500/50 transition-all"
-                                    aria-label={social.label}
-                                >
-                                    <social.icon className="w-5 h-5" />
-                                </a>
-                            ))}
+        <footer className="relative z-10 m-4 md:m-8 mt-auto rounded-3xl overflow-hidden border border-white/5 bg-black/40 backdrop-blur-3xl shadow-2xl">
+            <div className="px-8 lg:px-12 py-16 md:py-24">
+                <div className="max-w-7xl mx-auto">
+                    {/* Main Grid */}
+                    <div className="grid md:grid-cols-4 gap-12 lg:gap-24">
+                        {/* Brand Column */}
+                        <div className="md:col-span-2 space-y-6">
+                            <Link href="/" className="flex items-center gap-3 group">
+                                <div className="w-12 h-12 rounded-xl overflow-hidden shadow-lg shadow-white/10 group-hover:shadow-white/20 transition-all duration-300 group-hover:scale-105">
+                                    <img src="/icon.svg" alt="GraphGuard" className="w-full h-full object-cover" />
+                                </div>
+                                <span className="text-2xl font-bold bg-gradient-to-r from-zinc-200 to-zinc-400 bg-clip-text text-transparent">
+                                    GraphGuard
+                                </span>
+                            </Link>
+                            <p className="text-zinc-400 max-w-sm leading-relaxed text-sm">
+                                Evidence-first fraud detection with graph analytics, ML pipelines,
+                                and a local-first RAG assistant. Built to showcase practical, verifiable systems.
+                            </p>
                         </div>
-                    </div>
 
-                    {/* Links */}
-                    <div>
-                        <h3 className="text-sm font-semibold text-zinc-100 mb-4">Product</h3>
-                        <ul className="space-y-3">
-                            {footerLinks.product.map((link) => (
-                                <li key={link.label}>
-                                    <Link
-                                        href={link.href as any}
-                                        className="text-sm text-zinc-500 hover:text-zinc-300 transition-colors"
-                                    >
-                                        {link.label}
-                                    </Link>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
+                        {/* Pages Column */}
+                        <div>
+                            <h3 className="font-bold text-sm uppercase tracking-wider text-white mb-6">
+                                Pages
+                            </h3>
+                            <ul className="space-y-4 text-sm text-zinc-400">
+                                {pageLinks.map((link) => (
+                                    <li key={link.href}>
+                                        <Link
+                                            href={link.href}
+                                            className="hover:text-zinc-200 transition-colors"
+                                        >
+                                            {link.label}
+                                        </Link>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
 
-                    <div>
-                        <h3 className="text-sm font-semibold text-zinc-100 mb-4">Resources</h3>
-                        <ul className="space-y-3">
-                            {footerLinks.resources.map((link) => (
-                                <li key={link.label}>
-                                    <Link
-                                        href={link.href as any}
-                                        className="text-sm text-zinc-500 hover:text-zinc-300 transition-colors"
-                                    >
-                                        {link.label}
-                                    </Link>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-
-                    <div>
-                        <h3 className="text-sm font-semibold text-zinc-100 mb-4">Company</h3>
-                        <ul className="space-y-3">
-                            {footerLinks.company.map((link) => (
-                                <li key={link.label}>
-                                    <Link
-                                        href={link.href as any}
-                                        className="text-sm text-zinc-500 hover:text-zinc-300 transition-colors"
-                                    >
-                                        {link.label}
-                                    </Link>
-                                </li>
-                            ))}
-                        </ul>
+                        {/* Connect Column */}
+                        <div>
+                            <h3 className="font-bold text-sm uppercase tracking-wider text-white mb-6">
+                                Connect
+                            </h3>
+                            <ul className="space-y-4 text-sm text-zinc-400">
+                                {connectLinks.map((link) => (
+                                    <li key={link.label}>
+                                        <a
+                                            href={link.href}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="hover:text-zinc-200 transition-colors flex items-center gap-2 group"
+                                        >
+                                            <link.icon className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                                            {link.label}
+                                        </a>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
                     </div>
                 </div>
 
-                {/* Bottom */}
-                <div className="mt-16 pt-8 border-t border-zinc-900 flex flex-col md:flex-row items-center justify-between gap-4">
-                    <p className="text-sm text-zinc-600">
-                        © {new Date().getFullYear()} GraphGuard. Portfolio Project.
-                    </p>
-                    <div className="flex items-center gap-6 text-sm text-zinc-600">
-                        <Link href={"#" as any} className="hover:text-zinc-400 transition-colors">Privacy</Link>
-                        <Link href={"#" as any} className="hover:text-zinc-400 transition-colors">Terms</Link>
-                    </div>
+                {/* Bottom Bar */}
+                <div className="max-w-7xl mx-auto pt-12 mt-12 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-6 text-sm text-zinc-500">
+                    <p>Copyright {currentYear} GraphGuard. Portfolio project.</p>
+                    <button
+                        type="button"
+                        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                        className="text-white/60 hover:text-white transition-colors"
+                    >
+                        Back to top
+                    </button>
+                    <a
+                        href="https://hulax.vercel.app"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="group inline-flex items-baseline gap-1.5 md:mr-6"
+                    >
+                        <span className="text-sm text-white/60 transition-all duration-300 group-hover:text-white">
+                            A Project By
+                        </span>
+                        <span className="text-base sm:text-lg text-white/80 transition-all duration-300 origin-left group-hover:scale-110 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-zinc-200 group-hover:via-white group-hover:to-zinc-300 group-hover:font-semibold">
+                            HuLaX
+                        </span>
+                    </a>
                 </div>
             </div>
         </footer>

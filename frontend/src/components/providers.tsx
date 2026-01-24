@@ -3,7 +3,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { ApolloProvider } from "@apollo/client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { apolloClient } from "@/lib/apollo-client";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 
@@ -19,6 +19,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
                 },
             })
     );
+    const [isMounted, setIsMounted] = useState(false);
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     return (
         <QueryClientProvider client={queryClient}>
@@ -27,7 +32,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
                     {children}
                 </ErrorBoundary>
             </ApolloProvider>
-            {process.env.NODE_ENV === "development" && (
+            {process.env.NODE_ENV === "development" && isMounted && (
                 <ReactQueryDevtools initialIsOpen={false} />
             )}
         </QueryClientProvider>

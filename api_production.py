@@ -17,6 +17,8 @@ from pydantic import BaseModel, Field
 import xgboost as xgb
 import pandas as pd
 import numpy as np
+from ml.serving.rag.router import router as rag_router
+from ml.serving.rag.auto_index import maybe_start_auto_indexing
 
 # ============================================
 # FastAPI App
@@ -29,6 +31,12 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc"
 )
+
+# RAG endpoints (optional)
+try:
+    app.include_router(rag_router)
+except Exception:
+    pass
 
 # CORS
 cors_origins = os.getenv("CORS_ALLOW_ORIGINS", "http://localhost:3000").split(",")
@@ -157,6 +165,10 @@ async def startup_event():
     print("="*60)
     state.load_model()
     redis_ok = state.check_redis()
+    try:
+        maybe_start_auto_indexing()
+    except Exception as e:
+        print(f"⚠️  RAG auto-index failed to start: {e}")
     print(f"Redis: {'✅ Connected' if redis_ok else '⚠️  Not available'}")
     print("="*60 + "\n")
 

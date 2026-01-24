@@ -5,6 +5,7 @@ import { useQuery, useMutation } from "@apollo/client";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { MetricsGrid, FraudQueue, NetworkGraph, ShapChart } from "@/components/dashboard";
+import { RagAssistant } from "@/components/assistant/rag-assistant";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency, formatDate, formatPercent } from "@/lib/utils";
@@ -63,25 +64,36 @@ export default function DemoPage() {
     };
 
     // Transform API data to UI types
-    const metrics = dashData?.dashboardMetrics || {
-        totalTransactions: 0,
-        fraudRate: 0,
-        casesPending: 0,
-        casesResolved: 0,
-        avgLatencyMs: 0,
-        modelAccuracy: 0,
-    };
+    const metrics = dashData?.dashboardMetrics
+        ? {
+            totalTransactions: dashData.dashboardMetrics.totalTransactions ?? 0,
+            fraudRate: dashData.dashboardMetrics.fraudRate ?? 0,
+            pendingReview: dashData.dashboardMetrics.pendingReview ?? 0,
+            autoApproved: dashData.dashboardMetrics.autoApproved ?? 0,
+            autoDeclined: dashData.dashboardMetrics.autoDeclined ?? 0,
+            p99LatencyMs: dashData.dashboardMetrics.p99LatencyMs ?? 0,
+            modelAccuracy: dashData.dashboardMetrics.modelAccuracy ?? 0,
+        }
+        : {
+            totalTransactions: 0,
+            fraudRate: 0,
+            pendingReview: 0,
+            autoApproved: 0,
+            autoDeclined: 0,
+            p99LatencyMs: 0,
+            modelAccuracy: 0,
+        };
 
     const cases: FraudCase[] = (dashData?.fraudQueue?.items || []).map((item: any) => ({
         id: item.id,
         transactionId: item.transactionId,
         userId: item.userId,
-        amount: item.amount_val,
+        amount: item.amountVal,
         fraudScore: item.fraudScore,
         priority: item.priority,
         status: item.status,
         createdAt: item.createdAt,
-        currency: item.currency_code,
+        currency: item.currencyCode,
         merchantName: item.merchantName,
     }));
 
@@ -107,8 +119,26 @@ export default function DemoPage() {
 
     if (dashError) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-zinc-950 text-red-500">
-                Error connecting to API: {dashError.message}
+            <div className="min-h-screen bg-zinc-950 text-zinc-100">
+                <Header />
+                <main className="max-w-3xl mx-auto px-6 pt-28">
+                    <div className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-6 space-y-3">
+                        <h1 className="text-xl font-semibold">API not reachable</h1>
+                        <p className="text-zinc-400">
+                            The demo expects the GraphQL API at <span className="text-zinc-200">/graphql</span>.
+                            Start the local API and refresh this page. If you are using a non-default port,
+                            set <span className="text-zinc-200">NEXT_PUBLIC_API_PORT</span> (or
+                            <span className="text-zinc-200">API_PORT</span>) before running the frontend.
+                        </p>
+                        <div className="rounded-xl bg-zinc-950 border border-zinc-800 p-4 text-sm text-zinc-300 font-mono">
+                            python -m uvicorn ml.serving.api:app --reload --port 8000
+                        </div>
+                        <p className="text-zinc-500 text-sm">
+                            Error detail: {dashError.message}
+                        </p>
+                    </div>
+                </main>
+                <Footer />
             </div>
         );
     }
@@ -126,11 +156,12 @@ export default function DemoPage() {
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                             </span>
-                            Live System
+                            Demo Mode (Local-First)
                         </div>
                         <h1 className="text-4xl font-bold text-zinc-100">Fraud Operations Dashboard</h1>
                         <p className="text-zinc-400 max-w-2xl">
-                            Real-time fraud detection with graph analytics, ML scoring, and explainable decisions.
+                            Demo UI wired to the GraphQL API. Hosted demos run on free-tier services with limited features.
+                            For the full pipeline, run the local stack.
                         </p>
                     </div>
                     <Button variant="outline" size="icon" onClick={() => dashRefetch()} disabled={dashLoading}>
@@ -138,7 +169,38 @@ export default function DemoPage() {
                     </Button>
                 </section>
 
+                <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-4 text-sm text-zinc-400">
+                    Hosted demo targets use free-tier services (Supabase/Upstash/Railway). Heavy services like Kafka,
+                    Neo4j, and Flink are local-only. For the full pipeline, run the Docker Compose stack locally.
+                </div>
+
                 <MetricsGrid metrics={metrics} />
+
+                <div className="grid gap-4 md:grid-cols-3">
+                    {[
+                        {
+                            title: 'Fraud queue',
+                            desc: 'Live case list pulled from GraphQL with priority and status.',
+                        },
+                        {
+                            title: 'Network view',
+                            desc: 'D3-based graph from suspicious subgraph queries.',
+                        },
+                        {
+                            title: 'Explainability',
+                            desc: 'SHAP features with a plain-English summary.',
+                        },
+                    ].map((item) => (
+                        <Card key={item.title} className="bg-zinc-900/60 border-zinc-800">
+                            <CardHeader className="pb-2">
+                                <CardTitle className="text-sm text-zinc-200">{item.title}</CardTitle>
+                            </CardHeader>
+                            <CardContent className="text-sm text-zinc-500">
+                                {item.desc}
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
 
                 <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
                     <FraudQueue
@@ -224,6 +286,25 @@ export default function DemoPage() {
                     height={400}
                     onNodeClick={(node) => console.log("Node clicked:", node)}
                 />
+
+                <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+                    <RagAssistant />
+                    <Card>
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-lg">RAG Tips</CardTitle>
+                        </CardHeader>
+                        <CardContent className="text-sm text-zinc-400 space-y-2">
+                            <p>Ask about data flow, model training, or infra setup.</p>
+                            <p>Examples:</p>
+                            <ul className="list-disc list-inside space-y-1 text-zinc-500">
+                                <li>How do transactions reach Neo4j?</li>
+                                <li>What features are used for XGBoost?</li>
+                                <li>Where is drift detection implemented?</li>
+                                <li>How does the RAG index get built?</li>
+                            </ul>
+                        </CardContent>
+                    </Card>
+                </div>
             </main>
 
             <Footer />

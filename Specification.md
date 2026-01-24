@@ -1,4 +1,7 @@
-# **PROJECT 2: GRAPHGUARD - ENTERPRISE FRAUD DETECTION PLATFORM**
+# **PROJECT 2: GRAPHGUARD - DESIGN SPEC (ASPIRATIONAL)**
+
+> NOTE: This document is a design/vision specification with aspirational targets and hypothetical metrics.
+> It does not represent the current, verified implementation. For evidence-based status, see `docs/FINAL_AUDIT.md`.
 
 ## **I. Executive Summary**
 

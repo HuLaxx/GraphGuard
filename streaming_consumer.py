@@ -4,6 +4,7 @@ GraphGuard - Streaming Consumer (Redis Streams)
 Processes transactions from Redis Streams
 """
 
+import os
 import redis
 import json
 import time
@@ -20,7 +21,7 @@ class StreamingConsumer:
         self.consumer_group = 'fraud-detection'
         self.consumer_name = 'consumer-1'
         self.api_url = 'http://localhost:8000/score'
-        self.api_key = 'gguard_dev_key_9x7k2p4m1n8q6r5t3w0z'
+        self.api_key = os.getenv("API_KEY", "change-me")
         
         # Create consumer group if not exists
         try:
@@ -38,6 +39,8 @@ class StreamingConsumer:
     def process_transaction(self, transaction: dict):
         """Send transaction to fraud detection API"""
         try:
+            if self.api_key == "change-me":
+                print("   ⚠️  API_KEY not set. Update your environment or .env file.")
             headers = {'X-API-Key': self.api_key}
             response = requests.post(
                 self.api_url,

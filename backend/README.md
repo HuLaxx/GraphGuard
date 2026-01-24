@@ -6,27 +6,25 @@ This directory contains all backend Python services for the GraphGuard fraud det
 
 ```
 backend/
-├── api/              # FastAPI main API service
-│   └── pyproject.toml
-└── graphql/          # GraphQL resolvers (Strawberry)
-    └── pyproject.toml
+└── graphql/          # Strawberry GraphQL schema + resolvers
+    ├── __init__.py
+    ├── schema.py
+    └── resolvers.py
 ```
 
 ## Services
 
-### API Service (`api/`)
-- FastAPI-based REST and GraphQL endpoints
-- Real-time fraud scoring
-- Case management APIs
-
 ### GraphQL Service (`graphql/`)
 - Strawberry GraphQL schema and resolvers
-- DataLoader for efficient batching
+- Neo4j-backed queries with safe fallbacks
+
+### API Service (located in `ml/serving/`)
+- FastAPI REST scoring + GraphQL router
+- Main entrypoint: `ml/serving/api.py`
 
 ## Getting Started
 
 ```bash
-cd backend/api
-pip install -e .
-uvicorn app.main:app --reload
+pip install -e "ml[dev]"
+uvicorn ml.serving.api:app --reload
 ```

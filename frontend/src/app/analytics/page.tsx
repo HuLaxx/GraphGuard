@@ -10,9 +10,10 @@ import type { ShapFeature } from "@/types";
 const mockMetrics = {
     totalTransactions: 125847,
     fraudRate: 0.023,
-    casesPending: 342,
-    casesResolved: 118234,
-    avgLatencyMs: 45,
+    pendingReview: 342,
+    autoApproved: 116500,
+    autoDeclined: 1734,
+    p99LatencyMs: 45,
     modelAccuracy: 0.967,
 };
 
@@ -96,4 +97,3 @@ export default function AnalyticsPage() {
         </div>
     );
 }
-

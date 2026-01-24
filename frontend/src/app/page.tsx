@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import {
     Shield,
-    BarChart3,
     Zap,
     Brain,
     Database,
@@ -15,7 +14,9 @@ import {
     Globe,
     Network,
     AlertTriangle,
-    CheckCircle
+    CheckCircle,
+    Activity,
+    Code
 } from "lucide-react";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
@@ -25,52 +26,52 @@ const features = [
     {
         icon: Network,
         title: "Graph Analytics",
-        description: "Neo4j-powered transaction network analysis with PageRank and community detection for fraud ring identification.",
+        description: "Neo4j-backed network analysis with PageRank and community detection to surface suspicious rings.",
         color: "from-zinc-100 to-zinc-400",
         delay: 0,
     },
     {
         icon: Brain,
-        title: "ML Ensemble",
-        description: "XGBoost + Graph Attention Networks with 96.7% AUC-PR for precise fraud detection.",
+        title: "ML Training + Explainability",
+        description: "XGBoost and GAT training scripts with MLflow logs and SHAP explanations surfaced in the UI.",
         color: "from-zinc-100 to-zinc-500",
         delay: 100,
     },
     {
         icon: Zap,
-        title: "Real-Time Streaming",
-        description: "Kafka + Flink CEP for sub-100ms fraud scoring with exactly-once semantics.",
+        title: "Streaming + Features",
+        description: "Kafka + Flink CEP for real-time patterns and Spark/Feast for feature engineering (local stack).",
         color: "from-white to-zinc-400",
         delay: 200,
     },
     {
         icon: AlertTriangle,
-        title: "Explainable AI",
-        description: "SHAP-powered explanations with plain-English reasoning for every fraud decision.",
+        title: "RAG Assistant",
+        description: "Local-first investigator copilot with Groq/Ollama options and pgvector-backed retrieval.",
         color: "from-zinc-200 to-zinc-500",
         delay: 300,
     },
     {
         icon: Database,
         title: "Feature Store",
-        description: "Feast-based online/offline feature serving with Redis caching for low-latency inference.",
+        description: "Feast feature repo with Redis cache and Postgres + pgvector for retrieval data.",
         color: "from-zinc-300 to-zinc-600",
         delay: 400,
     },
     {
         icon: Layers,
         title: "Full-Stack",
-        description: "Next.js 16, FastAPI, PostgreSQL, Redis, Docker - production-grade architecture.",
+        description: "Next.js 16 + FastAPI + GraphQL with Docker Compose for local runs and free-tier demo targets.",
         color: "from-white to-zinc-500",
         delay: 500,
     },
 ];
 
 const stats = [
-    { value: "8", label: "Docker Services", icon: Globe },
-    { value: "6", label: "ML Models", icon: Brain },
-    { value: "30+", label: "Technologies", icon: Layers },
-    { value: "5", label: "Databases", icon: Database },
+    { value: "32", label: "Tests (Local Run)", icon: CheckCircle },
+    { value: "12", label: "Local Services", icon: Globe },
+    { value: "2", label: "Model Families", icon: Brain },
+    { value: "3", label: "Primary Stores", icon: Database },
 ];
 
 function FeatureCard({ feature, index }: { feature: (typeof features)[0]; index: number }) {
@@ -129,7 +130,7 @@ export default function HomePage() {
                         {/* Badge */}
                         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-zinc-900/80 border border-zinc-800 text-sm text-zinc-400 mb-8 backdrop-blur-sm">
                             <Sparkles className="w-4 h-4 text-zinc-100" />
-                            Portfolio Project • Full-Stack + ML + Data Engineering
+                            Portfolio Build - Evidence-First - Local-First
                         </div>
 
                         {/* Title */}
@@ -145,8 +146,8 @@ export default function HomePage() {
 
                         {/* Subtitle */}
                         <p className="text-lg md:text-xl text-zinc-400 mb-10 max-w-2xl mx-auto leading-relaxed">
-                            Enterprise-grade transaction fraud detection with graph analytics,
-                            ML ensemble models, and real-time explainability.
+                            Portfolio-grade fraud detection platform with graph analytics,
+                            ML training pipelines, and a local-first RAG assistant.
                         </p>
 
                         {/* CTAs */}
@@ -197,30 +198,23 @@ export default function HomePage() {
                                 <div className="w-3 h-3 rounded-full bg-green-500/80" />
                             </div>
                             <div className="flex-1 mx-4">
-                                <div className="bg-zinc-800 rounded-lg px-4 py-1.5 text-xs text-zinc-500 max-w-md mx-auto">
-                                    localhost:3000/demo
-                                </div>
+                            <div className="bg-zinc-800 rounded-lg px-4 py-1.5 text-xs text-zinc-500 max-w-md mx-auto">
+                                demo.graphguard.local
+                            </div>
                             </div>
                         </div>
 
                         {/* Dashboard preview placeholder */}
                         <div className="aspect-video bg-zinc-950 rounded-b-lg overflow-hidden relative">
                             <div className="absolute inset-0 bg-gradient-to-br from-zinc-900 via-zinc-950 to-zinc-900" />
-                            <div className="absolute inset-0 flex items-center justify-center">
-                                <div className="text-center">
-                                    <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-zinc-100 to-zinc-500 flex items-center justify-center">
-                                        <Shield className="w-10 h-10 text-zinc-950" />
-                                    </div>
-                                    <p className="text-zinc-400 mb-4">Fraud Operations Dashboard</p>
-                                    <Link
-                                        href="/demo"
-                                        className="inline-flex items-center gap-2 px-6 py-3 bg-zinc-100 text-zinc-900 rounded-lg font-medium hover:bg-white transition-colors"
-                                    >
-                                        <Play className="w-4 h-4" />
-                                        Open Demo
-                                    </Link>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="text-center">
+                                <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-zinc-100 to-zinc-500 flex items-center justify-center">
+                                    <Shield className="w-10 h-10 text-zinc-950" />
                                 </div>
+                                <p className="text-zinc-500 text-xs uppercase tracking-[0.35em]">System Preview</p>
                             </div>
+                        </div>
 
                             {/* Decorative elements */}
                             <div className="absolute top-4 left-4 w-48 h-24 bg-zinc-800/50 rounded-lg" />
@@ -240,14 +234,14 @@ export default function HomePage() {
                     <div className="text-center mb-16">
                         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-800/30 border border-zinc-700/50 text-zinc-100 text-sm mb-4">
                             <CheckCircle className="w-4 h-4" />
-                            Enterprise Features
+                            Evidence-Based Features
                         </div>
                         <h2 className="text-3xl md:text-5xl font-bold text-zinc-100 mb-4">
-                            Production-Ready Platform
+                            Built for Proof, Not Hype
                         </h2>
                         <p className="text-zinc-400 max-w-2xl mx-auto text-lg">
-                            Built with modern technologies and best practices for
-                            scalability, performance, and reliability.
+                            Every section maps to code in this repo. Heavy services
+                            run locally; the hosted demo is intentionally lightweight.
                         </p>
                     </div>
 
@@ -255,6 +249,113 @@ export default function HomePage() {
                         {features.map((feature, index) => (
                             <FeatureCard key={feature.title} feature={feature} index={index} />
                         ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* Operational Snapshot */}
+            <section className="py-16 px-6">
+                <div className="max-w-5xl mx-auto">
+                    <div className="p-8 rounded-2xl border border-zinc-800 bg-zinc-900/50">
+                        <div className="flex items-center gap-3 mb-6">
+                            <Activity className="w-6 h-6 text-zinc-200" />
+                            <h3 className="text-xl font-semibold text-zinc-100">Operational Snapshot</h3>
+                            <span className="ml-auto px-3 py-1 rounded-full bg-zinc-800/80 text-zinc-300 text-xs font-medium">
+                                Local Evidence
+                            </span>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {[
+                                "Kafka producer + consumer flow for transactions",
+                                "Neo4j graph build and algorithms scripts",
+                                "FastAPI scoring with Redis cache and metrics",
+                                "GraphQL fraud queue powering the UI",
+                                "Local RAG indexing and Q&A endpoints",
+                                "Prometheus metrics wired to /metrics",
+                            ].map((item) => (
+                                <div
+                                    key={item}
+                                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-zinc-800/50 transition-colors"
+                                >
+                                    <CheckCircle className="w-4 h-4 text-zinc-300 flex-shrink-0" />
+                                    <span className="text-sm text-zinc-400">{item}</span>
+                                </div>
+                            ))}
+                        </div>
+
+                        <p className="text-xs text-zinc-500 mt-4">
+                            Each item maps to code in this repo. Heavy services run locally; hosted demos are intentionally lightweight.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            {/* Developer API Section */}
+            <section className="py-20 relative overflow-hidden">
+                <div className="relative max-w-6xl mx-auto px-6">
+                    <div className="grid lg:grid-cols-2 gap-12 items-center">
+                        <div className="space-y-6">
+                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-800/40 border border-zinc-700 text-zinc-200 text-sm">
+                                <Code className="w-4 h-4" />
+                                Developer API
+                            </div>
+                            <h2 className="text-3xl md:text-5xl font-bold leading-tight text-zinc-100">
+                                Fraud scoring and graph insights on demand.
+                            </h2>
+                            <p className="text-lg text-zinc-400 leading-relaxed">
+                                The demo UI is backed by a FastAPI + GraphQL layer. Use REST for scoring and GraphQL for
+                                the fraud queue, explanations, and network data.
+                            </p>
+                            <ul className="space-y-3 text-zinc-400 text-sm">
+                                {[
+                                    "REST scoring endpoint for transaction risk",
+                                    "GraphQL fraud queue for analyst workflows",
+                                    "SHAP explanations for model transparency",
+                                ].map((item) => (
+                                    <li key={item} className="flex items-start gap-3">
+                                        <div className="w-5 h-5 rounded-full bg-zinc-800 flex items-center justify-center mt-0.5">
+                                            <CheckCircle className="w-3 h-3 text-zinc-200" />
+                                        </div>
+                                        <span>{item}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+
+                        <div className="relative group">
+                            <div className="absolute -inset-1 bg-gradient-to-r from-zinc-600 to-zinc-300 rounded-xl blur opacity-20 group-hover:opacity-30 transition duration-1000" />
+                            <div className="relative rounded-xl border border-zinc-800 bg-[#0D0E12] p-6 shadow-2xl">
+                                <div className="flex items-center justify-between mb-4 border-b border-zinc-800 pb-4">
+                                    <div className="flex gap-2">
+                                        <div className="w-3 h-3 rounded-full bg-red-500/20 border border-red-500/50" />
+                                        <div className="w-3 h-3 rounded-full bg-yellow-500/20 border border-yellow-500/50" />
+                                        <div className="w-3 h-3 rounded-full bg-green-500/20 border border-green-500/50" />
+                                    </div>
+                                    <span className="text-xs text-zinc-500 font-mono">POST /score</span>
+                                </div>
+
+                                <pre className="font-mono text-xs sm:text-sm leading-relaxed overflow-x-auto text-zinc-200/90">
+                                    <code>{`curl -X POST http://localhost:8000/score \\
+  -H \"Content-Type: application/json\" \\
+  -d '{
+    \"transaction_id\": \"txn_123\",
+    \"amount\": 740.25,
+    \"merchant\": \"Retail\"
+  }'`}</code>
+                                </pre>
+
+                                <div className="mt-4 pt-4 border-t border-zinc-800/50">
+                                    <div className="text-xs text-zinc-500 mb-2">Response (200 OK)</div>
+                                    <pre className="font-mono text-xs leading-relaxed text-zinc-200/90">
+                                        <code>{`{
+  \"fraud_score\": 0.87,
+  \"decision\": \"review\"
+}`}</code>
+                                    </pre>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -284,7 +385,7 @@ export default function HomePage() {
                             href="/stack"
                             className="px-8 py-5 text-zinc-400 hover:text-zinc-100 font-medium transition-colors"
                         >
-                            View Tech Stack →
+                            View Tech Stack {"->"}
                         </Link>
                     </div>
                 </div>

@@ -34,6 +34,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import APIKeyHeader
 
 from ml.serving.feature_cache import FeatureCache
+from ml.monitoring.performance_monitoring import (
+    get_performance_monitor,
+    get_prometheus_metrics,
+    get_prometheus_content_type,
+    active_requests,
+)
+from ml.serving.rag.router import router as rag_router
+from ml.serving.rag.auto_index import maybe_start_auto_indexing
 
 logger = structlog.get_logger(__name__)
 
@@ -100,6 +108,13 @@ try:
     logger.info("GraphQL endpoint enabled")
 except Exception as e:
     logger.warning("GraphQL endpoint not enabled", error=str(e))
+
+# RAG endpoints
+try:
+    app.include_router(rag_router)
+    logger.info("RAG endpoints enabled")
+except Exception as e:
+    logger.warning("RAG endpoints not enabled", error=str(e))
 
 
 # ============================================
@@ -459,6 +474,10 @@ def generate_explanation(
 async def startup_event():
     """Initialize models on startup."""
     model_ctx.initialize()
+    try:
+        maybe_start_auto_indexing()
+    except Exception as e:
+        logger.warning("RAG auto-index failed to start", error=str(e))
     logger.info("API startup complete")
 
 
@@ -475,114 +494,143 @@ async def score_transaction(
     Reference: Specification.md Lines 1931-2014
     """
     start_time = time.time()
-    
+    monitor = get_performance_monitor()
+    active_requests.inc()
+
     # 1. Check cache
     cached = False
-    if ctx.redis_client:
-        cache_key = f"fraud_score:{request.user_id}:{request.transaction_id}"
-        try:
-            cached_score = await _run_blocking(ctx.redis_client.get, cache_key)
-            if cached_score:
-                fraud_score = float(cached_score)
-                latency_ms = int((time.time() - start_time) * 1000)
-                
-                return PredictionResponse(
-                    transaction_id=request.transaction_id,
-                    fraud_score=fraud_score,
-                    decision=make_decision(fraud_score),
-                    latency_ms=latency_ms,
-                    model_version="cached",
-                    explanation=ExplanationResponse(
-                        top_features=[],
-                        graph_reasoning="",
-                        plain_english="Cached result"
-                    ),
-                    cached=True
-                )
-        except Exception as e:
-            logger.warning("Cache read failed", error=str(e))
-    
-    # 2. Build features (Feast -> cache -> defaults)
-    feature_names = [f for f in DEFAULT_FEATURE_ORDER if f not in RUNTIME_FEATURES]
-    feature_refs = _build_feature_refs(feature_names)
-    features: Dict[str, Any] = {}
-    if ctx.feature_cache:
-        features.update(
-            await _run_blocking(ctx.feature_cache.get_features, request.user_id, feature_refs)
+    latency_s: Optional[float] = None
+    record_metrics = False
+    model_version = "unknown"
+    decision = "REVIEW"
+    fraud_score = 0.5
+    try:
+        if ctx.redis_client:
+            cache_key = f"fraud_score:{request.user_id}:{request.transaction_id}"
+            try:
+                cached_score = await _run_blocking(ctx.redis_client.get, cache_key)
+                if cached_score:
+                    cached = True
+                    fraud_score = float(cached_score)
+                    latency_s = time.time() - start_time
+                    latency_ms = int(latency_s * 1000)
+                    decision = make_decision(fraud_score)
+                    model_version = "cached"
+                    record_metrics = True
+                    monitor.record_cache_event(True)
+                    
+                    return PredictionResponse(
+                        transaction_id=request.transaction_id,
+                        fraud_score=fraud_score,
+                        decision=decision,
+                        latency_ms=latency_ms,
+                        model_version=model_version,
+                        explanation=ExplanationResponse(
+                            top_features=[],
+                            graph_reasoning="",
+                            plain_english="Cached result"
+                        ),
+                        cached=True
+                    )
+                else:
+                    monitor.record_cache_event(False)
+            except Exception as e:
+                logger.warning("Cache read failed", error=str(e))
+        
+        # 2. Build features (Feast -> cache -> defaults)
+        feature_names = [f for f in DEFAULT_FEATURE_ORDER if f not in RUNTIME_FEATURES]
+        feature_refs = _build_feature_refs(feature_names)
+        features: Dict[str, Any] = {}
+        if ctx.feature_cache:
+            features.update(
+                await _run_blocking(ctx.feature_cache.get_features, request.user_id, feature_refs)
+            )
+
+        features = _apply_runtime_overrides(features, request)
+        features = _normalize_feature_values(features)
+
+        # Ensure all expected features exist
+        for name in DEFAULT_FEATURE_ORDER:
+            features.setdefault(name, 0.0)
+        
+        # 3. Score with XGBoost
+        xgb_score = await score_with_xgboost(features, ctx)
+        
+        # 4. GAT score (placeholder for now)
+        gat_score = None
+        
+        # 5. Ensemble score
+        if gat_score is None:
+            fraud_score = xgb_score
+            model_version = "xgb_only"
+        else:
+            fraud_score = 0.6 * xgb_score + 0.4 * gat_score
+            model_version = "ensemble_v2"
+        
+        # 6. Make decision
+        decision = make_decision(fraud_score)
+        
+        # 7. Generate explanation
+        explanation = generate_explanation(features, fraud_score)
+        
+        # 8. Cache result
+        if ctx.redis_client:
+            try:
+                cache_key = f"fraud_score:{request.user_id}:{request.transaction_id}"
+                await _run_blocking(ctx.redis_client.setex, cache_key, 900, str(fraud_score))  # 15 min TTL
+            except Exception as e:
+                logger.warning("Cache write failed", error=str(e))
+        
+        latency_s = time.time() - start_time
+        latency_ms = int(latency_s * 1000)
+        record_metrics = True
+        
+        # 9. Log for audit (background task)
+        background_tasks.add_task(
+            log_prediction,
+            request.transaction_id,
+            fraud_score,
+            decision,
+            latency_ms
         )
 
-    features = _apply_runtime_overrides(features, request)
-    features = _normalize_feature_values(features)
-
-    # Ensure all expected features exist
-    for name in DEFAULT_FEATURE_ORDER:
-        features.setdefault(name, 0.0)
-    
-    # 3. Score with XGBoost
-    xgb_score = await score_with_xgboost(features, ctx)
-    
-    # 4. GAT score (placeholder for now)
-    gat_score = None
-    
-    # 5. Ensemble score
-    if gat_score is None:
-        fraud_score = xgb_score
-        model_version = "xgb_only"
-    else:
-        fraud_score = 0.6 * xgb_score + 0.4 * gat_score
-        model_version = "ensemble_v2"
-    
-    # 6. Make decision
-    decision = make_decision(fraud_score)
-    
-    # 7. Generate explanation
-    explanation = generate_explanation(features, fraud_score)
-    
-    # 8. Cache result
-    if ctx.redis_client:
-        try:
-            cache_key = f"fraud_score:{request.user_id}:{request.transaction_id}"
-            await _run_blocking(ctx.redis_client.setex, cache_key, 900, str(fraud_score))  # 15 min TTL
-        except Exception as e:
-            logger.warning("Cache write failed", error=str(e))
-    
-    latency_ms = int((time.time() - start_time) * 1000)
-    
-    # 9. Log for audit (background task)
-    background_tasks.add_task(
-        log_prediction,
-        request.transaction_id,
-        fraud_score,
-        decision,
-        latency_ms
-    )
-
-    # 10. Update metrics (background task)
-    background_tasks.add_task(
-        update_metrics,
-        ctx,
-        decision,
-        latency_ms,
-        fraud_score > 0.7 # Simple high-risk threshold for 'potential fraud'
-    )
-    
-    logger.info(
-        "Transaction scored",
-        transaction_id=request.transaction_id,
-        fraud_score=fraud_score,
-        decision=decision,
-        latency_ms=latency_ms
-    )
-    
-    return PredictionResponse(
-        transaction_id=request.transaction_id,
-        fraud_score=fraud_score,
-        decision=decision,
-        latency_ms=latency_ms,
-        model_version=model_version,
-        explanation=explanation,
-        cached=cached
-    )
+        # 10. Update metrics (background task)
+        background_tasks.add_task(
+            update_metrics,
+            ctx,
+            decision,
+            latency_ms,
+            fraud_score > 0.7 # Simple high-risk threshold for 'potential fraud'
+        )
+        
+        logger.info(
+            "Transaction scored",
+            transaction_id=request.transaction_id,
+            fraud_score=fraud_score,
+            decision=decision,
+            latency_ms=latency_ms
+        )
+        
+        return PredictionResponse(
+            transaction_id=request.transaction_id,
+            fraud_score=fraud_score,
+            decision=decision,
+            latency_ms=latency_ms,
+            model_version=model_version,
+            explanation=explanation,
+            cached=cached
+        )
+    finally:
+        active_requests.dec()
+        if record_metrics:
+            if latency_s is None:
+                latency_s = time.time() - start_time
+            monitor.record_prediction(
+                model_version=model_version,
+                decision=decision,
+                latency=latency_s,
+                fraud_score=fraud_score,
+            )
 
 
 @app.get("/health", response_model=HealthResponse)
@@ -607,14 +655,12 @@ async def health_check(ctx: ModelContext = Depends(get_model_context)):
 
 @app.get("/metrics")
 async def prometheus_metrics():
-    """Prometheus metrics endpoint (placeholder)."""
-    from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
+    """Prometheus metrics endpoint."""
     from starlette.responses import Response
-    
-    # Would export actual metrics in production
+
     return Response(
-        content=b"# No metrics yet\n",
-        media_type=CONTENT_TYPE_LATEST
+        content=get_prometheus_metrics(),
+        media_type=get_prometheus_content_type()
     )
 
 
