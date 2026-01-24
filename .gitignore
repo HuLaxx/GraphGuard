@@ -1,0 +1,57 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+.env.local
+
+# Build outputs
+dist/
+build/
+*.egg-info/
+.next/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+
+# ML artifacts
+*.pth
+*.pkl
+*.bin
+mlruns/
+models/*.bin
+models/*.pth
+
+# Data files
+*.parquet
+*.csv
+!tests/fixtures/*.csv
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfvars
+
+# Secrets
+secrets/
+*.pem
+*.key

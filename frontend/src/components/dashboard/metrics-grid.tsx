@@ -1,0 +1,118 @@
+"use client";
+
+import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
+import { LucideIcon, Activity, AlertTriangle, CheckCircle2, XCircle, Clock, Zap } from "lucide-react";
+
+interface MetricCardProps {
+    title: string;
+    value: string | number;
+    icon: LucideIcon;
+    color: "blue" | "red" | "amber" | "green" | "purple" | "cyan";
+    trend?: { value: string; isPositive: boolean };
+}
+
+const colorMap = {
+    blue: { gradient: "from-zinc-100 to-zinc-400", text: "text-zinc-600" },
+    red: { gradient: "from-zinc-200 to-zinc-500", text: "text-zinc-700" }, // Keep trend text semantic, but icon monochrome
+    amber: { gradient: "from-zinc-100 to-zinc-300", text: "text-zinc-500" },
+    green: { gradient: "from-white to-zinc-400", text: "text-zinc-600" },
+    purple: { gradient: "from-zinc-300 to-zinc-600", text: "text-zinc-700" },
+    cyan: { gradient: "from-zinc-100 to-zinc-500", text: "text-zinc-600" },
+};
+
+export function MetricCard({ title, value, icon: Icon, color, trend }: MetricCardProps) {
+    return (
+        <Card className="group hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-500/5">
+            <CardContent className="p-5">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <p className="text-xs uppercase tracking-widest text-zinc-500 mb-1">{title}</p>
+                        <p className="text-2xl font-bold text-zinc-100">{value}</p>
+                        {trend && (
+                            <p className={cn("text-xs mt-1", trend.isPositive ? "text-emerald-400" : "text-red-400")}>
+                                {trend.isPositive ? "↑" : "↓"} {trend.value}
+                            </p>
+                        )}
+                    </div>
+                    <div className={cn("flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br", colorMap[color].gradient)}>
+                        <Icon className="h-6 w-6 text-zinc-900" />
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
+
+interface MetricsGridProps {
+    metrics: {
+        totalTransactions: number;
+        fraudRate: number;
+        casesPending: number;
+        casesResolved: number;
+        avgLatencyMs: number;
+        modelAccuracy: number;
+    };
+}
+
+function formatNumber(value: number): string {
+    if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
+    if (value >= 1000) return `${(value / 1000).toFixed(1)}K`;
+    return value.toString();
+}
+
+function formatPercent(value: number): string {
+    return `${(value * 100).toFixed(1)}%`;
+}
+
+export function MetricsGrid({ metrics }: MetricsGridProps) {
+    const cards = [
+        {
+            title: "Transactions",
+            value: formatNumber(metrics.totalTransactions),
+            icon: Activity,
+            color: "cyan" as const,
+            trend: { value: "12.5% from last hour", isPositive: true },
+        },
+        {
+            title: "Fraud Rate",
+            value: formatPercent(metrics.fraudRate),
+            icon: AlertTriangle,
+            color: "red" as const,
+            trend: { value: "0.3% decrease", isPositive: true },
+        },
+        {
+            title: "Pending Cases",
+            value: metrics.casesPending.toString(),
+            icon: Clock,
+            color: "amber" as const,
+        },
+        {
+            title: "Resolved Today",
+            value: metrics.casesResolved.toString(),
+            icon: CheckCircle2,
+            color: "green" as const,
+            trend: { value: "8 more than yesterday", isPositive: true },
+        },
+        {
+            title: "Latency p99",
+            value: `${metrics.avgLatencyMs}ms`,
+            icon: Zap,
+            color: "purple" as const,
+        },
+        {
+            title: "Model Accuracy",
+            value: formatPercent(metrics.modelAccuracy),
+            icon: XCircle,
+            color: "blue" as const,
+        },
+    ];
+
+    return (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+            {cards.map((card) => (
+                <MetricCard key={card.title} {...card} />
+            ))}
+        </div>
+    );
+}

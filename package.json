@@ -1,0 +1,28 @@
+{
+  "name": "graphguard",
+  "version": "1.0.0",
+  "description": "Real-Time Transaction Network Fraud Detection with Explainable Graph AI",
+  "private": true,
+  "scripts": {
+    "lint": "pnpm -r lint",
+    "test": "pnpm -r test",
+    "build": "pnpm -r build",
+    "dev": "pnpm -r --parallel dev"
+  },
+  "keywords": [
+    "fraud-detection",
+    "graph-neural-network",
+    "machine-learning",
+    "neo4j",
+    "kafka"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}

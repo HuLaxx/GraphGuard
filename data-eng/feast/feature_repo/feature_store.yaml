@@ -1,0 +1,21 @@
+# Feast Feature Store Configuration
+# Reference: Specification.md Lines 1072-1081
+#
+# This is the central configuration for the GraphGuard feature store.
+# It defines where features are stored and how they are served.
+
+project: graphguard
+registry: data/registry.db  # Local for development, S3 for production
+provider: local  # Use 'aws' for production
+
+# Online store (Redis for real-time serving)
+online_store:
+    type: redis
+    connection_string: ${REDIS_CONNECTION_STRING:-redis://localhost:6379}
+
+# Offline store (Parquet files for training)
+offline_store:
+    type: file
+
+# Entity key inference
+entity_key_serialization_version: 2

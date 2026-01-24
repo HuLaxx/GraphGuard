@@ -1,0 +1,31 @@
+[project]
+name = "graphguard-data-eng"
+version = "1.0.0"
+description = "GraphGuard Data Engineering Components"
+requires-python = ">=3.11"
+dependencies = [
+    "confluent-kafka>=2.3.0",
+    "faust-streaming>=0.11.0",
+    "neo4j>=5.14.0",
+    "pandas>=2.1.4",
+    "polars>=0.19.19",
+    "pyarrow>=14.0.2",
+    "duckdb>=0.9.2",
+    "pyspark>=3.5.0",
+    "feast[redis,aws]>=0.35.0",
+    "great-expectations>=0.18.5",
+    "dvc>=3.30.0",
+    "networkx>=3.2.1",
+    "python-igraph>=0.11.3",
+    "structlog>=23.2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "faker>=20.1.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

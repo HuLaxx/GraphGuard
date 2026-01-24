@@ -1,0 +1,6 @@
+packages:
+  - 'backend/*'
+  - 'frontend'
+  - 'data-eng/*'
+  - 'ml/*'
+  - 'infrastructure/*'

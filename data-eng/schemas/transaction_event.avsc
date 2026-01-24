@@ -1,0 +1,61 @@
+{
+  "type": "record",
+  "name": "TransactionEvent",
+  "namespace": "com.graphguard.transactions",
+  "doc": "Transaction event for fraud detection pipeline. Reference: Specification.md Lines 732-748",
+  "fields": [
+    {
+      "name": "transaction_id",
+      "type": "string",
+      "doc": "Unique transaction identifier from payment gateway"
+    },
+    {
+      "name": "user_id",
+      "type": "string",
+      "doc": "User who initiated the transaction"
+    },
+    {
+      "name": "merchant_id",
+      "type": "string",
+      "doc": "Merchant receiving the payment"
+    },
+    {
+      "name": "amount",
+      "type": "double",
+      "doc": "Transaction amount in the specified currency"
+    },
+    {
+      "name": "currency",
+      "type": "string",
+      "doc": "ISO 4217 currency code (USD, EUR, GBP)"
+    },
+    {
+      "name": "timestamp",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      },
+      "doc": "Transaction timestamp in milliseconds since epoch"
+    },
+    {
+      "name": "device_id",
+      "type": "string",
+      "doc": "Device fingerprint identifier"
+    },
+    {
+      "name": "ip_address",
+      "type": "string",
+      "doc": "Client IP address"
+    },
+    {
+      "name": "card_last4",
+      "type": "string",
+      "doc": "Last 4 digits of the card used"
+    },
+    {
+      "name": "idempotency_key",
+      "type": "string",
+      "doc": "SHA256 hash of transaction_id:timestamp for deduplication"
+    }
+  ]
+}

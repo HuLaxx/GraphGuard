@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GraphGuard - Fraud Detection Dashboard</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Source Sans 3', sans-serif;
+            background:
+                radial-gradient(1200px circle at 10% 5%, rgba(28, 128, 174, 0.12), transparent 60%),
+                radial-gradient(1000px circle at 90% 10%, rgba(240, 158, 11, 0.14), transparent 60%),
+                linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
+            color: #0f172a;
+            min-height: 100vh;
+        }
+
+        h1, h2, h3 {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        button {
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            background: none;
+            font-family: 'Source Sans 3', sans-serif;
+        }
+
+        button:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        :root {
+            --slate-950: #0f172a;
+            --slate-800: #1e293b;
+            --slate-700: #334155;
+            --slate-600: #475569;
+            --slate-500: #64748b;
+            --slate-400: #94a3b8;
+            --slate-200: #e2e8f0;
+            --slate-100: #f1f5f9;
+            --amber-500: #f59e0b;
+            --emerald-500: #10b981;
+            --rose-500: #ef4444;
+            --sky-500: #0ea5e9;
+        }
+
+        .page {
+            min-height: 100vh;
+        }
+
+        .header {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.82);
+            border-bottom: 1px solid var(--slate-200);
+            backdrop-filter: blur(12px);
+        }
+
+        .header-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 16px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-mark {
+            width: 42px;
+            height: 42px;
+            border-radius: 14px;
+            background: var(--slate-950);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            box-shadow: 0 12px 24px rgba(15, 23, 42, 0.2);
+        }
+
+        .brand-title {
+            font-weight: 600;
+            font-size: 16px;
+            color: var(--slate-950);
+        }
+
+        .brand-subtitle {
+            font-size: 12px;
+            color: var(--slate-500);
+        }
+
+        .nav-pill {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(15, 23, 42, 0.06);
+            padding: 4px;
+            border-radius: 999px;
+        }
+
+        .nav-link {
+            padding: 8px 14px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--slate-500);
+        }
+
+        .nav-link.active {
+            background: white;
+            color: var(--slate-950);
+            box-shadow: 0 10px 18px rgba(15, 23, 42, 0.08);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            background: rgba(245, 158, 11, 0.12);
+            color: #92400e;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .chip-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+            background: var(--amber-500);
+            animation: pulse 1.8s ease-in-out infinite;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 32px;
+        }
+
+        .badge-dark {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: var(--slate-950);
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.86);
+            border: 1px solid var(--slate-200);
+            border-radius: 16px;
+            box-shadow: 0 16px 32px rgba(15, 23, 42, 0.08);
+            backdrop-filter: blur(6px);
+        }
+
+        .card-header {
+            padding: 16px 18px 0;
+        }
+
+        .card-body {
+            padding: 16px 18px 18px;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--slate-950);
+        }
+
+        .card-subtitle {
+            font-size: 13px;
+            color: var(--slate-500);
+            margin-top: 6px;
+        }
+
+        .card-header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .metric-card {
+            padding: 16px;
+        }
+
+        .metric-label {
+            font-size: 11px;
+            color: var(--slate-500);
+            text-transform: uppercase;
+            letter-spacing: 0.18em;
+        }
+
+        .metric-value {
+            margin-top: 6px;
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--slate-950);
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        .metric-hint {
+            margin-top: 6px;
+            font-size: 12px;
+            color: var(--slate-500);
+        }
+
+        .hero-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 24px;
+            align-items: start;
+        }
+
+        .hero-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid var(--slate-200);
+            border-radius: 14px;
+            padding: 12px;
+        }
+
+        .stat-title {
+            font-size: 12px;
+            color: var(--slate-500);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .stat-value {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 22px;
+            color: var(--slate-950);
+            margin-top: 6px;
+        }
+
+        .stat-note {
+            font-size: 12px;
+            color: var(--slate-500);
+            margin-top: 4px;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(6, minmax(0, 1fr));
+            gap: 16px;
+            margin-top: 24px;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 24px;
+            margin-top: 24px;
+        }
+
+        .btn {
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid transparent;
+        }
+
+        .btn-primary {
+            background: var(--slate-950);
+            color: white;
+            box-shadow: 0 12px 24px rgba(15, 23, 42, 0.2);
+        }
+
+        .btn-outline {
+            border: 1px solid var(--slate-200);
+            background: white;
+            color: var(--slate-700);
+        }
+
+        .btn-ghost {
+            border: 1px solid transparent;
+            color: var(--slate-500);
+            background: transparent;
+        }
+
+        .btn-success {
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            background: rgba(16, 185, 129, 0.12);
+            color: #065f46;
+        }
+
+        .btn-danger {
+            border: 1px solid rgba(239, 68, 68, 0.35);
+            background: rgba(239, 68, 68, 0.12);
+            color: #991b1b;
+        }
+
+        .btn-warning {
+            border: 1px solid rgba(245, 158, 11, 0.35);
+            background: rgba(245, 158, 11, 0.15);
+            color: #92400e;
+        }
+
+        .pill {
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            min-width: 560px;
+        }
+
+        .table thead th {
+            text-align: left;
+            padding: 12px 10px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.18em;
+            color: var(--slate-500);
+            border-bottom: 1px solid var(--slate-200);
+        }
+
+        .table tbody td {
+            padding: 12px 10px;
+            border-bottom: 1px solid var(--slate-100);
+            color: var(--slate-700);
+        }
+
+        .table tbody tr:hover {
+            background: rgba(15, 23, 42, 0.04);
+        }
+
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-top: 12px;
+            font-size: 12px;
+            color: var(--slate-500);
+        }
+
+        .legend-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .legend-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+        }
+
+        .shap-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .shap-name {
+            width: 140px;
+            font-size: 12px;
+            color: var(--slate-500);
+            text-align: right;
+        }
+
+        .shap-bar {
+            flex: 1;
+            height: 20px;
+            background: var(--slate-100);
+            border-radius: 6px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .shap-bar-line {
+            position: absolute;
+            left: 50%;
+            height: 100%;
+            width: 1px;
+            background: var(--slate-400);
+        }
+
+        .shap-value {
+            width: 60px;
+            font-size: 11px;
+            color: var(--slate-500);
+            text-align: right;
+        }
+
+        .case-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            font-size: 13px;
+            color: var(--slate-600);
+        }
+
+        .case-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.18em;
+            color: var(--slate-400);
+            margin-bottom: 4px;
+        }
+
+        .case-value {
+            font-weight: 600;
+            color: var(--slate-950);
+        }
+
+        .animate-rise {
+            animation: rise 0.6s ease both;
+        }
+
+        @keyframes rise {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 0.5;
+                transform: scale(0.9);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            100% {
+                opacity: 0.5;
+                transform: scale(0.9);
+            }
+        }
+
+        @media (max-width: 1100px) {
+            .hero-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .metrics-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .nav-pill {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header-inner {
+                padding: 12px 20px;
+            }
+
+            .container {
+                padding: 24px 20px;
+            }
+
+            .metrics-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .stat-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 640px) {
+            .header-actions {
+                display: none;
+            }
+
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stat-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // ============================================
+        // Mock Data
+        // ============================================
+        const mockMetrics = {
+            totalTransactions: 125847,
+            fraudRate: 0.023,
+            pendingReview: 342,
+            autoApproved: 118234,
+            autoDeclined: 1456,
+            avgLatencyMs: 45
+        };
+
+        const mockCases = [
+            { id: 'case_001', fraudScore: 0.92, status: 'PENDING', priority: 'CRITICAL', amount: 4500, currency: 'USD', merchantName: 'Suspicious Electronics', createdAt: new Date().toISOString() },
+            { id: 'case_002', fraudScore: 0.85, status: 'PENDING', priority: 'HIGH', amount: 1250, currency: 'USD', merchantName: 'Online Marketplace', createdAt: new Date(Date.now() - 3600000).toISOString() },
+            { id: 'case_003', fraudScore: 0.78, status: 'IN_REVIEW', priority: 'MEDIUM', amount: 890, currency: 'EUR', merchantName: 'Digital Services', createdAt: new Date(Date.now() - 7200000).toISOString() },
+            { id: 'case_004', fraudScore: 0.71, status: 'PENDING', priority: 'MEDIUM', amount: 550, currency: 'USD', merchantName: 'Gaming Platform', createdAt: new Date(Date.now() - 10800000).toISOString() },
+            { id: 'case_005', fraudScore: 0.65, status: 'PENDING', priority: 'LOW', amount: 320, currency: 'USD', merchantName: 'Subscription Service', createdAt: new Date(Date.now() - 14400000).toISOString() }
+        ];
+
+        const mockGraphNodes = [
+            { id: 'user_12345', type: 'USER', label: 'Target User', fraud: true, pagerank: 0.025 },
+            { id: 'user_related_1', type: 'USER', label: 'Connected User 1', fraud: true, pagerank: 0.018 },
+            { id: 'user_related_2', type: 'USER', label: 'Connected User 2', fraud: false, pagerank: 0.012 },
+            { id: 'merchant_001', type: 'MERCHANT', label: 'Suspicious Store', fraud: false, pagerank: 0.045 },
+            { id: 'device_001', type: 'DEVICE', label: 'Shared Device', fraud: false, pagerank: 0.008 }
+        ];
+
+        const mockGraphLinks = [
+            { source: 'user_12345', target: 'merchant_001', amount: 4500 },
+            { source: 'user_related_1', target: 'merchant_001', amount: 3200 },
+            { source: 'user_related_2', target: 'merchant_001', amount: 150 },
+            { source: 'user_12345', target: 'device_001', amount: 0 },
+            { source: 'user_related_1', target: 'device_001', amount: 0 }
+        ];
+
+        const mockShapFeatures = [
+            { name: 'txn_count_1h', value: 8, shapValue: 0.28 },
+            { name: 'amount', value: 4500, shapValue: 0.22 },
+            { name: 'is_new_device', value: 1, shapValue: 0.18 },
+            { name: 'merchant_fraud_rate', value: 0.12, shapValue: 0.12 },
+            { name: 'pagerank', value: 0.025, shapValue: 0.08 },
+            { name: 'device_age_days', value: 0, shapValue: 0.06 }
+        ];
+
+        // ============================================
+        // Components
+        // ============================================
+
+        const MetricCard = ({ label, value, color, hint }) => (
+            <div className="card metric-card" style={{ borderTop: `3px solid ${color}` }}>
+                <div className="metric-label">{label}</div>
+                <div className="metric-value">{value}</div>
+                {hint && <div className="metric-hint">{hint}</div>}
+            </div>
+        );
+
+        const FraudQueue = ({ cases, onCaseClick, selectedId }) => {
+            const priorityTone = {
+                CRITICAL: { bg: '#dc2626', text: '#ffffff' },
+                HIGH: { bg: '#ef4444', text: '#ffffff' },
+                MEDIUM: { bg: '#f59e0b', text: '#1f2937' },
+                LOW: { bg: '#10b981', text: '#ffffff' }
+            };
+            const statusTone = {
+                PENDING: { bg: 'rgba(245, 158, 11, 0.15)', text: '#92400e' },
+                IN_REVIEW: { bg: 'rgba(14, 165, 233, 0.15)', text: '#0369a1' },
+                RESOLVED_FRAUD: { bg: 'rgba(239, 68, 68, 0.15)', text: '#b91c1c' },
+                RESOLVED_LEGITIMATE: { bg: 'rgba(16, 185, 129, 0.15)', text: '#065f46' }
+            };
+            const getTone = (map, key) => map[key] || { bg: '#e2e8f0', text: '#475569' };
+
+            return (
+                <div className="card">
+                    <div className="card-header">
+                        <div className="card-header-row">
+                            <div>
+                                <h2 className="card-title">Fraud investigation queue</h2>
+                                <p className="card-subtitle">Prioritized by velocity, risk score, and graph signals</p>
+                            </div>
+                            <span className="pill" style={{ background: 'rgba(15, 23, 42, 0.08)', color: 'var(--slate-700)' }}>
+                                {cases.length} open
+                            </span>
+                        </div>
+                    </div>
+                    <div className="card-body">
+                        <div className="table-wrap">
+                            <table className="table">
+                                <thead>
+                                    <tr>
+                                        <th>Priority</th>
+                                        <th>Score</th>
+                                        <th>Amount</th>
+                                        <th>Merchant</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {cases.map(c => {
+                                        const priority = getTone(priorityTone, c.priority);
+                                        const status = getTone(statusTone, c.status);
+                                        const scoreTone = c.fraudScore > 0.7 ? '#dc2626' : '#d97706';
+                                        const rowStyle = selectedId === c.id ? { backgroundColor: 'rgba(15, 23, 42, 0.06)' } : null;
+                                        return (
+                                            <tr key={c.id} onClick={() => onCaseClick(c)} style={rowStyle}>
+                                                <td>
+                                                    <span className="pill" style={{ background: priority.bg, color: priority.text }}>{c.priority}</span>
+                                                </td>
+                                                <td style={{ fontWeight: 600, color: scoreTone }}>{(c.fraudScore * 100).toFixed(0)}%</td>
+                                                <td>{c.currency} {c.amount.toLocaleString()}</td>
+                                                <td>{c.merchantName}</td>
+                                                <td>
+                                                    <span className="pill" style={{ background: status.bg, color: status.text }}>{c.status.replace("_", " ")}</span>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const ShapChart = ({ features, predictionValue }) => {
+            const maxVal = Math.max(...features.map(f => Math.abs(f.shapValue)));
+            const riskTone = predictionValue > 0.7
+                ? { bg: 'rgba(239, 68, 68, 0.15)', text: '#b91c1c' }
+                : { bg: 'rgba(245, 158, 11, 0.15)', text: '#92400e' };
+            return (
+                <div className="card">
+                    <div className="card-header">
+                        <div className="card-header-row">
+                            <div>
+                                <h3 className="card-title">Model explanation</h3>
+                                <p className="card-subtitle">Top signals shaping the score</p>
+                            </div>
+                            <span className="pill" style={{ background: riskTone.bg, color: riskTone.text }}>
+                                {(predictionValue * 100).toFixed(0)}% risk
+                            </span>
+                        </div>
+                    </div>
+                    <div className="card-body">
+                        {features.map((f, i) => (
+                            <div key={i} className="shap-row">
+                                <div className="shap-name">{f.name}</div>
+                                <div className="shap-bar">
+                                    <div className="shap-bar-line"></div>
+                                    <div
+                                        style={{
+                                            position: 'absolute',
+                                            left: f.shapValue > 0 ? '50%' : `${50 - (Math.abs(f.shapValue) / maxVal) * 50}%`,
+                                            width: `${(Math.abs(f.shapValue) / maxVal) * 50}%`,
+                                            height: '100%',
+                                            backgroundColor: f.shapValue > 0 ? '#ef4444' : '#22c55e',
+                                            borderRadius: '6px'
+                                        }}
+                                    ></div>
+                                </div>
+                                <div className="shap-value">{f.shapValue > 0 ? '+' : ''}{f.shapValue.toFixed(2)}</div>
+                            </div>
+                        ))}
+                        <div className="legend" style={{ justifyContent: 'center' }}>
+                            <span className="legend-item">
+                                <span className="legend-dot" style={{ background: '#ef4444' }}></span>
+                                Increases risk
+                            </span>
+                            <span className="legend-item">
+                                <span className="legend-dot" style={{ background: '#22c55e' }}></span>
+                                Decreases risk
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const NetworkGraph = ({ nodes, links }) => {
+            const svgRef = useRef(null);
+
+            useEffect(() => {
+                if (!svgRef.current) return;
+                const width = 450, height = 350;
+
+                d3.select(svgRef.current).selectAll('*').remove();
+                const svg = d3.select(svgRef.current).attr('width', width).attr('height', height);
+
+                const simulation = d3.forceSimulation(nodes)
+                    .force('link', d3.forceLink(links).id(d => d.id).distance(80))
+                    .force('charge', d3.forceManyBody().strength(-200))
+                    .force('center', d3.forceCenter(width / 2, height / 2));
+
+                const link = svg.append('g').selectAll('line').data(links).join('line').attr('stroke', '#999').attr('stroke-width', 2);
+                const node = svg.append('g').selectAll('circle').data(nodes).join('circle')
+                    .attr('r', d => 8 + (d.pagerank || 0) * 100)
+                    .attr('fill', d => d.fraud ? '#ef4444' : d.type === 'USER' ? '#0ea5e9' : d.type === 'MERCHANT' ? '#10b981' : '#f59e0b')
+                    .attr('stroke', '#fff').attr('stroke-width', 2)
+                    .call(d3.drag().on('start', (e, d) => { if (!e.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
+                        .on('drag', (e, d) => { d.fx = e.x; d.fy = e.y; })
+                        .on('end', (e, d) => { if (!e.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; }));
+
+                const label = svg.append('g').selectAll('text').data(nodes).join('text').text(d => d.label).attr('font-size', 10).attr('dx', 12).attr('dy', 4);
+
+                simulation.on('tick', () => {
+                    link.attr('x1', d => d.source.x).attr('y1', d => d.source.y).attr('x2', d => d.target.x).attr('y2', d => d.target.y);
+                    node.attr('cx', d => d.x).attr('cy', d => d.y);
+                    label.attr('x', d => d.x).attr('y', d => d.y);
+                });
+            }, [nodes, links]);
+
+            return (
+                <div className="card">
+                    <div className="card-header">
+                        <div className="card-header-row">
+                            <h3 className="card-title">Transaction network</h3>
+                            <span className="pill" style={{ background: 'rgba(15, 23, 42, 0.08)', color: 'var(--slate-700)' }}>
+                                {nodes.length} nodes
+                            </span>
+                        </div>
+                        <p className="card-subtitle">Shared devices and merchants connected to the case.</p>
+                    </div>
+                    <div className="card-body">
+                        <svg ref={svgRef}></svg>
+                        <div className="legend">
+                            <span className="legend-item">
+                                <span className="legend-dot" style={{ background: '#ef4444' }}></span>
+                                Fraudster
+                            </span>
+                            <span className="legend-item">
+                                <span className="legend-dot" style={{ background: '#0ea5e9' }}></span>
+                                User
+                            </span>
+                            <span className="legend-item">
+                                <span className="legend-dot" style={{ background: '#10b981' }}></span>
+                                Merchant
+                            </span>
+                            <span className="legend-item">
+                                <span className="legend-dot" style={{ background: '#f59e0b' }}></span>
+                                Device
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // ============================================
+        // Main Dashboard
+        // ============================================
+        const Dashboard = () => {
+            const [selectedCase, setSelectedCase] = useState(mockCases[0]);
+            const focusCase = selectedCase || mockCases[0];
+            const priorityTone = {
+                CRITICAL: { bg: 'rgba(239, 68, 68, 0.18)', text: '#b91c1c' },
+                HIGH: { bg: 'rgba(239, 68, 68, 0.15)', text: '#b91c1c' },
+                MEDIUM: { bg: 'rgba(245, 158, 11, 0.18)', text: '#92400e' },
+                LOW: { bg: 'rgba(16, 185, 129, 0.18)', text: '#065f46' }
+            };
+            const getTone = (map, key) => map[key] || { bg: 'rgba(15, 23, 42, 0.08)', text: 'var(--slate-700)' };
+            const priority = getTone(priorityTone, focusCase.priority);
+
+            const handleAction = (action) => {
+                console.log('Action:', action, focusCase.id);
+            };
+
+            return (
+                <div className="page">
+                    <header className="header">
+                        <div className="header-inner">
+                            <div className="brand">
+                                <div className="brand-mark">GG</div>
+                                <div>
+                                    <div className="brand-title">GraphGuard</div>
+                                    <div className="brand-subtitle">Fraud Operations Center</div>
+                                </div>
+                            </div>
+                            <nav className="nav-pill">
+                                <a href="#" className="nav-link active">Dashboard</a>
+                                <a href="#" className="nav-link">Cases</a>
+                                <a href="#" className="nav-link">Analytics</a>
+                            </nav>
+                            <div className="header-actions">
+                                <div className="chip">
+                                    <span className="chip-dot"></span>
+                                    Live monitoring
+                                </div>
+                                <button className="btn btn-ghost">Alerts</button>
+                                <button className="btn btn-ghost">Settings</button>
+                            </div>
+                        </div>
+                    </header>
+
+                    <main className="container">
+                        <section className="hero-grid animate-rise">
+                            <div>
+                                <span className="badge-dark">Live operations</span>
+                                <h1 style={{ fontSize: '40px', marginTop: '16px', color: 'var(--slate-950)' }}>
+                                    Fraud operations, mapped in real time.
+                                </h1>
+                                <p style={{ marginTop: '12px', color: 'var(--slate-600)', fontSize: '16px', maxWidth: '560px' }}>
+                                    GraphGuard connects streaming transactions, network signals, and explainability into a
+                                    single command surface for analysts and risk teams.
+                                </p>
+                                <div className="hero-actions">
+                                    <button className="btn btn-primary">Open live queue</button>
+                                    <button className="btn btn-outline">View analytics</button>
+                                </div>
+                                <div className="stat-grid">
+                                    <div className="stat-card">
+                                        <div className="stat-title">Today risk drift</div>
+                                        <div className="stat-value">+0.6%</div>
+                                        <div className="stat-note">Stable vs 7-day baseline</div>
+                                    </div>
+                                    <div className="stat-card">
+                                        <div className="stat-title">Latency p99</div>
+                                        <div className="stat-value">78ms</div>
+                                        <div className="stat-note">Below the 100ms SLA</div>
+                                    </div>
+                                    <div className="stat-card">
+                                        <div className="stat-title">Auto-approval rate</div>
+                                        <div className="stat-value">94.2%</div>
+                                        <div className="stat-note">Improving week over week</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="card">
+                                <div className="card-header">
+                                    <div className="card-header-row">
+                                        <h3 className="card-title">Active Threat Pulse</h3>
+                                        <span className="pill" style={{ background: 'rgba(16, 185, 129, 0.18)', color: '#065f46' }}>
+                                            Stable
+                                        </span>
+                                    </div>
+                                </div>
+                                <div className="card-body">
+                                    <div className="stat-card" style={{ marginBottom: '12px' }}>
+                                        <div className="case-label">Top cluster</div>
+                                        <div className="stat-value" style={{ fontSize: '20px' }}>
+                                            North America - Electronics
+                                        </div>
+                                        <div className="stat-note">High velocity merchants with shared devices detected.</div>
+                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '8px', marginTop: '12px', fontSize: '12px', color: 'var(--slate-600)' }}>
+                                            <div>
+                                                <div className="case-value">18</div>
+                                                <div>users linked</div>
+                                            </div>
+                                            <div>
+                                                <div className="case-value">$41k</div>
+                                                <div>exposure</div>
+                                            </div>
+                                            <div>
+                                                <div className="case-value">0.82</div>
+                                                <div>avg risk</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px', color: 'var(--slate-600)' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                            <span>High priority cases</span>
+                                            <span style={{ fontWeight: 600, color: 'var(--slate-950)' }}>23 open</span>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                            <span>Automated declines</span>
+                                            <span style={{ fontWeight: 600, color: 'var(--slate-950)' }}>1,456 today</span>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                            <span>Model confidence</span>
+                                            <span style={{ fontWeight: 600, color: '#065f46' }}>Stable</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <div className="metrics-grid animate-rise" style={{ animationDelay: '0.05s' }}>
+                            <MetricCard label="Total Transactions" value={mockMetrics.totalTransactions.toLocaleString()} color="#0ea5e9" hint="Last 24h" />
+                            <MetricCard label="Fraud Rate" value={`${(mockMetrics.fraudRate * 100).toFixed(2)}%`} color="#ef4444" hint="Rolling 7 days" />
+                            <MetricCard label="Pending Review" value={mockMetrics.pendingReview.toString()} color="#f59e0b" hint="Queue depth" />
+                            <MetricCard label="Auto Approved" value={mockMetrics.autoApproved.toLocaleString()} color="#10b981" hint="Straight-through" />
+                            <MetricCard label="Auto Declined" value={mockMetrics.autoDeclined.toLocaleString()} color="#fb7185" hint="Policy blocks" />
+                            <MetricCard label="Avg Latency" value={`${mockMetrics.avgLatencyMs}ms`} color="#38bdf8" hint="p99 SLA" />
+                        </div>
+
+                        <div className="main-grid">
+                            <FraudQueue cases={mockCases} onCaseClick={setSelectedCase} selectedId={selectedCase?.id} />
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                <div className="card">
+                                    <div className="card-header">
+                                        <div className="card-header-row">
+                                            <div>
+                                                <h2 className="card-title">Case focus</h2>
+                                                <p className="card-subtitle">
+                                                    {focusCase.currency} {focusCase.amount.toLocaleString()} * {focusCase.merchantName}
+                                                </p>
+                                            </div>
+                                            <span className="pill" style={{ background: priority.bg, color: priority.text }}>
+                                                {focusCase.priority}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="card-body">
+                                        <div className="case-grid">
+                                            <div>
+                                                <div className="case-label">Risk score</div>
+                                                <div className="case-value">{(focusCase.fraudScore * 100).toFixed(0)}%</div>
+                                            </div>
+                                            <div>
+                                                <div className="case-label">Status</div>
+                                                <div className="case-value">{focusCase.status.replace("_", " ")}</div>
+                                            </div>
+                                            <div>
+                                                <div className="case-label">Case ID</div>
+                                                <div className="case-value">{focusCase.id}</div>
+                                            </div>
+                                            <div>
+                                                <div className="case-label">Detected</div>
+                                                <div className="case-value">{new Date(focusCase.createdAt).toLocaleString()}</div>
+                                            </div>
+                                        </div>
+                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '14px' }}>
+                                            <button className="btn btn-success" onClick={() => handleAction('legitimate')}>Mark legitimate</button>
+                                            <button className="btn btn-danger" onClick={() => handleAction('fraud')}>Confirm fraud</button>
+                                            <button className="btn btn-warning" onClick={() => handleAction('escalate')}>Escalate</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <ShapChart features={mockShapFeatures} predictionValue={focusCase.fraudScore} />
+                                <NetworkGraph nodes={mockGraphNodes} links={mockGraphLinks} />
+                            </div>
+                        </div>
+                    </main>
+                </div>
+            );
+        };
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<Dashboard />);
+    </script>
+</body>
+
+</html>
