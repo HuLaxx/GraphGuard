@@ -140,7 +140,9 @@ function NetworkGraphComponent({
                 });
         }
 
-        return () => simulation.stop();
+        return () => {
+            simulation.stop();
+        };
     }, [nodes, links, width, height, onNodeClick]);
 
     return (
