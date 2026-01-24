@@ -145,10 +145,10 @@ const ShapChartComponent: React.FC<ShapChartProps> = ({
                 fontSize: '12px'
             }}>
                 <span style={{ color: '#f44336' }}>
-                    -> Increases fraud risk
+                    → Increases fraud risk
                 </span>
                 <span style={{ color: '#4caf50' }}>
-                    <- Decreases fraud risk
+                    ← Decreases fraud risk
                 </span>
             </div>
 
