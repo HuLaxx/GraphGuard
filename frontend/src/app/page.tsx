@@ -186,46 +186,6 @@ export default function HomePage() {
                 </div>
             </section>
 
-            {/* Demo Preview Section */}
-            <section className="py-16 relative">
-                <div className="max-w-6xl mx-auto px-6">
-                    <div className="relative rounded-2xl border border-zinc-800 bg-zinc-900/50 p-2 shadow-2xl shadow-black/50 overflow-hidden group">
-                        {/* Browser chrome */}
-                        <div className="flex items-center gap-2 px-4 py-3 bg-zinc-900 rounded-t-xl border-b border-zinc-800">
-                            <div className="flex gap-1.5">
-                                <div className="w-3 h-3 rounded-full bg-red-500/80" />
-                                <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
-                                <div className="w-3 h-3 rounded-full bg-green-500/80" />
-                            </div>
-                            <div className="flex-1 mx-4">
-                            <div className="bg-zinc-800 rounded-lg px-4 py-1.5 text-xs text-zinc-500 max-w-md mx-auto">
-                                demo.graphguard.local
-                            </div>
-                            </div>
-                        </div>
-
-                        {/* Dashboard preview placeholder */}
-                        <div className="aspect-video bg-zinc-950 rounded-b-lg overflow-hidden relative">
-                            <div className="absolute inset-0 bg-gradient-to-br from-zinc-900 via-zinc-950 to-zinc-900" />
-                        <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="text-center">
-                                <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-zinc-100 to-zinc-500 flex items-center justify-center">
-                                    <Shield className="w-10 h-10 text-zinc-950" />
-                                </div>
-                                <p className="text-zinc-500 text-xs uppercase tracking-[0.35em]">System Preview</p>
-                            </div>
-                        </div>
-
-                            {/* Decorative elements */}
-                            <div className="absolute top-4 left-4 w-48 h-24 bg-zinc-800/50 rounded-lg" />
-                            <div className="absolute top-4 right-4 w-48 h-24 bg-zinc-800/50 rounded-lg" />
-                            <div className="absolute bottom-4 left-4 w-32 h-20 bg-zinc-800/50 rounded-lg" />
-                            <div className="absolute bottom-4 right-4 w-32 h-20 bg-zinc-800/50 rounded-lg" />
-                        </div>
-                    </div>
-                </div>
-            </section>
-
             {/* Features Section */}
             <section id="features" className="py-24 bg-zinc-900/30 relative">
                 <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,_var(--tw-gradient-stops))] from-zinc-800/10 via-transparent to-transparent" />

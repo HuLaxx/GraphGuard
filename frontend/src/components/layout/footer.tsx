@@ -11,9 +11,9 @@ const pageLinks = [
 ];
 
 const connectLinks = [
-    { icon: Github, label: 'GitHub', href: 'https://github.com/HuLaxx' },
-    { icon: Linkedin, label: 'LinkedIn', href: 'https://linkedin.com/in/rahul-khanke' },
-    { icon: Mail, label: 'Email', href: 'mailto:rahulkhanke02@gmail.com' },
+    { icon: Github, label: 'GitHub', href: 'https://github.com/HuLaxx/GraphGuard' },
+    { icon: Linkedin, label: 'LinkedIn', href: 'https://www.linkedin.com/in/rahul-khanke-853717218/' },
+    { icon: Mail, label: 'Email', href: 'mailto:rahulkhane786@gmail.com' },
 ];
 
 export function Footer() {
@@ -100,10 +100,12 @@ export function Footer() {
                         rel="noreferrer"
                         className="group inline-flex items-baseline gap-1.5 md:mr-6"
                     >
-                        <span className="text-sm text-white/60 transition-all duration-300 group-hover:text-white">
+                        <span className="hulax-credit-label text-sm text-white/60 transition-all duration-300 group-hover:text-white group-hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.35)]">
                             A Project By
                         </span>
-                        <span className="text-base sm:text-lg text-white/80 transition-all duration-300 origin-left group-hover:scale-110 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-zinc-200 group-hover:via-white group-hover:to-zinc-300 group-hover:font-semibold">
+                        <span className="hulax-credit text-base sm:text-lg text-white/80 transition-all duration-300 origin-left group-hover:scale-110 group-hover:text-transparent 
+                            group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-zinc-200 
+                            group-hover:via-white group-hover:to-zinc-300 group-hover:font-semibold">
                             HuLaX
                         </span>
                     </a>

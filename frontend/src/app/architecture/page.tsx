@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import {
     Database,
     Server,
@@ -120,29 +121,51 @@ const layers = [
 ];
 
 export default function ArchitecturePage() {
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
     return (
         <div className="min-h-screen bg-zinc-950">
             <Header />
 
             {/* Hero */}
-            <section className="pt-32 pb-16">
-                <div className="max-w-7xl mx-auto px-6">
-                    <div className="text-center max-w-3xl mx-auto">
-                        <h1 className="text-4xl md:text-5xl font-bold text-zinc-100 mb-4">
-                            System Architecture
-                        </h1>
-                        <p className="text-xl text-zinc-400">
-                            A local-first architecture that keeps evidence close to the code.
-                            Heavy services run locally; the demo is intentionally lightweight.
-                        </p>
+            <section className="relative pt-28 pb-16 overflow-hidden">
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-zinc-800/20 via-transparent to-transparent" />
+
+                <div className={`relative max-w-5xl mx-auto px-6 text-center
+                    transition-all duration-1000 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+                >
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-zinc-900/80 border border-zinc-800 text-sm text-zinc-400 mb-6">
+                        <Server className="w-4 h-4 text-zinc-200" />
+                        System Architecture
                     </div>
+
+                    <h1 className="text-4xl md:text-6xl font-bold mb-6">
+                        <span className="bg-gradient-to-r from-zinc-100 to-zinc-300 bg-clip-text text-transparent">
+                            Architecture
+                        </span>
+                    </h1>
+
+                    <p className="text-lg text-zinc-400 max-w-2xl mx-auto">
+                        Local-first pipeline with an evidence-based demo footprint.
+                        Heavy services run locally; hosted demos stay lightweight.
+                    </p>
                 </div>
             </section>
 
             {/* Visual Data Flow */}
             <section className="py-12">
                 <div className="max-w-5xl mx-auto px-6">
-                    <h2 className="text-2xl font-bold text-zinc-100 mb-8 text-center">Data Flow</h2>
+                    <div className="text-center mb-8">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-900/80 border border-zinc-800 text-sm text-zinc-400 mb-4">
+                            <ArrowDown className="w-4 h-4 text-zinc-300" />
+                            Data Flow
+                        </div>
+                        <h2 className="text-2xl font-bold text-zinc-100">Pipeline Overview</h2>
+                    </div>
 
                     <div className="relative bg-zinc-900/50 border border-zinc-800 rounded-2xl p-8">
                         <div className="space-y-6">

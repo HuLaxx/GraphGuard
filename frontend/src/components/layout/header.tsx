@@ -57,12 +57,14 @@ export function Header() {
                                 href="https://hulax.vercel.app"
                                 target="_blank"
                                 rel="noreferrer"
-                                className="group flex flex-col items-start leading-tight"
+                                className="group flex flex-col items-center gap-0 text-center leading-tight"
                             >
-                                <span className="text-[0.55rem] text-white/50 transition-all group-hover:text-white/70">
+                                <span className="hulax-credit-label text-[0.55rem] text-white/50 transition-all group-hover:text-white/70">
                                     A Project By
                                 </span>
-                                <span className="text-[0.85rem] text-white/70 transition-all group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-zinc-200 group-hover:via-zinc-100 group-hover:to-white group-hover:font-semibold">
+                                <span className="hulax-credit text-[0.85rem] text-white/70 transition-all group-hover:scale-110 group-hover:text-transparent 
+                                    group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-zinc-200 
+                                    group-hover:via-white group-hover:to-zinc-300 group-hover:font-semibold">
                                     HuLaX
                                 </span>
                             </a>
@@ -107,7 +109,7 @@ export function Header() {
                     {/* Desktop Actions (Socials) */}
                     <div className="hidden md:flex items-center gap-3">
                         <a
-                            href="https://github.com"
+                            href="https://github.com/HuLaxx/GraphGuard"
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-400 hover:text-zinc-100 transition-colors rounded-full hover:bg-zinc-800/50"
@@ -144,7 +146,7 @@ export function Header() {
                                 </Link>
                             ))}
                             <a
-                                href="https://github.com"
+                                href="https://github.com/HuLaxx/GraphGuard"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="flex items-center gap-2 px-4 py-3 text-sm text-zinc-400 hover:text-zinc-100"

@@ -1,9 +1,10 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import Link from 'next/link';
-import { ArrowRight, Play, ExternalLink } from 'lucide-react';
+import { Play, ExternalLink, Cpu } from 'lucide-react';
 
 const getLogoUrl = (name: string) => {
     const slugMap: Record<string, string> = {
@@ -167,21 +168,38 @@ const categories = [
 ];
 
 export default function TechStackPage() {
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
     return (
         <div className="min-h-screen bg-zinc-950">
             <Header />
 
             {/* Hero */}
-            <section className="pt-32 pb-16">
-                <div className="max-w-7xl mx-auto px-6">
-                    <div className="text-center max-w-3xl mx-auto">
-                        <h1 className="text-4xl md:text-5xl font-bold text-zinc-100 mb-4">
-                            Technology Stack
-                        </h1>
-                        <p className="text-xl text-zinc-400">
-                            Evidence-first stack with local execution and planned free-tier targets.
-                        </p>
+            <section className="relative pt-28 pb-16 overflow-hidden">
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-zinc-800/20 via-transparent to-transparent" />
+
+                <div className={`relative max-w-5xl mx-auto px-6 text-center
+                    transition-all duration-1000 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+                >
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-zinc-900/80 border border-zinc-800 text-sm text-zinc-400 mb-6">
+                        <Cpu className="w-4 h-4 text-zinc-200" />
+                        Technology Stack
                     </div>
+
+                    <h1 className="text-4xl md:text-6xl font-bold mb-6">
+                        <span className="bg-gradient-to-r from-zinc-100 to-zinc-300 bg-clip-text text-transparent">
+                            Tech Stack
+                        </span>
+                    </h1>
+
+                    <p className="text-lg text-zinc-400 max-w-2xl mx-auto">
+                        Evidence-first stack with local execution and planned free-tier targets.
+                        Click any tool to view its documentation.
+                    </p>
                 </div>
             </section>
 
@@ -215,6 +233,10 @@ export default function TechStackPage() {
             {/* Tech Categories */}
             <section className="py-12">
                 <div className="max-w-7xl mx-auto px-6 space-y-16">
+                    <div className="text-center">
+                        <h2 className="text-3xl font-bold text-zinc-100 mb-3">Complete Tech Stack</h2>
+                        <p className="text-zinc-400">Each card links to its official documentation</p>
+                    </div>
                     {categories.map((category) => (
                         <div key={category.name}>
                             <div className="flex items-center gap-4 mb-8">
