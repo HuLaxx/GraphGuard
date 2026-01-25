@@ -1,6 +1,26 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
 export function LoadingScreen() {
+    const [isVisible, setIsVisible] = useState(false);
+
+    useEffect(() => {
+        try {
+            const alreadyShown = sessionStorage.getItem("gg_loaded");
+            if (alreadyShown) return;
+            sessionStorage.setItem("gg_loaded", "1");
+        } catch {
+            // If sessionStorage is blocked, still show once per mount.
+        }
+
+        setIsVisible(true);
+        const hideTimer = setTimeout(() => setIsVisible(false), 2200);
+        return () => clearTimeout(hideTimer);
+    }, []);
+
+    if (!isVisible) return null;
+
     return (
         <div
             className="loading-screen fixed inset-0 z-[100] flex flex-col items-center justify-center bg-zinc-950"
