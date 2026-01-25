@@ -86,7 +86,7 @@ export function DustBackground() {
     return (
         <canvas
             ref={canvasRef}
-            className="fixed inset-0 pointer-events-none opacity-70"
+            className="fixed inset-0 z-0 pointer-events-none opacity-70"
             aria-hidden="true"
         />
     );
