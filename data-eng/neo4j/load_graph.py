@@ -47,19 +47,25 @@ class GraphLoader:
             # User constraint
             session.run("""
                 CREATE CONSTRAINT user_id_unique IF NOT EXISTS
-                FOR (u:User) REQUIRE u.user_id IS UNIQUE
+                FOR (u:User) REQUIRE u.id IS UNIQUE
             """)
             
             # Merchant constraint
             session.run("""
                 CREATE CONSTRAINT merchant_id_unique IF NOT EXISTS
-                FOR (m:Merchant) REQUIRE m.merchant_id IS UNIQUE
+                FOR (m:Merchant) REQUIRE m.id IS UNIQUE
             """)
             
             # Device constraint
             session.run("""
                 CREATE CONSTRAINT device_id_unique IF NOT EXISTS
-                FOR (d:Device) REQUIRE d.device_id IS UNIQUE
+                FOR (d:Device) REQUIRE d.id IS UNIQUE
+            """)
+
+            # Transaction constraint
+            session.run("""
+                CREATE CONSTRAINT transaction_id_unique IF NOT EXISTS
+                FOR (t:Transaction) REQUIRE t.id IS UNIQUE
             """)
         print("✓ Constraints created")
     
@@ -70,8 +76,9 @@ class GraphLoader:
         with self.driver.session() as session:
             for _, user in tqdm(users_df.iterrows(), total=len(users_df), desc="Users"):
                 session.run("""
-                    MERGE (u:User {user_id: $user_id})
-                    SET u.email = $email,
+                    MERGE (u:User {id: $user_id})
+                    SET u.user_id = $user_id,
+                        u.email = $email,
                         u.name = $name,
                         u.created_at = datetime($created_at),
                         u.risk_tier = $risk_tier,
@@ -94,8 +101,9 @@ class GraphLoader:
         with self.driver.session() as session:
             for _, merchant in tqdm(merchants_df.iterrows(), total=len(merchants_df), desc="Merchants"):
                 session.run("""
-                    MERGE (m:Merchant {merchant_id: $merchant_id})
-                    SET m.name = $name,
+                    MERGE (m:Merchant {id: $merchant_id})
+                    SET m.merchant_id = $merchant_id,
+                        m.name = $name,
                         m.category = $category,
                         m.base_fraud_rate = $base_fraud_rate,
                         m.avg_transaction_amount = $avg_transaction_amount,
@@ -118,8 +126,9 @@ class GraphLoader:
         with self.driver.session() as session:
             for _, device in tqdm(devices_df.iterrows(), total=len(devices_df), desc="Devices"):
                 session.run("""
-                    MERGE (d:Device {device_id: $device_id})
-                    SET d.user_agent = $user_agent,
+                    MERGE (d:Device {id: $device_id})
+                    SET d.device_id = $device_id,
+                        d.user_agent = $user_agent,
                         d.os = $os,
                         d.browser = $browser,
                         d.first_seen = datetime($first_seen),
@@ -144,48 +153,75 @@ class GraphLoader:
         # Batch transactions for performance
         batch_size = 1000
         
+        cypher = """
+        UNWIND $transactions AS txn
+        MATCH (u:User {id: txn.user_id})
+        MATCH (m:Merchant {id: txn.merchant_id})
+        MATCH (d:Device {id: txn.device_id})
+
+        MERGE (t:Transaction {id: txn.transaction_id})
+        ON CREATE SET t.amount = txn.amount,
+                      t.currency = txn.currency,
+                      t.timestamp = datetime(txn.timestamp),
+                      t.fraud_score = txn.fraud_score,
+                      t.status = txn.status,
+                      t.ip_address = txn.ip_address,
+                      t.card_last4 = txn.card_last4,
+                      t.fraud_type = txn.fraud_type,
+                      t.user_id = txn.user_id,
+                      t.merchant_id = txn.merchant_id,
+                      t.device_id = txn.device_id
+        ON MATCH SET t.amount = txn.amount,
+                     t.currency = txn.currency,
+                     t.timestamp = datetime(txn.timestamp),
+                     t.fraud_score = txn.fraud_score,
+                     t.status = txn.status,
+                     t.ip_address = txn.ip_address,
+                     t.card_last4 = txn.card_last4,
+                     t.fraud_type = txn.fraud_type
+
+        MERGE (u)-[:PERFORMED]->(t)
+        MERGE (t)-[:PAID_TO]->(m)
+        MERGE (t)-[:USED_DEVICE]->(d)
+
+        MERGE (u)-[r:TRANSACTED_WITH {transaction_id: txn.transaction_id}]->(m)
+        ON CREATE SET r.amount = txn.amount,
+                      r.currency = txn.currency,
+                      r.timestamp = datetime(txn.timestamp),
+                      r.is_fraud = txn.is_fraud,
+                      r.fraud_type = txn.fraud_type
+        ON MATCH SET r.amount = txn.amount,
+                     r.currency = txn.currency,
+                     r.timestamp = datetime(txn.timestamp),
+                     r.is_fraud = txn.is_fraud,
+                     r.fraud_type = txn.fraud_type
+        """
+
         with self.driver.session() as session:
             for i in tqdm(range(0, len(transactions_df), batch_size), desc="Transaction batches"):
                 batch = transactions_df.iloc[i:i+batch_size]
-                
-                # Create TRANSACTED_WITH relationships
+
+                transactions_payload = []
                 for _, txn in batch.iterrows():
-                    session.run("""
-                        MATCH (u:User {user_id: $user_id})
-                        MATCH (m:Merchant {merchant_id: $merchant_id})
-                        CREATE (u)-[r:TRANSACTED_WITH {
-                            transaction_id: $transaction_id,
-                            amount: $amount,
-                            currency: $currency,
-                            timestamp: datetime($timestamp),
-                            is_fraud: $is_fraud,
-                            fraud_type: $fraud_type
-                        }]->(m)
-                    """, {
+                    is_fraud = int(txn['is_fraud'])
+                    fraud_score = 0.92 if is_fraud == 1 else 0.08
+                    transactions_payload.append({
+                        'transaction_id': txn['transaction_id'],
                         'user_id': txn['user_id'],
                         'merchant_id': txn['merchant_id'],
-                        'transaction_id': txn['transaction_id'],
-                        'amount': float(txn['amount']),
-                        'currency': txn['currency'],
-                        'timestamp': txn['timestamp'].isoformat(),
-                        'is_fraud': int(txn['is_fraud']),
-                        'fraud_type': txn.get('fraud_type')
-                    })
-                    
-                    # Create USED_DEVICE relationships
-                    session.run("""
-                        MATCH (u:User {user_id: $user_id})
-                        MATCH (d:Device {device_id: $device_id})
-                        MERGE (u)-[r:USED_DEVICE]->(d)
-                        ON CREATE SET r.first_used = datetime($timestamp),
-                                      r.transaction_count = 1
-                        ON MATCH SET r.transaction_count = r.transaction_count + 1,
-                                     r.last_used = datetime($timestamp)
-                    """, {
-                        'user_id': txn['user_id'],
                         'device_id': txn['device_id'],
-                        'timestamp': txn['timestamp'].isoformat()
+                        'amount': float(txn['amount']),
+                        'currency': txn.get('currency', 'USD'),
+                        'timestamp': txn['timestamp'].isoformat(),
+                        'fraud_score': fraud_score,
+                        'status': 'PENDING',
+                        'ip_address': txn.get('ip_address', ''),
+                        'card_last4': txn.get('card_last4', ''),
+                        'fraud_type': txn.get('fraud_type'),
+                        'is_fraud': is_fraud
                     })
+
+                session.run(cypher, transactions=transactions_payload)
         
         print(f"✓ Loaded {len(transactions_df):,} transactions")
 
@@ -194,7 +230,7 @@ def main():
     # Configuration
     NEO4J_URI = os.getenv('NEO4J_URI', 'bolt://localhost:7687')
     NEO4J_USER = os.getenv('NEO4J_USER', 'neo4j')
-    NEO4J_PASSWORD = os.getenv('NEO4J_PASSWORD', 'graphguard_dev_2026')
+    NEO4J_PASSWORD = os.getenv('NEO4J_PASSWORD', 'graphguard_dev')
     
     DATA_DIR = Path('data')
     
