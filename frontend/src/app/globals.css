@@ -178,6 +178,34 @@ body {
     }
 }
 
+.looming-gradient {
+    position: fixed;
+    inset: -15%;
+    z-index: 0;
+    pointer-events: none;
+    mix-blend-mode: screen;
+    background:
+        radial-gradient(circle at 20% 20%, rgba(180, 180, 190, 0.18), transparent 40%),
+        radial-gradient(circle at 80% 30%, rgba(160, 160, 175, 0.16), transparent 45%),
+        radial-gradient(circle at 50% 80%, rgba(140, 140, 160, 0.12), transparent 55%);
+    animation: looming-shift 18s ease-in-out infinite;
+}
+
+@keyframes looming-shift {
+    0% {
+        transform: translate3d(-2%, -1%, 0) scale(1.02);
+        opacity: 0.22;
+    }
+    50% {
+        transform: translate3d(2%, 2%, 0) scale(1.06);
+        opacity: 0.16;
+    }
+    100% {
+        transform: translate3d(-2%, -1%, 0) scale(1.02);
+        opacity: 0.22;
+    }
+}
+
 .animate-gradient-x {
     background-size: 200% 200%;
     animation: gradient-x 3s ease infinite;

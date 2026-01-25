@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
-import { NetworkBackground } from "@/components/ui/network-background";
+import { DustBackground } from "@/components/ui/dust-background";
 
 const features = [
     {
@@ -108,15 +108,17 @@ export default function HomePage() {
     }, []);
 
     return (
-        <div className="min-h-screen bg-zinc-950 overflow-x-hidden">
-            <Header />
+        <div className="min-h-screen bg-zinc-950 overflow-x-hidden relative">
+            <div className="looming-gradient" aria-hidden="true" />
+            <DustBackground />
+            <div className="relative z-10">
+                <Header />
 
             {/* Hero Section */}
             <section className="relative pt-28 pb-20 overflow-hidden">
                 {/* Animated Background */}
                 <div className="absolute inset-0">
                     <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-zinc-800/20 via-zinc-950 to-zinc-950" />
-                    <NetworkBackground />
                     <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-zinc-500/10 rounded-full blur-[150px] animate-pulse" />
                     <div className="absolute top-20 left-1/4 w-[400px] h-[400px] bg-zinc-400/5 rounded-full blur-[100px]" />
                     <div className="absolute top-40 right-1/4 w-[300px] h-[300px] bg-white/5 rounded-full blur-[100px]" />
@@ -351,7 +353,8 @@ export default function HomePage() {
                 </div>
             </section>
 
-            <Footer />
+                <Footer />
+            </div>
         </div>
     );
 }
