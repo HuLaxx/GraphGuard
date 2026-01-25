@@ -103,9 +103,7 @@ export function Footer() {
                         <span className="hulax-credit-label text-sm text-white/60 transition-all duration-300 group-hover:text-white group-hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.35)]">
                             A Project By
                         </span>
-                        <span className="hulax-credit text-base sm:text-lg text-white/80 transition-all duration-300 origin-left group-hover:scale-110 group-hover:text-transparent 
-                            group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-zinc-200 
-                            group-hover:via-white group-hover:to-zinc-300 group-hover:font-semibold">
+                        <span className="hulax-credit hulax-credit-gradient text-base sm:text-lg transition-all duration-300 origin-left group-hover:font-semibold">
                             HuLaX
                         </span>
                     </a>

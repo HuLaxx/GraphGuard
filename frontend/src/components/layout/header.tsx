@@ -62,9 +62,7 @@ export function Header() {
                                 <span className="hulax-credit-label text-[0.55rem] text-white/50 transition-all group-hover:text-white/70">
                                     A Project By
                                 </span>
-                                <span className="hulax-credit text-[0.85rem] text-white/70 transition-all group-hover:scale-110 group-hover:text-transparent 
-                                    group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-zinc-200 
-                                    group-hover:via-white group-hover:to-zinc-300 group-hover:font-semibold">
+                                <span className="hulax-credit hulax-credit-gradient text-[0.85rem] transition-all group-hover:font-semibold">
                                     HuLaX
                                 </span>
                             </a>

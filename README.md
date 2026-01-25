@@ -1,36 +1,53 @@
 <div align="center">
-  <h1>GraphGuard</h1>
-  <p>Real-time transaction network fraud detection with explainable Graph AI</p>
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=0f172a&height=280&section=header&text=GRAPHGUARD&fontSize=72&fontAlignY=35&animation=fadeIn&fontColor=ffffff&desc=Graph%20%2B%20ML%20Fraud%20Intelligence&descSize=18&descAlignY=60&descAlign=50" alt="GraphGuard" width="100%" />
 
-  <p>
-    <img src="https://img.shields.io/badge/Python-3.11%2B-blue" alt="Python" />
-    <img src="https://img.shields.io/badge/FastAPI-009688" alt="FastAPI" />
-    <img src="https://img.shields.io/badge/Next.js-16-black" alt="Next.js" />
-    <img src="https://img.shields.io/badge/GraphQL-Strawberry-E10098" alt="GraphQL" />
-    <img src="https://img.shields.io/badge/Docker-Compose-2496ED" alt="Docker" />
-  </p>
+  <a href="https://git.io/typing-svg">
+    <img src="https://readme-typing-svg.herokuapp.com?font=Fira+Code&weight=600&size=22&pause=1000&color=E4E4E7&center=true&vCenter=true&width=680&lines=Real-time+fraud+scoring;Graph+analytics+%2B+XGBoost;Local-first+RAG+indexing;Evidence-first+portfolio+build" alt="Typing" />
+  </a>
 
-  <p>
-    <a href="#quick-start">Quick Start</a> | <a href="#features">Features</a> | <a href="#architecture">Architecture</a> | <a href="#api">API</a> | <a href="#testing">Testing</a>
-  </p>
+  <br />
+
+  <img src="https://img.shields.io/badge/Evidence-First-111827?style=for-the-badge" alt="Evidence First" />
+  <img src="https://img.shields.io/badge/Local--First-RAG-1f2937?style=for-the-badge" alt="Local First RAG" />
+  <img src="https://img.shields.io/badge/Free--Tier-Deploy-0f172a?style=for-the-badge" alt="Free Tier Deploy" />
+  <br />
+  <img src="https://img.shields.io/badge/Python-3.11%2B-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python" />
+  <img src="https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI" />
+  <img src="https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=next.js&logoColor=white" alt="Next.js" />
+  <img src="https://img.shields.io/badge/GraphQL-Strawberry-E10098?style=for-the-badge&logo=graphql&logoColor=white" alt="GraphQL" />
+  <img src="https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" />
+
+  <br /><br />
+
+  <a href="#quick-start">Quick Start</a> | <a href="#evidence-map">Evidence Map</a> | <a href="#architecture">Architecture</a> | <a href="#api">API</a> | <a href="#testing">Testing</a> | <a href="#deployment">Deployment</a>
 </div>
 
 ---
 
 ## Overview
 
-GraphGuard is a portfolio-grade, evidence-first fraud detection platform. It combines classic ML (XGBoost) with graph analytics (Neo4j + GAT training) and a local-first RAG assistant. Heavy services run locally; the hosted demo is intentionally lightweight and uses free-tier services.
+GraphGuard is a portfolio-grade fraud detection platform that blends classic ML (XGBoost), graph analytics (Neo4j), and a local-first RAG assistant for repo-aware Q and A. The hosted demo is intentionally lightweight and uses free-tier services, while the full stack runs locally via Docker.
 
-## Features
+## Product Reveal
 
-| Area | What it covers | Where it lives |
-| --- | --- | --- |
-| Real-time ingestion | Kafka producer/consumer flow and Flink CEP patterns | data-eng/ | 
-| Graph intelligence | Neo4j graph build + algorithms | data-eng/neo4j/ |
-| ML scoring | XGBoost scoring API + GAT training scripts | ml/serving/, ml/training/ |
-| Explainability | SHAP explanations surfaced in the UI | ml/explainability/, frontend/ |
-| RAG assistant | Local-first repo indexing + Q&A | ml/serving/rag/ |
-| Observability | Prometheus metrics endpoint and dashboards | ml/monitoring/, infrastructure/ |
+<div align="center">
+  <img src="docs/assets/graphguard-hero.png" alt="GraphGuard Hero" width="90%" />
+  <br />
+  <img src="docs/assets/graphguard-demo.gif" alt="GraphGuard Demo" width="90%" />
+</div>
+
+## Evidence Map
+
+No claims without code. Each core capability maps to an implementation path.
+
+| Capability | Evidence (path) |
+| --- | --- |
+| FastAPI scoring API | `ml/serving/api.py` |
+| GraphQL schema + resolvers | `backend/graphql/schema.py`, `backend/graphql/resolvers.py` |
+| Kafka ingestion and graph build | `data-eng/transaction_ingester.py`, `data-eng/graph_builder.py` |
+| SHAP explainability + UI | `ml/explainability/`, `frontend/src/components/charts/` |
+| Local-first RAG indexing | `ml/serving/rag/` |
+| Frontend pages and UI | `frontend/src/app/` |
 
 ## Quick Start
 
@@ -54,17 +71,17 @@ docker compose up -d
 python -m uvicorn ml.serving.api:app --host 127.0.0.1 --port 8000
 ```
 
-### 3) Run the frontend
-
-```bash
-pnpm -C frontend dev -- --port 3000
-```
-
-If the API is not on port 8000, set this before running the frontend:
+If 8000 is busy, use 8010 and set the frontend proxy:
 
 ```bash
 set NEXT_PUBLIC_API_PORT=8010
 set API_PORT=8010
+```
+
+### 3) Run the frontend
+
+```bash
+pnpm -C frontend dev -- --port 3000
 ```
 
 ### 4) Optional: RAG indexing
@@ -81,8 +98,8 @@ curl -X POST http://127.0.0.1:8000/rag/query \
 
 ## Live Demo vs Local Stack
 
-- Hosted demo (free tier): Planned on Supabase + Upstash + Railway with heavyweight services disabled.
-- Full pipeline (local): Kafka, Neo4j, Flink, MLflow, and Grafana run via Docker Compose.
+- Hosted demo (free tier): planned on Supabase, Upstash, and Railway with heavyweight services disabled.
+- Full pipeline (local): Kafka, Neo4j, Spark, Flink, MLflow, and Grafana run via Docker Compose.
 
 ## Architecture
 
@@ -91,7 +108,7 @@ Sources -> Kafka -> Flink CEP -> Feature Store -> ML Scoring
                          |              |            |
                          |              |            +-> FastAPI + GraphQL
                          |              +-> Neo4j Graph
-                         +-> Spark/Feast
+                         +-> Spark / Feast
 
 UI (Next.js + D3) -> GraphQL -> Fraud Queue -> SHAP + RAG
 ```
@@ -119,7 +136,8 @@ query FraudQueue {
       userId
       amountVal
       currencyCode
-      fraudScore
+      riskScore
+      decision
     }
   }
 }
@@ -127,34 +145,50 @@ query FraudQueue {
 
 ## Testing
 
+Tests exist and run locally. Coverage reporting is not yet wired into CI.
+
 ```bash
-pytest -v
+pytest -q
+pnpm -C frontend test
 ```
 
-Local test evidence is stored under `docs/evidence/` (for example, `docs/evidence/python-tests-20260124-210457.txt`).
+## Tech Stack
 
-## Tech Stack (Summary)
+<div align="center">
+  <img src="https://skillicons.dev/icons?i=nextjs,react,ts,tailwind,python,fastapi,postgres,redis,docker,kafka,graphql,neo4j&perline=12" alt="Tech Stack" />
+</div>
 
-- Frontend: Next.js 16, React 18, TypeScript, D3, Tailwind
-- Backend: FastAPI, Strawberry GraphQL, Pydantic, Redis
-- Data: Kafka, Flink, Spark, Feast, Neo4j, PostgreSQL
-- ML: XGBoost, PyTorch, SHAP, MLflow
-- Ops: Docker Compose, Prometheus, Grafana
-- RAG: SentenceTransformers, pgvector, Groq/Ollama options
+## Deployment
 
-## Project Structure
+Free-tier target deployment:
 
-```
-graphguard/
-  data-eng/           # Ingestion, streaming, features, graph
-  ml/                 # Training, serving, explainability
-  backend/            # GraphQL schema + resolvers
-  frontend/           # Next.js UI
-  infrastructure/     # Infra templates + configs
-  tests/              # Unit + integration tests
-  docker-compose.yml  # Local stack
-```
+- Frontend: Vercel
+- Backend: Railway
+- Database: Supabase
+- Cache: Upstash
+
+The live demo should disclose free-tier limits and point users to local setup for the full experience.
+
+## Documentation
+
+| Document | Description |
+| --- | --- |
+| `docs/PORTFOLIO_CLAIMS.md` | Skills and claims by role |
+| `docs/WORKFLOW_MAP.md` | Data flow and system integration |
+| `docs/TECH_STACK.md` | Detailed technology inventory |
+| `docs/DEPLOYMENT.md` | Deployment steps and environment vars |
 
 ## License
 
-MIT
+MIT (Portfolio project)
+
+---
+
+<div align="center">
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=0f172a&height=120&section=footer&text=Built%20by%20HuLaX&fontSize=24&fontColor=ffffff" width="100%" />
+  <br />
+  <a href="https://hulax.vercel.app">Portfolio</a> | 
+  <a href="https://github.com/HuLaxx">GitHub</a> | 
+  <a href="https://www.linkedin.com/in/rahul-khanke-853717218/">LinkedIn</a> | 
+  <a href="mailto:rahulkhane786@gmail.com">Email</a>
+</div>
