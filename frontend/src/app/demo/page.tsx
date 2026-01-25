@@ -222,7 +222,7 @@ export default function DemoPage() {
 
     if (dashError) {
         return (
-            <div className="min-h-screen bg-zinc-950 text-zinc-100">
+            <div className="min-h-screen bg-transparent text-zinc-100">
                 <Header />
                 <main className="max-w-3xl mx-auto px-6 pt-28">
                     <div className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-6 space-y-3">
@@ -247,7 +247,7 @@ export default function DemoPage() {
     }
 
     return (
-        <div className="min-h-screen bg-zinc-950">
+        <div className="min-h-screen bg-transparent">
             <Header />
 
             <main className="max-w-7xl mx-auto px-6 pb-20 pt-28 space-y-8">

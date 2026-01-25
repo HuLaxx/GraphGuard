@@ -31,7 +31,7 @@ def compute_basic_features(uri: str, user: str, password: str):
                     u.in_degree = in_deg,
                     u.degree = out_deg + in_deg
             """)
-            print("   ✓ Degree computed for all users")
+            print("   Degree computed for all users")
             
             print("\n2. Computing device sharing metrics...")
             session.run("""
@@ -40,7 +40,7 @@ def compute_basic_features(uri: str, user: str, password: str):
                 WITH d, count(r) as user_cnt
                 SET d.user_count = user_cnt
             """)
-            print("   ✓ Device metrics computed")
+            print("   Device metrics computed")
             
             print("\n3. Computing simple PageRank approximation...")
             # Simplified PageRank: count of transactions weighted by merchant connections
@@ -49,7 +49,7 @@ def compute_basic_features(uri: str, user: str, password: str):
                 WITH u, count(m) as merchant_count
                 SET u.pagerank = toFloat(merchant_count) / 100.0
             """)
-            print("   ✓ Simple PageRank computed")
+            print("   Simple PageRank computed")
             
             print("\n4. Assigning random community IDs (placeholder for Louvain)...")
             # For now, assign based on user_id hash for demo purposes
@@ -57,14 +57,14 @@ def compute_basic_features(uri: str, user: str, password: str):
                 MATCH (u:User)
                 SET u.community_id = toInteger(rand() * 50)
             """)
-            print("   ✓ Community IDs assigned")
+            print("   Community IDs assigned")
             
             print("\n5. Computing betweenness (simplified)...")
             session.run("""
                 MATCH (u:User)
                 SET u.betweenness = toFloat(u.degree) / toFloat(u.degree + 1)
             """)
-            print("   ✓ Betweenness approximation computed")
+            print("   Betweenness approximation computed")
             
             print("\n6. Statistics:")
             result = session.run("""
@@ -83,7 +83,7 @@ def compute_basic_features(uri: str, user: str, password: str):
             print(f"   Degree - Min: {record['min_degree']}, Max: {record['max_degree']}, Avg: {record['avg_degree']:.2f}")
             print(f"   PageRank - Min: {record['min_pr']:.6f}, Max: {record['max_pr']:.6f}, Avg: {record['avg_pr']:.6f}")
             
-            print("\n✅ Basic graph features computed successfully!")
+            print("\nBasic graph features computed successfully.")
             print("\nNote: These are simplified features. For production, install Neo4j GDS plugin for:")
             print("  - True PageRank algorithm")
             print("  - Louvain community detection") 

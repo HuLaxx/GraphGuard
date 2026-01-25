@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { Menu, X, Github, Shield, Play } from 'lucide-react';
+import { Menu, X, Github, Play } from 'lucide-react';
 
 const navLinks = [
     { href: '/', label: 'Home' },
@@ -40,8 +40,8 @@ export function Header() {
                     {/* Logo Section */}
                     <div className="flex items-center gap-4">
                         <Link href="/" className="flex items-center gap-3 group">
-                            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-zinc-200 to-zinc-400 flex items-center justify-center shadow-lg shadow-white/5 group-hover:shadow-white/20 group-hover:scale-105 transition-all border border-white/10">
-                                <Shield className="w-5 h-5 text-zinc-950" />
+                            <div className="w-9 h-9 rounded-xl overflow-hidden shadow-lg shadow-white/5 group-hover:shadow-white/20 group-hover:scale-105 transition-all">
+                                <img src="/icon.svg" alt="GraphGuard" className="w-full h-full object-cover" />
                             </div>
                             <div className="flex flex-col">
                                 <span className="text-lg font-bold bg-gradient-to-r from-zinc-100 to-zinc-400 bg-clip-text text-transparent">

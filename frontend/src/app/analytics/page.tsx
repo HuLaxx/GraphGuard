@@ -41,7 +41,7 @@ const toneMap: Record<string, string> = {
 
 export default function AnalyticsPage() {
     return (
-        <div className="min-h-screen bg-zinc-950">
+        <div className="min-h-screen bg-transparent">
             <Header />
 
             <main className="max-w-7xl mx-auto px-6 pb-16 pt-28 space-y-8">

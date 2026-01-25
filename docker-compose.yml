@@ -179,7 +179,9 @@ services:
   # ============================================
 
   mlflow:
-    image: ghcr.io/mlflow/mlflow:v2.8.1
+    build:
+      context: ./infrastructure/mlflow
+    image: graphguard-mlflow:local
     container_name: graphguard-mlflow
     ports:
       - "5000:5000"

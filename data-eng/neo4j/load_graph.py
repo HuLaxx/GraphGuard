@@ -38,7 +38,7 @@ class GraphLoader:
         print("Clearing existing graph...")
         with self.driver.session() as session:
             session.run("MATCH (n) DETACH DELETE n")
-        print("✓ Graph cleared")
+        print("Graph cleared")
     
     def create_constraints(self):
         """Create uniqueness constraints for performance."""
@@ -67,7 +67,7 @@ class GraphLoader:
                 CREATE CONSTRAINT transaction_id_unique IF NOT EXISTS
                 FOR (t:Transaction) REQUIRE t.id IS UNIQUE
             """)
-        print("✓ Constraints created")
+        print("Constraints created")
     
     def load_users(self, users_df: pd.DataFrame):
         """Load users as nodes."""
@@ -92,7 +92,7 @@ class GraphLoader:
                     'avg_txn_amount': float(user['avg_txn_amount'])
                 })
         
-        print(f"✓ Loaded {len(users_df):,} users")
+        print(f"Loaded {len(users_df):,} users")
     
     def load_merchants(self, merchants_df: pd.DataFrame):
         """Load merchants as nodes."""
@@ -117,7 +117,7 @@ class GraphLoader:
                     'is_high_risk': bool(merchant['is_high_risk'])
                 })
         
-        print(f"✓ Loaded {len(merchants_df):,} merchants")
+        print(f"Loaded {len(merchants_df):,} merchants")
     
     def load_devices(self, devices_df: pd.DataFrame):
         """Load devices as nodes."""
@@ -144,7 +144,7 @@ class GraphLoader:
                     'expected_users': int(device['expected_users'])
                 })
         
-        print(f"✓ Loaded {len(devices_df):,} devices")
+        print(f"Loaded {len(devices_df):,} devices")
     
     def load_transactions(self, transactions_df: pd.DataFrame):
         """Load transactions as relationships."""
@@ -223,7 +223,7 @@ class GraphLoader:
 
                 session.run(cypher, transactions=transactions_payload)
         
-        print(f"✓ Loaded {len(transactions_df):,} transactions")
+        print(f"Loaded {len(transactions_df):,} transactions")
 
 
 def main():
@@ -250,7 +250,7 @@ def main():
         loader.create_constraints()
         
         # Load entities
-        print("\n📊 Loading entities...")
+        print("\nLoading entities...")
         
         users_df = pd.read_parquet(DATA_DIR / 'users.parquet')
         loader.load_users(users_df)
@@ -262,29 +262,29 @@ def main():
         loader.load_devices(devices_df)
         
         # Load transactions
-        print("\n🔗 Loading relationships...")
+        print("\nLoading relationships...")
         transactions_df = pd.read_parquet(DATA_DIR / 'transactions.parquet')
         loader.load_transactions(transactions_df)
         
         # Print stats
         print("\n" + "="*60)
-        print("✅ Graph loaded successfully!")
+        print("Graph loaded successfully.")
         print("="*60)
         
         with loader.driver.session() as session:
             # Count nodes
             result = session.run("MATCH (n) RETURN labels(n)[0] as label, count(n) as count")
-            print("\n📊 Node counts:")
+            print("\nNode counts:")
             for record in result:
                 print(f"  {record['label']}: {record['count']:,}")
             
             # Count relationships
             result = session.run("MATCH ()-[r]->() RETURN type(r) as type, count(r) as count")
-            print("\n🔗 Relationship counts:")
+            print("\nRelationship counts:")
             for record in result:
                 print(f"  {record['type']}: {record['count']:,}")
         
-        print("\n✨ Next step: Run graph algorithms (graph_algorithms.cypher)")
+        print("\nNext step: Run graph algorithms (graph_algorithms.cypher)")
         
     finally:
         loader.close()

@@ -5,11 +5,15 @@ import { useEffect, useRef } from "react";
 type DustParticle = {
     x: number;
     y: number;
-    vx: number;
-    vy: number;
-    r: number;
-    alpha: number;
-    phase: number;
+    size: number;
+    speedX: number;
+    speedY: number;
+    opacity: number;
+    baseOpacity: number;
+    hue: number;
+    twinkleSpeed: number;
+    twinklePhase: number;
+    isTwinkling: boolean;
 };
 
 export function DustBackground() {
@@ -22,71 +26,94 @@ export function DustBackground() {
         const ctx = canvas.getContext("2d");
         if (!ctx) return;
 
-        let width = 0;
-        let height = 0;
-        let dpr = Math.max(window.devicePixelRatio || 1, 1);
-        let animationFrame = 0;
+        let animationFrameId = 0;
         let particles: DustParticle[] = [];
 
         const resize = () => {
-            width = window.innerWidth;
-            height = window.innerHeight;
-            dpr = Math.max(window.devicePixelRatio || 1, 1);
-
-            canvas.width = Math.floor(width * dpr);
-            canvas.height = Math.floor(height * dpr);
-            canvas.style.width = `${width}px`;
-            canvas.style.height = `${height}px`;
-            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-            const count = Math.min(Math.floor((width * height) / 14000), 180);
-            particles = Array.from({ length: count }, () => ({
-                x: Math.random() * width,
-                y: Math.random() * height,
-                vx: (Math.random() - 0.5) * 0.18,
-                vy: (Math.random() - 0.5) * 0.18,
-                r: Math.random() * 1.4 + 0.4,
-                alpha: Math.random() * 0.35 + 0.08,
-                phase: Math.random() * Math.PI * 2,
-            }));
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
         };
 
-        const step = (time: number) => {
-            ctx.clearRect(0, 0, width, height);
+        const createParticles = () => {
+            particles = [];
+            const particleCount = Math.floor((canvas.width * canvas.height) / 15000);
 
-            for (const particle of particles) {
-                particle.x += particle.vx;
-                particle.y += particle.vy;
-
-                if (particle.x < -10) particle.x = width + 10;
-                if (particle.x > width + 10) particle.x = -10;
-                if (particle.y < -10) particle.y = height + 10;
-                if (particle.y > height + 10) particle.y = -10;
-
-                const twinkle = 0.6 + 0.4 * Math.sin(time * 0.001 + particle.phase);
-                ctx.beginPath();
-                ctx.arc(particle.x, particle.y, particle.r, 0, Math.PI * 2);
-                ctx.fillStyle = `rgba(190, 190, 200, ${particle.alpha * twinkle})`;
-                ctx.fill();
+            for (let i = 0; i < particleCount; i++) {
+                const baseOpacity = Math.random() * 0.5 + 0.2;
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    size: Math.random() * Math.random() * 2.7 + 0.3,
+                    speedX: (Math.random() - 0.5) * 0.3,
+                    speedY: (Math.random() - 0.5) * 0.3,
+                    opacity: baseOpacity,
+                    baseOpacity: baseOpacity,
+                    hue: 210 + Math.random() * 25,
+                    twinkleSpeed: Math.random() * 0.008 + 0.002,
+                    twinklePhase: Math.random() * Math.PI * 2,
+                    isTwinkling: Math.random() > 0.6,
+                });
             }
+        };
 
-            animationFrame = window.requestAnimationFrame(step);
+        const drawParticle = (particle: DustParticle) => {
+            ctx.beginPath();
+            ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+            ctx.fillStyle = `hsla(${particle.hue}, 14%, 76%, ${particle.opacity})`;
+            ctx.fill();
+
+            ctx.shadowBlur = particle.size * 4;
+            ctx.shadowColor = `hsla(${particle.hue}, 20%, 68%, ${particle.opacity * 0.45})`;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        };
+
+        const animate = () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            particles.forEach((particle) => {
+                particle.x += particle.speedX;
+                particle.y += particle.speedY;
+
+                if (particle.x < 0) particle.x = canvas.width;
+                if (particle.x > canvas.width) particle.x = 0;
+                if (particle.y < 0) particle.y = canvas.height;
+                if (particle.y > canvas.height) particle.y = 0;
+
+                if (particle.isTwinkling) {
+                    particle.twinklePhase += particle.twinkleSpeed;
+                    const twinkleFactor = Math.sin(particle.twinklePhase);
+                    particle.opacity = particle.baseOpacity * (0.3 + twinkleFactor * 0.7);
+                }
+
+                drawParticle(particle);
+            });
+
+            animationFrameId = window.requestAnimationFrame(animate);
+        };
+
+        const handleResize = () => {
+            resize();
+            createParticles();
         };
 
         resize();
-        animationFrame = window.requestAnimationFrame(step);
-        window.addEventListener("resize", resize);
+        createParticles();
+        animate();
+
+        window.addEventListener("resize", handleResize);
 
         return () => {
-            window.removeEventListener("resize", resize);
-            window.cancelAnimationFrame(animationFrame);
+            window.cancelAnimationFrame(animationFrameId);
+            window.removeEventListener("resize", handleResize);
         };
     }, []);
 
     return (
         <canvas
             ref={canvasRef}
-            className="fixed inset-0 z-0 pointer-events-none opacity-70"
+            className="fixed inset-0 pointer-events-none z-0 opacity-60"
+            style={{ mixBlendMode: "screen" }}
             aria-hidden="true"
         />
     );

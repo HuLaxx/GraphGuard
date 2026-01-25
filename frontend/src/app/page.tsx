@@ -107,7 +107,7 @@ export default function HomePage() {
     }, []);
 
     return (
-        <div className="min-h-screen bg-zinc-950 overflow-x-hidden">
+        <div className="min-h-screen bg-transparent overflow-x-hidden">
             <Header />
 
             {/* Hero Section */}
@@ -314,37 +314,6 @@ export default function HomePage() {
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div>
-            </section>
-
-            {/* CTA Section */}
-            <section className="py-24 relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-zinc-900/20 to-transparent" />
-
-                <div className="relative max-w-4xl mx-auto px-6 text-center">
-                    <h2 className="text-3xl md:text-5xl font-bold text-zinc-100 mb-6">
-                        Ready to Explore?
-                    </h2>
-                    <p className="text-zinc-400 mb-10 text-lg max-w-xl mx-auto">
-                        Experience the fraud detection dashboard, network visualization,
-                        and ML-powered explainability.
-                    </p>
-                    <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                        <Link
-                            href="/demo"
-                            className="group flex items-center gap-3 px-10 py-5 bg-gradient-to-r from-zinc-100 to-zinc-400 text-zinc-950 rounded-xl font-semibold text-lg transition-all shadow-xl shadow-zinc-500/20 hover:shadow-zinc-500/40 hover:scale-[1.02]"
-                        >
-                            <Play className="w-5 h-5" />
-                            Launch Demo
-                            <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
-                        </Link>
-                        <Link
-                            href="/stack"
-                            className="px-8 py-5 text-zinc-400 hover:text-zinc-100 font-medium transition-colors"
-                        >
-                            View Tech Stack {"->"}
-                        </Link>
                     </div>
                 </div>
             </section>

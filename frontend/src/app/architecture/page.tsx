@@ -128,7 +128,7 @@ export default function ArchitecturePage() {
     }, []);
 
     return (
-        <div className="min-h-screen bg-zinc-950">
+        <div className="min-h-screen bg-transparent">
             <Header />
 
             {/* Hero */}

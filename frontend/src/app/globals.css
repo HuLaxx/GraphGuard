@@ -87,6 +87,16 @@ body {
         radial-gradient(circle at 50% 0%, #18181b 0%, #000000 70%);
 }
 
+/* Noise Texture */
+.noise {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.015;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
 /* HuLaX Credit Styling */
 .hulax-credit-label {
     font-family: var(--font-script);
@@ -116,17 +126,17 @@ body {
 .group:hover .hulax-credit-gradient {
     color: transparent;
     background-image: linear-gradient(90deg,
-            #f4f4f5,
-            #e4e4e7,
-            #a1a1aa,
-            #3f3f46,
-            #0a0a0a,
-            #f4f4f5);
+            #e5e7eb,
+            #cbd5f5,
+            #9ca3af,
+            #6b7280,
+            #374151,
+            #e5e7eb);
     background-clip: text;
     -webkit-background-clip: text;
     background-position: 100% 50%;
     transform: scale(1.08);
-    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.2));
+    filter: drop-shadow(0 0 8px rgba(160, 160, 160, 0.25));
 }
 
 /* Custom Animations */
