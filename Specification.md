@@ -708,7 +708,7 @@ faker==20.1.0  # Generate synthetic data
 ### **Phase 0: Foundation (Week 1-2)**
 
 **All Tracks:**
-- Monorepo setup: `pnpm workspaces` (backend, frontend, ml, data-eng)
+- Monorepo layout: backend, frontend, ml, data-eng
 - Terraform: VPC, EKS, RDS, MSK, ElastiCache, S3 buckets
 - Deploy base services: Kafka, PostgreSQL, Redis, Neo4j (Helm charts)
 - GitHub Actions: CI pipeline (lint, test, build)

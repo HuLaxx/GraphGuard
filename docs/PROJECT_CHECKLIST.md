@@ -50,5 +50,5 @@ Legend:
 
 ## How to verify
 - Python: `pytest tests/unit/test_rag.py -v`
-- Frontend: `cd frontend && pnpm test`
+- Frontend: `cd frontend && npm run test`
 - Evidence artifacts: `docs/evidence/`

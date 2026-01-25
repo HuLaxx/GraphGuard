@@ -55,7 +55,7 @@ No claims without code. Each core capability maps to an implementation path.
 
 - Docker Desktop
 - Python 3.11+
-- Node.js 18+ and pnpm
+- Node.js 18+ and npm
 
 ### 1) Start the local stack
 
@@ -81,7 +81,7 @@ set API_PORT=8010
 ### 3) Run the frontend
 
 ```bash
-pnpm -C frontend dev -- --port 3000
+npm --prefix frontend run dev -- --port 3000
 ```
 
 ### 4) Optional: RAG indexing
@@ -149,7 +149,7 @@ Tests exist and run locally. Coverage reporting is not yet wired into CI.
 
 ```bash
 pytest -q
-pnpm -C frontend test
+npm --prefix frontend run test
 ```
 
 ## Tech Stack

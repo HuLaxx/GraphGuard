@@ -17,7 +17,7 @@ Status: Portfolio build. Local demo is supported; cloud deployment is not fully 
 1) `cp .env.example .env`
 2) `docker-compose up -d`
 3) `python -m uvicorn ml.serving.api:app --reload --port 8000`
-4) `cd frontend && pnpm install && pnpm dev`
+4) `cd frontend && npm install && npm run dev`
 
 Notes:
 - API requests require `API_KEY` via environment variables.

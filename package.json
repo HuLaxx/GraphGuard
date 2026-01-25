@@ -1,13 +1,15 @@
 {
   "name": "graphguard",
   "version": "1.0.0",
+  "packageManager": "npm@10.4.0",
   "description": "Real-Time Transaction Network Fraud Detection with Explainable Graph AI",
   "private": true,
   "scripts": {
-    "lint": "pnpm -r lint",
-    "test": "pnpm -r test",
-    "build": "pnpm -r build",
-    "dev": "pnpm -r --parallel dev"
+    "lint": "npm --prefix frontend run lint",
+    "test": "npm --prefix frontend run test",
+    "build": "npm --prefix frontend run build",
+    "dev": "npm --prefix frontend run dev",
+    "postinstall": "npm --prefix frontend install"
   },
   "keywords": [
     "fraud-detection",
@@ -20,7 +22,7 @@
   "license": "MIT",
   "engines": {
     "node": ">=18.0.0",
-    "pnpm": ">=8.0.0"
+    "npm": ">=9.0.0"
   },
   "devDependencies": {
     "typescript": "^5.3.3"

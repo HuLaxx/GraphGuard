@@ -1,6 +1,7 @@
 {
     "name": "graphguard-dashboard",
     "version": "1.0.0",
+    "packageManager": "npm@10.4.0",
     "private": true,
     "scripts": {
         "dev": "node scripts/dev.js",
@@ -30,6 +31,7 @@
         "d3": "^7.8.5",
         "date-fns": "^3.2.0",
         "framer-motion": "^10.18.0",
+        "graphguard": "file:..",
         "graphql": "^16.8.1",
         "lucide-react": "^0.312.0",
         "next": "16.1.1",
@@ -49,6 +51,7 @@
         "@types/node": "^20.11.0",
         "@types/react": "^18.2.48",
         "@types/react-dom": "^18.2.18",
+        "@vitest/coverage-v8": "^2.1.5",
         "autoprefixer": "^10.4.17",
         "eslint": "^9.0.0",
         "eslint-config-next": "16.1.1",
@@ -57,7 +60,6 @@
         "prettier-plugin-tailwindcss": "^0.5.11",
         "tailwindcss": "^4.1.18",
         "typescript": "^5.3.3",
-        "vitest": "^2.1.5",
-        "@vitest/coverage-v8": "^2.1.5"
+        "vitest": "^2.1.5"
     }
 }

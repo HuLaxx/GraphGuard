@@ -14,8 +14,8 @@ Next.js dashboard for fraud investigators with Radix UI + Tailwind and D3.js net
 ## Getting Started
 
 ```bash
-pnpm install
-pnpm dev
+npm install
+npm run dev
 ```
 
 ## Key Components

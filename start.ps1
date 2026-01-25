@@ -37,14 +37,8 @@ Step 4 - Start FastAPI backend (in new terminal):
 
 Step 5 - Install & start frontend (in new terminal):
   cd $projectRoot\frontend
-  pnpm install
-  pnpm dev
-
-  # If pnpm is not available:
-  #   corepack enable
-  #   corepack prepare pnpm@10.21.0 --activate
-  #   pnpm install
-  #   pnpm dev
+  npm install
+  npm run dev
 
 Dashboard will be at: http://localhost:3000
 API will be at: http://localhost:8000

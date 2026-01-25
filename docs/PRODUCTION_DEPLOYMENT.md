@@ -13,7 +13,7 @@ Steps:
 1) `cp .env.example .env`
 2) `docker-compose up -d`
 3) `python -m uvicorn ml.serving.api:app --reload --port 8000`
-4) `cd frontend && pnpm install && pnpm dev`
+4) `cd frontend && npm install && npm run dev`
 
 ## Terraform (template only)
 
