@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "installCommand": "rm -rf node_modules frontend/node_modules && npm install",
-  "buildCommand": "npm run build",
-  "devCommand": "npm run dev"
+  "installCommand": "cd frontend && npm ci --no-audit --no-fund",
+  "buildCommand": "cd frontend && npm run build",
+  "devCommand": "cd frontend && npm run dev"
 }
