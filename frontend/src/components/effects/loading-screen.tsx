@@ -1,32 +1,7 @@
-"use client";
-
-import { useEffect, useState } from "react";
-
 export function LoadingScreen() {
-    const [isLoading, setIsLoading] = useState(true);
-    const [isSliding, setIsSliding] = useState(false);
-
-    useEffect(() => {
-        const loadTimer = setTimeout(() => {
-            setIsSliding(true);
-        }, 1400);
-
-        const removeTimer = setTimeout(() => {
-            setIsLoading(false);
-        }, 2100);
-
-        return () => {
-            clearTimeout(loadTimer);
-            clearTimeout(removeTimer);
-        };
-    }, []);
-
-    if (!isLoading) return null;
-
     return (
         <div
-            className={`fixed inset-0 z-[100] flex flex-col items-center justify-center bg-zinc-950 transition-transform duration-700 ease-[cubic-bezier(0.76,0,0.24,1)]
-        ${isSliding ? "-translate-y-full" : "translate-y-0"}`}
+            className="loading-screen fixed inset-0 z-[100] flex flex-col items-center justify-center bg-zinc-950"
         >
             {/* Background glow */}
             <div className="absolute inset-0 overflow-hidden">
@@ -54,11 +29,7 @@ export function LoadingScreen() {
                 <div className="relative">
                     <div className="w-48 h-1 bg-zinc-800 rounded-full overflow-hidden">
                         <div
-                            className="h-full bg-gradient-to-r from-zinc-200 via-white to-zinc-300 rounded-full transition-all duration-1000 ease-out"
-                            style={{
-                                width: isSliding ? "100%" : "0%",
-                                animation: "loadProgress 1.4s ease-out forwards",
-                            }}
+                            className="progress-bar h-full bg-gradient-to-r from-zinc-200 via-white to-zinc-300 rounded-full"
                         />
                     </div>
                 </div>
@@ -77,6 +48,33 @@ export function LoadingScreen() {
             <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent" />
 
             <style jsx>{`
+                .loading-screen {
+                    animation: screenExit 2.1s cubic-bezier(0.76, 0, 0.24, 1) forwards;
+                }
+
+                .progress-bar {
+                    width: 0%;
+                    animation: loadProgress 1.4s ease-out forwards;
+                }
+
+                @keyframes screenExit {
+                    0% {
+                        transform: translateY(0);
+                        opacity: 1;
+                        visibility: visible;
+                    }
+                    66% {
+                        transform: translateY(0);
+                        opacity: 1;
+                        visibility: visible;
+                    }
+                    100% {
+                        transform: translateY(-100%);
+                        opacity: 0;
+                        visibility: hidden;
+                    }
+                }
+
                 @keyframes loadProgress {
                     0% { width: 0%; }
                     50% { width: 70%; }
