@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation } from "@apollo/client";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
@@ -9,22 +9,132 @@ import { RagAssistant } from "@/components/assistant/rag-assistant";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency, formatDate, formatPercent } from "@/lib/utils";
-import { CheckCircle, XCircle, RefreshCw } from "lucide-react";
+import { AlertTriangle, ArrowRight, CheckCircle, Github, RefreshCw, XCircle } from "lucide-react";
 import type { FraudCase, GraphNode, GraphLink } from "@/types";
 import { GET_DASHBOARD_DATA, GET_SUSPICIOUS_SUBGRAPH, GET_SHAP_EXPLANATION, LABEL_CASE_MUTATION } from "@/lib/queries";
 
+function DemoNotice({ isLive }: { isLive: boolean }) {
+    return (
+        <div
+            className={`bg-gradient-to-r ${
+                isLive
+                    ? "from-emerald-900/40 via-emerald-800/30 to-emerald-900/40 border-emerald-500/40"
+                    : "from-amber-900/40 via-amber-800/30 to-amber-900/40 border-amber-500/40"
+            } border rounded-2xl p-5`}
+        >
+            <div className="flex flex-col md:flex-row md:items-center gap-4">
+                <div className="flex items-center gap-3">
+                    <div
+                        className={`w-10 h-10 rounded-xl ${
+                            isLive ? "bg-emerald-500/20" : "bg-amber-500/20"
+                        } flex items-center justify-center`}
+                    >
+                        {isLive ? (
+                            <span className="h-3 w-3 rounded-full bg-emerald-400 animate-pulse" />
+                        ) : (
+                            <AlertTriangle className="w-5 h-5 text-amber-400" />
+                        )}
+                    </div>
+                    <div>
+                        <h3 className={`${isLive ? "text-emerald-200" : "text-amber-200"} font-bold`}>
+                            {isLive ? "Live Data" : "Demo Mode"}
+                        </h3>
+                        <p className={`${isLive ? "text-emerald-300/70" : "text-amber-300/70"} text-xs`}>
+                            {isLive ? "Connected to API - Real-time updates" : "Using fallback data"}
+                        </p>
+                    </div>
+                </div>
+
+                <div className="flex-1 md:text-center">
+                    <p className={`${isLive ? "text-emerald-100/80" : "text-amber-100/80"} text-sm`}>
+                        {isLive ? (
+                            <>
+                                GraphQL connected to{" "}
+                                <span className="text-emerald-300 font-semibold">Neo4j + Redis</span>
+                            </>
+                        ) : (
+                            <>
+                                Free hosted demo. For{" "}
+                                <span className="text-amber-300 font-semibold">full pipeline</span> - run locally.
+                            </>
+                        )}
+                    </p>
+                </div>
+
+                <a
+                    href="https://github.com/HuLaxx/GraphGuard"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`inline-flex items-center gap-2 px-4 py-2.5 ${
+                        isLive
+                            ? "bg-emerald-500/20 hover:bg-emerald-500/30 border-emerald-500/50"
+                            : "bg-amber-500/20 hover:bg-amber-500/30 border-amber-500/50"
+                    } border rounded-xl ${isLive ? "text-emerald-100" : "text-amber-100"} font-medium text-sm transition-all hover:scale-[1.02]`}
+                >
+                    <Github className="w-4 h-4" />
+                    {isLive ? "View Source" : "Clone & Run Locally"}
+                    <ArrowRight className="w-3 h-3" />
+                </a>
+            </div>
+        </div>
+    );
+}
+
 export default function DemoPage() {
     const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
+    const [isLive, setIsLive] = useState(false);
+
+    useEffect(() => {
+        let active = true;
+
+        const checkHealth = async () => {
+            try {
+                const res = await fetch("/api/health", { cache: "no-store" });
+                if (!res.ok) {
+                    throw new Error("health check failed");
+                }
+                if (active) {
+                    setIsLive(true);
+                }
+            } catch {
+                if (active) {
+                    setIsLive(false);
+                }
+            }
+        };
+
+        checkHealth();
+        const interval = setInterval(checkHealth, 15000);
+
+        return () => {
+            active = false;
+            clearInterval(interval);
+        };
+    }, []);
 
     // 1. Fetch Dashboard Data
     const { data: dashData, loading: dashLoading, error: dashError, refetch: dashRefetch } = useQuery(GET_DASHBOARD_DATA, {
         pollInterval: 5000,
     });
 
+    // Transform API data to UI types
+    const cases: FraudCase[] = (dashData?.fraudQueue?.items || []).map((item: any) => ({
+        id: item.id,
+        transactionId: item.transactionId,
+        userId: item.userId,
+        amount: item.amountVal,
+        fraudScore: item.fraudScore,
+        priority: item.priority,
+        status: item.status,
+        createdAt: item.createdAt,
+        currency: item.currencyCode,
+        merchantName: item.merchantName,
+    }));
+
     // Determine Active Case
-    const activeCase = dashData?.fraudQueue?.items?.find((c: any) => c.id === selectedCaseId) || dashData?.fraudQueue?.items?.[0];
+    const activeCase = cases.find((c) => c.id === selectedCaseId) || cases[0];
     const activeUserId = activeCase?.userId;
-    const activeTxnId = activeCase?.transactionId;
+    const activeTxnId = activeCase?.id;
 
     // 2. Fetch Subgraph
     const { data: graphData } = useQuery(GET_SUSPICIOUS_SUBGRAPH, {
@@ -53,6 +163,13 @@ export default function DemoPage() {
                     notes: `Manually labeled as ${label}`
                 }
             });
+            const currentIndex = cases.findIndex((c) => c.id === activeCase.id);
+            if (currentIndex >= 0 && cases.length > 1) {
+                const nextCase = cases[currentIndex + 1] || cases[0];
+                if (nextCase?.id && nextCase.id !== activeCase.id) {
+                    setSelectedCaseId(nextCase.id);
+                }
+            }
         } catch (e) {
             console.error("Mutation failed", e);
         }
@@ -63,7 +180,6 @@ export default function DemoPage() {
         setSelectedCaseId(c.id);
     };
 
-    // Transform API data to UI types
     const metrics = dashData?.dashboardMetrics
         ? {
             totalTransactions: dashData.dashboardMetrics.totalTransactions ?? 0,
@@ -83,19 +199,6 @@ export default function DemoPage() {
             p99LatencyMs: 0,
             modelAccuracy: 0,
         };
-
-    const cases: FraudCase[] = (dashData?.fraudQueue?.items || []).map((item: any) => ({
-        id: item.id,
-        transactionId: item.transactionId,
-        userId: item.userId,
-        amount: item.amountVal,
-        fraudScore: item.fraudScore,
-        priority: item.priority,
-        status: item.status,
-        createdAt: item.createdAt,
-        currency: item.currencyCode,
-        merchantName: item.merchantName,
-    }));
 
     const nodes: GraphNode[] = (graphData?.suspiciousSubgraph?.nodes || []).map((n: any) => ({
         id: n.id,
@@ -151,12 +254,26 @@ export default function DemoPage() {
                 {/* Page Header */}
                 <section className="space-y-3 flex items-end justify-between">
                     <div>
-                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-sm text-emerald-400 mb-4">
+                        <div
+                            className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border text-sm mb-4 ${
+                                isLive
+                                    ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
+                                    : "bg-amber-500/10 border-amber-500/30 text-amber-300"
+                            }`}
+                        >
                             <span className="relative flex h-2 w-2">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                <span
+                                    className={`animate-ping absolute inline-flex h-full w-full rounded-full ${
+                                        isLive ? "bg-emerald-400" : "bg-amber-400"
+                                    } opacity-75`}
+                                ></span>
+                                <span
+                                    className={`relative inline-flex rounded-full h-2 w-2 ${
+                                        isLive ? "bg-emerald-500" : "bg-amber-500"
+                                    }`}
+                                ></span>
                             </span>
-                            Demo Mode (Local-First)
+                            {isLive ? "Live Data" : "Demo Mode"}
                         </div>
                         <h1 className="text-4xl font-bold text-zinc-100">Fraud Operations Dashboard</h1>
                         <p className="text-zinc-400 max-w-2xl">
@@ -169,10 +286,7 @@ export default function DemoPage() {
                     </Button>
                 </section>
 
-                <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-4 text-sm text-zinc-400">
-                    Hosted demo targets use free-tier services (Supabase/Upstash/Railway). Heavy services like Kafka,
-                    Neo4j, and Flink are local-only. For the full pipeline, run the Docker Compose stack locally.
-                </div>
+                <DemoNotice isLive={isLive} />
 
                 <MetricsGrid metrics={metrics} />
 

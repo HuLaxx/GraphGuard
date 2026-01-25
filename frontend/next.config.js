@@ -23,6 +23,10 @@ const nextConfig = {
                 source: '/graphql',
                 destination: `${apiBase}/graphql`,
             },
+            {
+                source: '/rag/:path*',
+                destination: `${apiBase}/rag/:path*`,
+            },
         ];
     },
 

@@ -584,6 +584,13 @@ class Query:
             txn = results[0]['t']
             score = float(txn.get('fraud_score', 0.0))
             amount = float(txn.get('amount', 0.0))
+            timestamp_raw = txn.get('timestamp')
+            timestamp = None
+            if timestamp_raw:
+                try:
+                    timestamp = datetime.fromisoformat(str(timestamp_raw))
+                except ValueError:
+                    timestamp = None
             
             # 2. Construct features dynamically
             features = []
@@ -598,6 +605,19 @@ class Query:
                 impact=impact,
                 description=f"Amount ({amount}) is {'high' if amount > 1000 else 'normal'}."
             ))
+
+            # Time-of-day Feature
+            if timestamp is not None:
+                hour = float(timestamp.hour)
+                off_hours = hour < 6 or hour >= 22
+                features.append(ShapFeature(
+                    name="Time of Day",
+                    value=hour,
+                    shap_value=0.2 if off_hours else 0.05,
+                    importance=0.35,
+                    impact="HIGH" if off_hours else "LOW",
+                    description="Transaction occurred during off-hours." if off_hours else "Transaction occurred during business hours."
+                ))
             
             # Fraud Score self-ref (just for demo)
             features.append(ShapFeature(
@@ -609,12 +629,20 @@ class Query:
                 description="The model is highly confident this is fraud."
             ))
 
+            reasons = []
+            if amount > 1000:
+                reasons.append("high amount")
+            if timestamp is not None and (timestamp.hour < 6 or timestamp.hour >= 22):
+                reasons.append("off-hours activity")
+            if not reasons:
+                reasons.append("suspicious patterns")
+
             return ShapExplanation(
                 transaction_id=transaction_id,
                 base_value=0.1,
                 prediction_value=score,
                 features=features,
-                plain_english=f"The transaction was flagged mainly due to {'high amount' if amount > 1000 else 'suspicious patterns'} and high model confidence."
+                plain_english=f"The transaction was flagged mainly due to {', '.join(reasons)} and high model confidence."
             )
         except Exception as e:
             logger.error("SHAP explanation error", error=str(e))
@@ -628,6 +656,58 @@ class Query:
 
             ctx = get_model_context()
             redis = ctx.redis_client
+
+            async def metrics_from_neo4j() -> DashboardMetrics:
+                cypher = """
+                MATCH (t:Transaction)
+                RETURN count(t) as total,
+                       sum(CASE WHEN t.fraud_score < 0.3 THEN 1 ELSE 0 END) as auto_approved,
+                       sum(CASE WHEN t.fraud_score >= 0.7 THEN 1 ELSE 0 END) as auto_declined,
+                       sum(CASE WHEN t.fraud_score >= 0.3 AND t.fraud_score < 0.7 THEN 1 ELSE 0 END) as pending_review
+                """
+                res = await run_neo4j_query(cypher)
+                if not res:
+                    return DashboardMetrics(
+                        total_transactions=0,
+                        fraud_rate=0.0,
+                        auto_approved=0,
+                        auto_declined=0,
+                        pending_review=0,
+                        avg_latency_ms=0.0,
+                        p99_latency_ms=0.0,
+                        model_accuracy=0.0
+                    )
+
+                row = res[0]
+                total = int(row.get('total') or 0)
+                if total == 0:
+                    return DashboardMetrics(
+                        total_transactions=0,
+                        fraud_rate=0.0,
+                        auto_approved=0,
+                        auto_declined=0,
+                        pending_review=0,
+                        avg_latency_ms=0.0,
+                        p99_latency_ms=0.0,
+                        model_accuracy=0.0
+                    )
+
+                approved = int(row.get('auto_approved') or 0)
+                declined = int(row.get('auto_declined') or 0)
+                review = int(row.get('pending_review') or 0)
+                fraud_rate = (declined / total) if total > 0 else 0.0
+                avg_latency = 45.0
+
+                return DashboardMetrics(
+                    total_transactions=total,
+                    fraud_rate=fraud_rate,
+                    auto_approved=approved,
+                    auto_declined=declined,
+                    pending_review=review,
+                    avg_latency_ms=avg_latency,
+                    p99_latency_ms=avg_latency * 2.5,
+                    model_accuracy=0.95
+                )
             
             if redis:
                 # Use pipeline for atomic fetch
@@ -649,6 +729,11 @@ class Query:
                 latency = float(res[5] or 0.0)
                 
                 fraud_rate = (fraud / total) if total > 0 else 0.0
+
+                if total == 0:
+                    fallback = await metrics_from_neo4j()
+                    if fallback.total_transactions > 0:
+                        return fallback
                 
                 return DashboardMetrics(
                     total_transactions=total,
@@ -662,23 +747,7 @@ class Query:
                 )
             else:
                 # Fallback to Neo4j if Redis unavailable
-                cypher = """
-                MATCH (t:Transaction)
-                RETURN count(t) as total,
-                       avg(t.fraud_score) as avg_score
-                """
-                res = await run_neo4j_query(cypher)
-                total = res[0]['total'] if res else 0
-                return DashboardMetrics(
-                    total_transactions=total,
-                    fraud_rate=0.04,
-                    auto_approved=int(total * 0.9),
-                    auto_declined=int(total * 0.05),
-                    pending_review=int(total * 0.05),
-                    avg_latency_ms=45.0,
-                    p99_latency_ms=120.0,
-                    model_accuracy=0.95
-                )
+                return await metrics_from_neo4j()
 
         except Exception as e:
             logger.error("Failed to fetch dashboard metrics", error=str(e))

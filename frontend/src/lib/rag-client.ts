@@ -32,10 +32,11 @@ export type RagStatus = {
     auto_index_index?: string;
 };
 
-const DEFAULT_RAG_URL = "http://localhost:8000";
+const DEFAULT_RAG_URL = "";
 
 export function getRagBaseUrl() {
-    return process.env.NEXT_PUBLIC_RAG_API_URL || DEFAULT_RAG_URL;
+    const base = process.env.NEXT_PUBLIC_RAG_API_URL || DEFAULT_RAG_URL;
+    return base.replace(/\/$/, "");
 }
 
 export async function fetchRagIndexes() {

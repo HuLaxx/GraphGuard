@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { LucideIcon, Activity, AlertTriangle, CheckCircle2, XCircle, Clock, Zap } from "lucide-react";
@@ -77,20 +78,43 @@ export function MetricsGrid({ metrics }: MetricsGridProps) {
         modelAccuracy: metrics.modelAccuracy ?? 0,
     };
 
+    const prevMetricsRef = useRef<typeof safeMetrics | null>(null);
+    const prevMetrics = prevMetricsRef.current;
+    const autoDecisions = safeMetrics.autoApproved + safeMetrics.autoDeclined;
+    const prevAutoDecisions = prevMetrics ? prevMetrics.autoApproved + prevMetrics.autoDeclined : 0;
+
+    const transactionDelta = prevMetrics ? safeMetrics.totalTransactions - prevMetrics.totalTransactions : null;
+    const fraudRateDelta = prevMetrics ? safeMetrics.fraudRate - prevMetrics.fraudRate : null;
+    const autoDecisionDelta = prevMetrics ? autoDecisions - prevAutoDecisions : null;
+
+    useEffect(() => {
+        prevMetricsRef.current = safeMetrics;
+    }, [safeMetrics]);
+
     const cards = [
         {
             title: "Transactions",
             value: formatNumber(safeMetrics.totalTransactions),
             icon: Activity,
             color: "cyan" as const,
-            trend: { value: "12.5% from last hour", isPositive: true },
+            trend: transactionDelta === null
+                ? undefined
+                : {
+                    value: `${formatNumber(Math.abs(transactionDelta))} since last refresh`,
+                    isPositive: transactionDelta >= 0,
+                },
         },
         {
             title: "Fraud Rate",
             value: formatPercent(safeMetrics.fraudRate),
             icon: AlertTriangle,
             color: "red" as const,
-            trend: { value: "0.3% decrease", isPositive: true },
+            trend: fraudRateDelta === null
+                ? undefined
+                : {
+                    value: `${(Math.abs(fraudRateDelta) * 100).toFixed(2)}% since last refresh`,
+                    isPositive: fraudRateDelta >= 0,
+                },
         },
         {
             title: "Pending Review",
@@ -100,10 +124,15 @@ export function MetricsGrid({ metrics }: MetricsGridProps) {
         },
         {
             title: "Auto Decisions",
-            value: (safeMetrics.autoApproved + safeMetrics.autoDeclined).toString(),
+            value: autoDecisions.toString(),
             icon: CheckCircle2,
             color: "green" as const,
-            trend: { value: "8 more than yesterday", isPositive: true },
+            trend: autoDecisionDelta === null
+                ? undefined
+                : {
+                    value: `${Math.abs(autoDecisionDelta)} since last refresh`,
+                    isPositive: autoDecisionDelta >= 0,
+                },
         },
         {
             title: "Latency p99",
