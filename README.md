@@ -1,194 +1,216 @@
 <div align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=0f172a&height=280&section=header&text=GRAPHGUARD&fontSize=72&fontAlignY=35&animation=fadeIn&fontColor=ffffff&desc=Graph%20%2B%20ML%20Fraud%20Intelligence&descSize=18&descAlignY=60&descAlign=50" alt="GraphGuard" width="100%" />
 
-  <a href="https://git.io/typing-svg">
-    <img src="https://readme-typing-svg.herokuapp.com?font=Fira+Code&weight=600&size=22&pause=1000&color=E4E4E7&center=true&vCenter=true&width=680&lines=Real-time+fraud+scoring;Graph+analytics+%2B+XGBoost;Local-first+RAG+indexing;Evidence-first+portfolio+build" alt="Typing" />
-  </a>
+<img src="docs/assets/evidence-graph-hero.svg" width="100%" alt="Original animated forensic casefile visual: a sample transaction connected to accounts, devices and merchants" />
 
-  <br />
+### GRAPHGUARD / THE EVIDENCE GRAPH
 
-  <img src="https://img.shields.io/badge/Evidence-First-111827?style=for-the-badge" alt="Evidence First" />
-  <img src="https://img.shields.io/badge/Local--First-RAG-1f2937?style=for-the-badge" alt="Local First RAG" />
-  <img src="https://img.shields.io/badge/Free--Tier-Deploy-0f172a?style=for-the-badge" alt="Free Tier Deploy" />
-  <br />
-  <img src="https://img.shields.io/badge/Python-3.11%2B-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python" />
-  <img src="https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI" />
-  <img src="https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=next.js&logoColor=white" alt="Next.js" />
-  <img src="https://img.shields.io/badge/GraphQL-Strawberry-E10098?style=for-the-badge&logo=graphql&logoColor=white" alt="GraphQL" />
-  <img src="https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" />
+**Fraud rarely leaves a single clue. The important part is what the clues connect.**
 
-  <br /><br />
+A graph-informed fraud investigation project exploring **event ingestion, relationship analysis, XGBoost scoring, explainability and case review**.
 
-  <a href="#quick-start">Quick Start</a> | <a href="#evidence-map">Evidence Map</a> | <a href="#architecture">Architecture</a> | <a href="#api">API</a> | <a href="#testing">Testing</a> | <a href="#deployment">Deployment</a>
+[**Inspect the demo**](https://graph-guard-frontend.vercel.app) · [**Follow the evidence**](#follow-the-evidence) · [**Evidence register**](#evidence-register) · [**Run locally**](#open-the-case-locally)
+
+<sub>The animated hero uses fictional entities and relationships. It is not live transaction data, a measured risk score or an actual investigation.</sub>
+
 </div>
 
 ---
 
-## Overview
+## Case opening / One event is not the whole story
 
-GraphGuard is a portfolio-grade fraud detection platform that blends classic ML (XGBoost), graph analytics (Neo4j), and a local-first RAG assistant for repo-aware Q and A. The hosted demo is intentionally lightweight and uses free-tier services, while the full stack runs locally via Docker.
+Consider a **fictional example**: a purchase looks routine on its own, but the device appears on several accounts, which in turn connect to related merchants. Those relationships deserve inspection—not an automatic verdict.
 
-## Product Reveal
+> **Can we reveal the context behind a suspicious transaction, explain the model's reasoning and help an analyst decide what to examine next?**
+
+GraphGuard's codebase explores that question. It separates **evidence**, **model output**, **explanation** and **reviewer action**. Some of the implementation is modular or local-first; not every service in the architectural vision is active in the hosted demo.
+
+## Follow the evidence
 
 <div align="center">
-  <img src="docs/assets/graphguard-hero.png" alt="GraphGuard Hero" width="90%" />
-  <br />
-  <img src="docs/assets/graphguard-demo.gif" alt="GraphGuard Demo" width="90%" />
+<img src="docs/assets/investigation-trail.svg" width="100%" alt="Five-step conceptual evidence trail: event intake, graph construction, risk scoring, explanations, human case review" />
+
+<sub>Conceptual module map. This does not certify a complete live production pipeline.</sub>
 </div>
 
-## Evidence Map
+<table>
+<tr>
+<td width="50%" valign="top">
 
-No claims without code. Each core capability maps to an implementation path.
+**01 / What happened?**
 
-| Capability | Evidence (path) |
-| --- | --- |
-| FastAPI scoring API | `ml/serving/api.py` |
-| GraphQL schema + resolvers | `backend/graphql/schema.py`, `backend/graphql/resolvers.py` |
-| Kafka ingestion and graph build | `data-eng/transaction_ingester.py`, `data-eng/graph_builder.py` |
-| SHAP explainability + UI | `ml/explainability/`, `frontend/src/components/charts/` |
-| Local-first RAG indexing | `ml/serving/rag/` |
-| Frontend pages and UI | `frontend/src/app/` |
+The event producer provides the Kafka-facing intake path.
 
-## Quick Start
+[Transaction producer](data-eng/producers/transaction_ingester.py) · [Event schema](data-eng/schemas/transaction_event.avsc)
 
-### Prerequisites
+</td>
+<td width="50%" valign="top">
 
-- Docker Desktop
-- Python 3.11+
-- Node.js 18+ and npm
+**02 / What's connected?**
 
-### 1) Start the local stack
+The consumer and Neo4j tools reconstruct relationships that flat records can hide.
 
-```bash
+[Graph builder](data-eng/consumers/graph_builder.py) · [Graph algorithms](data-eng/neo4j/graph_algorithms.cypher)
+
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+
+**03 / What is the estimated risk?**
+
+XGBoost training and FastAPI scoring form the model-oriented path. Evaluation and calibration still matter.
+
+[Model training](ml/training/train_xgboost_rigorous.py) · [Score endpoint](ml/serving/api.py)
+
+</td>
+<td width="50%" valign="top">
+
+**04 / Why that output?**
+
+SHAP tooling and explanatory charts make model contributions inspectable; an explanation is not causal proof.
+
+[SHAP analysis](ml/explainability/shap_analysis.py) · [Explanation chart](frontend/src/components/dashboard/shap-chart.tsx)
+
+</td>
+</tr>
+<tr>
+<td colspan="2" valign="top">
+
+**05 / What should the analyst review?**
+
+The case queue, graph visualization and GraphQL models translate technical outputs into an investigation interface.
+
+[Investigation desk](frontend/src/app/cases/page.tsx) · [GraphQL schema](backend/graphql/schema.py) · [Fraud queue](frontend/src/components/dashboard/fraud-queue.tsx)
+
+</td>
+</tr>
+</table>
+
+## Inside the investigation desk
+
+<div align="center">
+<img src="docs/assets/graphguard-demo.gif" width="86%" alt="Existing GraphGuard demo animation; an interface preview, not evidence of a connected live backend" />
+
+<sub>Existing repository demo capture. The frontend contains sample cases and mock graph relationships, so a visible case is not necessarily a processed real transaction.</sub>
+</div>
+
+Beyond a generic analytics dashboard, the project includes a [demo view](frontend/src/app/demo/page.tsx), [case investigation page](frontend/src/app/cases/page.tsx), [network graph](frontend/src/components/dashboard/network-graph.tsx), [SHAP component](frontend/src/components/dashboard/shap-chart.tsx) and [local-first RAG assistant](frontend/src/components/assistant/rag-assistant.tsx).
+
+### Hosted demo ≠ full local stack
+
+| Where | What's represented |
+| :--- | :--- |
+| **Hosted project website** | Lightweight frontend experience; mocked/fallback data is possible. Current live integration was **not** independently checked for this README refresh. |
+| **Local Docker services** | Compose files for PostgreSQL, Neo4j, Kafka, Flink and monitoring. Services require local resources and configuration. |
+| **Python API and frontend** | Started separately; scoring, graph, model and RAG capabilities depend on credentials, services and available artifacts. |
+| **Proposed hosted architecture** | Terraform and managed-service targets are plans/templates, not proof of completed production deployment. |
+
+[Deployment reality check](docs/PRODUCTION_DEPLOYMENT.md) · [Implementation inventory](docs/PROJECT_CHECKLIST.md)
+
+## Evidence register
+
+**No claim without a trail back to code or an artifact.**
+
+| Exhibit | Question | Evidence | Caveat |
+| :--- | :--- | :--- | :--- |
+| **E-01** | How do events enter the system? | [Producer](data-eng/producers/transaction_ingester.py) · [Consumer](data-eng/consumers/graph_builder.py) | Requires local services |
+| **E-02** | How are patterns represented? | [Neo4j](data-eng/neo4j/) · [Flink](data-eng/flink/) · [Feature repo](data-eng/feast/feature_repo/) | Full pipeline not freshly verified |
+| **E-03** | Where does scoring happen? | [Training](ml/training/train_xgboost_rigorous.py) · [API](ml/serving/api.py) | Model availability varies |
+| **E-04** | Where are outputs explained? | [SHAP](ml/explainability/shap_analysis.py) · [UI](frontend/src/components/dashboard/shap-chart.tsx) | Not proof of causality |
+| **E-05** | How does a case reach a reviewer? | [GraphQL](backend/graphql/resolvers.py) · [Case page](frontend/src/app/cases/page.tsx) | Case page includes mock data |
+| **E-06** | How does repo-aware RAG work? | [Indexer](ml/serving/rag/indexer.py) · [RAG router](ml/serving/rag/router.py) · [Guide](docs/RAG.md) | Optional providers/settings |
+| **E-07** | What testing exists? | [Python test log](docs/evidence/python-tests-20260124-210720.txt) · [API sample](docs/evidence/api-score-20260124-214043.txt) · [Audit](docs/FINAL_AUDIT.md) | Saved evidence, not live CI |
+
+The saved test log reports **32 Python tests passing on January 24, 2026**; this is dated evidence rather than a current passing badge. The [source audit](docs/FINAL_AUDIT.md) explicitly records **GAT scoring as stubbed** and **Terraform as a template**.
+
+## Open the case locally
+
+The documented workflow uses **Docker Compose for supporting services**, with the Python API and Next.js interface started separately.
+
+Prerequisites: Python 3.11+, a Node.js version compatible with Next.js 16, Docker/Compose for the backing stack, and enough system resources for the services selected.
+
+~~~bash
+git clone https://github.com/HuLaxx/GraphGuard.git
+cd GraphGuard
 cp .env.example .env
+~~~
 
+Configure local environment variables required by [Docker Compose](docker-compose.yml), including POSTGRES_PASSWORD, NEO4J_AUTH and GRAFANA_ADMIN_PASSWORD. Do not commit credentials.
+
+~~~bash
+# Optional backing services. May be resource-intensive.
 docker compose up -d
-```
 
-### 2) Run the API
+# Python API from the repository root (another terminal).
+python -m venv .venv
+source .venv/bin/activate
+pip install -e "./ml[dev]"
+python -m uvicorn ml.serving.api:app --reload --port 8000
 
-```bash
-python -m uvicorn ml.serving.api:app --host 127.0.0.1 --port 8000
-```
+# Frontend from a separate terminal.
+npm --prefix frontend install
+npm --prefix frontend run dev
+~~~
 
-If 8000 is busy, use 8010 and set the frontend proxy:
+Windows venv activation: **.venv\Scripts\activate**. The API may need environment settings and keys for protected endpoints. Source-aligned commands above have **not** been re-tested end-to-end during this visual makeover.
 
-```bash
-set NEXT_PUBLIC_API_PORT=8010
-set API_PORT=8010
-```
+| Local surface | URL |
+| :--- | :--- |
+| API reference | http://127.0.0.1:8000/docs |
+| Health | http://127.0.0.1:8000/health |
+| Frontend | http://localhost:3000 |
 
-### 3) Run the frontend
+The optional [RAG assistant setup](docs/RAG.md) documents indexing, retrieval settings and providers separately.
 
-```bash
-npm --prefix frontend run dev -- --port 3000
-```
+### Scoring and investigation endpoints
 
-### 4) Optional: RAG indexing
+| Route | What it exposes | Evidence |
+| :--- | :--- | :--- |
+| POST /score | Transaction scoring | [FastAPI](ml/serving/api.py) |
+| GET /health | API health | [FastAPI](ml/serving/api.py) |
+| GET /metrics | Prometheus metrics | [Monitoring](ml/monitoring/performance_monitoring.py) |
+| POST /rag/ingest | Local RAG indexing | [Router](ml/serving/rag/router.py) |
+| POST /rag/query | Ask over an index | [Router](ml/serving/rag/router.py) |
 
-```bash
-curl -X POST http://127.0.0.1:8000/rag/ingest \
-  -H "Content-Type: application/json" \
-  -d '{"source_type":"repo","root_path":".","index":"graphguard"}'
+### Reproduce the checks
 
-curl -X POST http://127.0.0.1:8000/rag/query \
-  -H "Content-Type: application/json" \
-  -d '{"question":"How does Kafka flow into Neo4j?","index":"graphguard"}'
-```
+~~~bash
+# After setting up Python dependencies
+python -m pytest tests/unit/test_rag.py -v
+python -m pytest tests/ -q
 
-## Live Demo vs Local Stack
-
-- Hosted demo (free tier): planned on Supabase, Upstash, and Railway with heavyweight services disabled.
-- Full pipeline (local): Kafka, Neo4j, Spark, Flink, MLflow, and Grafana run via Docker Compose.
-
-## Architecture
-
-```
-Sources -> Kafka -> Flink CEP -> Feature Store -> ML Scoring
-                         |              |            |
-                         |              |            +-> FastAPI + GraphQL
-                         |              +-> Neo4j Graph
-                         +-> Spark / Feast
-
-UI (Next.js + D3) -> GraphQL -> Fraud Queue -> SHAP + RAG
-```
-
-## API
-
-### REST (FastAPI)
-
-| Method | Endpoint | Purpose |
-| --- | --- | --- |
-| POST | /score | Score a transaction |
-| GET | /health | Health check |
-| GET | /metrics | Prometheus metrics |
-| POST | /rag/ingest | Build a local RAG index |
-| POST | /rag/query | Query the RAG index |
-
-### GraphQL (Strawberry)
-
-```graphql
-query FraudQueue {
-  fraudQueue(status: PENDING, limit: 20) {
-    items {
-      id
-      transactionId
-      userId
-      amountVal
-      currencyCode
-      riskScore
-      decision
-    }
-  }
-}
-```
-
-## Testing
-
-Tests exist and run locally. Coverage reporting is not yet wired into CI.
-
-```bash
-pytest -q
+# In another terminal
 npm --prefix frontend run test
-```
+~~~
 
-## Tech Stack
+These commands have **not** been executed during this README redesign. Historical logs and smoke results are stored in [docs/evidence](docs/evidence/).
 
-<div align="center">
-  <img src="https://skillicons.dev/icons?i=nextjs,react,ts,tailwind,python,fastapi,postgres,redis,docker,kafka,graphql,neo4j&perline=12" alt="Tech Stack" />
-</div>
+## The unfinished case
 
-## Deployment
+Fraud investigation requires disciplined uncertainty: clear model provenance, measured errors, valid data, and a human review path.
 
-Free-tier target deployment:
+- [x] Code paths for events, graph features, scoring, explanations and investigation interface.
+- [x] Historical testing, API smoke logs and a source-level [audit](docs/FINAL_AUDIT.md).
+- [x] Explicit separation of mocked UI cases, local services and proposed deployment.
+- [ ] Replace/validate stubbed GAT scoring if that path is part of the intended application.
+- [ ] Verify the full graph-to-score-to-review path in a reproducible environment.
+- [ ] Re-run CI and publish traceable quality/coverage data; don't infer it from old logs.
+- [ ] Evaluate precision, recall, false-positive costs and bias on labeled data before citing performance.
+- [ ] Verify the hosted demo's actual integration boundaries and document them.
+- [ ] Review old example credentials and secrets before any external deployment.
 
-- Frontend: Vercel
-- Backend: Railway
-- Database: Supabase
-- Cache: Upstash
-
-The live demo should disclose free-tier limits and point users to local setup for the full experience.
-
-## Documentation
-
-| Document | Description |
-| --- | --- |
-| `docs/PORTFOLIO_CLAIMS.md` | Skills and claims by role |
-| `docs/WORKFLOW_MAP.md` | Data flow and system integration |
-| `docs/TECH_STACK.md` | Detailed technology inventory |
-| `docs/DEPLOYMENT.md` | Deployment steps and environment vars |
-
-## License
-
-MIT (Portfolio project)
+[Detailed implementation inventory](docs/PROJECT_CHECKLIST.md) · [Creative makeover checklist](docs/CREATIVE_CHECKLIST.md)
 
 ---
 
 <div align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=0f172a&height=120&section=footer&text=Built%20by%20HuLaX&fontSize=24&fontColor=ffffff" width="100%" />
-  <br />
-  <a href="https://hulax.vercel.app">Portfolio</a> | 
-  <a href="https://github.com/HuLaxx">GitHub</a> | 
-  <a href="https://www.linkedin.com/in/rahul-khanke-853717218/">LinkedIn</a> | 
-  <a href="mailto:rahulkhane786@gmail.com">Email</a>
+
+### THE EVIDENCE MATTERS MORE THAN THE ALERT.
+
+A portfolio project by **Rahul Khanke / HuLaX**
+
+[**Project website**](https://graph-guard-frontend.vercel.app) · [**Portfolio**](https://portfolio.hulax.uk/) · [**GitHub**](https://github.com/HuLaxx) · [**LinkedIn**](https://www.linkedin.com/in/rahul-khanke-853717218/)
+
+<sub>Illustrative diagrams and sample data are not live risk judgments.</sub>
+
 </div>
