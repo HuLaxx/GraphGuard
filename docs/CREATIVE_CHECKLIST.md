@@ -21,7 +21,7 @@ This checklist distinguishes **published repo edits** from independent operation
 ## Evidence quality
 
 - [x] Connect specific statements to Kafka, Neo4j, XGBoost, SHAP, GraphQL and RAG modules.
-- [x] Link historical [32-pass Python test record (24 Jan 2026)](../evidence/python-tests-20260124-210720.txt) and [API score sample](../evidence/api-score-20260124-214043.txt) without presenting them as live CI.
+- [x] Link historical [32-pass Python test record (24 Jan 2026)](evidence/python-tests-20260124-210720.txt) and [API score sample](evidence/api-score-20260124-214043.txt) without presenting them as live CI.
 - [x] Disclose the documented GAT scoring stub and un-applied Terraform.
 - [ ] Run current Python and frontend tests with recorded output; existing logs are historical.
 - [ ] Verify current CI workflows pass (including install/build jobs).
@@ -35,7 +35,7 @@ This checklist distinguishes **published repo edits** from independent operation
 
 - [x] Publish updated README and both custom SVG illustrations.
 - [x] Confirm the new artifacts exist on the default branch.
-- [ ] Recheck all README local links after this checklist file is added.
+- [x] Recheck all README local links after this checklist file is added (all 33 targets exist).
 - [ ] Retest commands, live environment and production claims separately.
 
 **Status:** Visual/editorial pass complete. Test/build/deployment verification is **not** complete.
