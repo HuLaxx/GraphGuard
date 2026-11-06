@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1240 460" role="img" aria-labelledby="heroTitle heroDesc">
+<title id="heroTitle">GraphGuard — The Evidence Graph</title>
+<desc id="heroDesc">An original animated forensic casefile illustration showing a suspicious transaction connected to an account, device, merchant and related entity. These are fictional illustrative relationships, not real transactions or live risk scores.</desc>
+<defs>
+ <linearGradient id="paper" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#080f1e"/><stop offset=".55" stop-color="#131b2c"/><stop offset="1" stop-color="#0c1727"/></linearGradient>
+ <linearGradient id="amber" x1="0" y1="0" x2="1"><stop stop-color="#f5b570"/><stop offset=".54" stop-color="#fbe4a9"/><stop offset="1" stop-color="#ed987a"/></linearGradient>
+ <radialGradient id="haze"><stop stop-color="#bb7f77" stop-opacity=".19"/><stop offset="1" stop-color="#bb7f77" stop-opacity="0"/></radialGradient>
+ <pattern id="fine" width="27" height="27" patternUnits="userSpaceOnUse"><path d="M27 0H0V27" fill="none" stroke="#b9d5e3" stroke-opacity=".06" stroke-width=".6"/></pattern>
+ <clipPath id="mask"><rect width="1240" height="460" rx="19"/></clipPath>
+</defs>
+<g clip-path="url(#mask)">
+ <rect width="1240" height="460" fill="url(#paper)"/><rect width="1240" height="460" fill="url(#fine)"/>
+ <circle cx="900" cy="226" r="345" fill="url(#haze)"><animate attributeName="r" values="310;365;310" dur="11s" repeatCount="indefinite"/></circle>
+ <g><circle cx="618.8" cy="279.1" r="0.61" fill="#a7c9dc" opacity="0.23"/><circle cx="1062.5" cy="398.3" r="0.38" fill="#a7c9dc" opacity="0.24"/><circle cx="45.7" cy="280.5" r="0.85" fill="#a7c9dc" opacity="0.19"/><circle cx="198.9" cy="310.3" r="0.51" fill="#a7c9dc" opacity="0.18"/><circle cx="1166.5" cy="87.8" r="0.45" fill="#a7c9dc" opacity="0.16"/><circle cx="73.6" cy="359.8" r="0.94" fill="#a7c9dc" opacity="0.16"/><circle cx="1095.2" cy="43.2" r="0.76" fill="#a7c9dc" opacity="0.22"/><circle cx="572.8" cy="292.8" r="0.69" fill="#a7c9dc" opacity="0.17"/><circle cx="330.3" cy="367.4" r="0.67" fill="#a7c9dc" opacity="0.15"/><circle cx="506.5" cy="395.5" r="0.81" fill="#a7c9dc" opacity="0.11"/><circle cx="962.0" cy="205.4" r="0.66" fill="#a7c9dc" opacity="0.15"/><circle cx="693.4" cy="290.4" r="0.40" fill="#a7c9dc" opacity="0.24"/><circle cx="718.0" cy="163.7" r="1.04" fill="#a7c9dc" opacity="0.11"/><circle cx="464.8" cy="384.4" r="1.02" fill="#a7c9dc" opacity="0.12"/><circle cx="1001.9" cy="358.7" r="0.81" fill="#a7c9dc" opacity="0.08"/><circle cx="900.6" cy="87.9" r="0.55" fill="#a7c9dc" opacity="0.20"/><circle cx="1091.0" cy="276.7" r="0.45" fill="#a7c9dc" opacity="0.23"/><circle cx="274.8" cy="364.9" r="0.68" fill="#a7c9dc" opacity="0.13"/><circle cx="274.9" cy="24.5" r="0.96" fill="#a7c9dc" opacity="0.20"/><circle cx="1072.3" cy="115.2" r="0.89" fill="#a7c9dc" opacity="0.16"/><circle cx="675.2" cy="32.0" r="0.68" fill="#a7c9dc" opacity="0.16"/><circle cx="746.0" cy="246.4" r="0.76" fill="#a7c9dc" opacity="0.23"/><circle cx="1065.4" cy="45.3" r="0.42" fill="#a7c9dc" opacity="0.13"/><circle cx="94.9" cy="318.8" r="0.82" fill="#a7c9dc" opacity="0.11"/><circle cx="1051.6" cy="351.8" r="0.43" fill="#a7c9dc" opacity="0.13"/><circle cx="222.0" cy="360.2" r="0.43" fill="#a7c9dc" opacity="0.13"/><circle cx="1093.5" cy="196.0" r="0.33" fill="#a7c9dc" opacity="0.09"/><circle cx="174.1" cy="292.8" r="0.96" fill="#a7c9dc" opacity="0.08"/><circle cx="786.7" cy="106.4" r="0.66" fill="#a7c9dc" opacity="0.10"/><circle cx="100.9" cy="330.9" r="0.80" fill="#a7c9dc" opacity="0.18"/><circle cx="244.9" cy="154.9" r="0.71" fill="#a7c9dc" opacity="0.14"/><circle cx="255.6" cy="250.1" r="0.89" fill="#a7c9dc" opacity="0.12"/><circle cx="953.2" cy="25.3" r="0.87" fill="#a7c9dc" opacity="0.22"/><circle cx="675.8" cy="47.6" r="0.52" fill="#a7c9dc" opacity="0.12"/><circle cx="42.0" cy="55.4" r="0.54" fill="#a7c9dc" opacity="0.19"/><circle cx="335.2" cy="314.0" r="0.75" fill="#a7c9dc" opacity="0.08"/><circle cx="971.0" cy="308.5" r="0.62" fill="#a7c9dc" opacity="0.09"/><circle cx="605.7" cy="215.5" r="1.04" fill="#a7c9dc" opacity="0.08"/><circle cx="694.5" cy="197.1" r="0.76" fill="#a7c9dc" opacity="0.12"/><circle cx="930.2" cy="229.0" r="0.51" fill="#a7c9dc" opacity="0.09"/><circle cx="497.1" cy="337.6" r="0.38" fill="#a7c9dc" opacity="0.14"/><circle cx="16.1" cy="386.5" r="0.67" fill="#a7c9dc" opacity="0.17"/><circle cx="569.8" cy="336.6" r="0.59" fill="#a7c9dc" opacity="0.09"/><circle cx="129.4" cy="332.4" r="0.78" fill="#a7c9dc" opacity="0.20"/><circle cx="107.0" cy="67.5" r="0.77" fill="#a7c9dc" opacity="0.23"/><circle cx="1179.5" cy="350.9" r="0.64" fill="#a7c9dc" opacity="0.19"/><circle cx="503.8" cy="239.4" r="0.58" fill="#a7c9dc" opacity="0.17"/><circle cx="324.1" cy="425.5" r="0.59" fill="#a7c9dc" opacity="0.16"/><circle cx="764.6" cy="157.0" r="0.40" fill="#a7c9dc" opacity="0.08"/><circle cx="725.8" cy="268.7" r="0.62" fill="#a7c9dc" opacity="0.19"/><circle cx="851.4" cy="230.9" r="0.40" fill="#a7c9dc" opacity="0.14"/><circle cx="418.3" cy="324.6" r="0.46" fill="#a7c9dc" opacity="0.09"/><circle cx="873.5" cy="420.5" r="0.38" fill="#a7c9dc" opacity="0.14"/><circle cx="1213.7" cy="380.6" r="1.04" fill="#a7c9dc" opacity="0.17"/><circle cx="957.3" cy="67.3" r="0.40" fill="#a7c9dc" opacity="0.12"/><circle cx="140.0" cy="412.5" r="0.91" fill="#a7c9dc" opacity="0.07"/><circle cx="587.2" cy="379.4" r="0.67" fill="#a7c9dc" opacity="0.18"/><circle cx="920.3" cy="299.2" r="0.86" fill="#a7c9dc" opacity="0.15"/><circle cx="1046.5" cy="327.5" r="0.86" fill="#a7c9dc" opacity="0.23"/><circle cx="721.2" cy="89.7" r="0.32" fill="#a7c9dc" opacity="0.18"/><circle cx="69.7" cy="232.6" r="0.82" fill="#a7c9dc" opacity="0.10"/><circle cx="572.7" cy="400.7" r="0.66" fill="#a7c9dc" opacity="0.20"/><circle cx="484.8" cy="23.9" r="0.63" fill="#a7c9dc" opacity="0.20"/><circle cx="738.6" cy="425.7" r="0.91" fill="#a7c9dc" opacity="0.20"/><circle cx="176.5" cy="148.7" r="0.78" fill="#a7c9dc" opacity="0.08"/><circle cx="397.7" cy="275.6" r="0.39" fill="#a7c9dc" opacity="0.20"/><circle cx="879.8" cy="93.6" r="0.81" fill="#a7c9dc" opacity="0.19"/><circle cx="424.8" cy="90.0" r="0.57" fill="#a7c9dc" opacity="0.18"/><circle cx="714.8" cy="396.4" r="0.99" fill="#a7c9dc" opacity="0.21"/><circle cx="803.3" cy="120.3" r="0.96" fill="#a7c9dc" opacity="0.16"/><circle cx="711.2" cy="170.0" r="0.39" fill="#a7c9dc" opacity="0.07"/><circle cx="1138.1" cy="103.6" r="0.39" fill="#a7c9dc" opacity="0.19"/><circle cx="1124.3" cy="216.6" r="0.88" fill="#a7c9dc" opacity="0.10"/><circle cx="638.7" cy="28.3" r="0.49" fill="#a7c9dc" opacity="0.20"/><circle cx="851.4" cy="393.9" r="0.76" fill="#a7c9dc" opacity="0.09"/><circle cx="1203.7" cy="190.3" r="1.00" fill="#a7c9dc" opacity="0.11"/></g>
+ <path d="M0 56H1240M0 416H1240" stroke="#6b7e91" stroke-opacity=".3"/>
+ <path d="M615 56V416" stroke="#aa8a79" stroke-opacity=".28" stroke-dasharray="4 11"/>
+ <g font-family="monospace">
+ <rect x="50" y="84" width="235" height="29" rx="5" fill="#cc9277" fill-opacity=".12" stroke="#d7a78d" stroke-opacity=".43"/>
+ <text x="63" y="104" fill="#e9bd9e" font-size="11" letter-spacing="1.8">CASEFILE // HULAX LABS</text>
+ <rect x="502" y="84" width="83" height="29" rx="5" fill="none" stroke="#efaf7c" stroke-opacity=".65"/>
+ <text x="543.5" y="103" text-anchor="middle" fill="#f4bc90" font-size="11" letter-spacing="1.7">EXHIBIT A</text>
+ </g>
+ <text x="49" y="199" fill="#f5f7ff" font-family="Arial,Helvetica,sans-serif" font-size="67" font-weight="800" letter-spacing="-2.6">GRAPHGUARD</text>
+ <rect x="53" y="224" width="473" height="3" rx="1.5" fill="url(#amber)"/>
+ <text x="52" y="267" fill="#f3c48d" font-family="Arial,Helvetica,sans-serif" font-size="24" letter-spacing="2.7" font-weight="700">THE EVIDENCE GRAPH</text>
+ <text x="53" y="308" fill="#b8c7d9" font-family="Arial,Helvetica,sans-serif" font-size="17">A suspicious transaction is only a clue.</text>
+ <text x="53" y="334" fill="#b8c7d9" font-family="Arial,Helvetica,sans-serif" font-size="17">The relationships explain the case.</text>
+ <g font-family="monospace" font-size="11" letter-spacing="1.5" fill="#92b6c9">
+  <text x="53" y="386">CONNECT   /   SCORE   /   EXPLAIN   /   INVESTIGATE</text>
+  <text x="53" y="440" fill="#778eab" font-size="10">VISUAL CONCEPT — NO REAL CUSTOMER OR TRANSACTION DATA</text>
+  <text x="1190" y="440" text-anchor="end" fill="#a4b6c8" font-size="10">EVIDENCE FIRST / 2026</text>
+ </g>
+ <g fill="none" stroke="#8da2b4" stroke-opacity=".17">
+   <circle cx="916" cy="226" r="176" stroke-dasharray="4 10"/>
+   <circle cx="916" cy="226" r="138"/>
+   <circle cx="916" cy="226" r="103" stroke-dasharray="3 8"/>
+   <circle cx="916" cy="226" r="66"/>
+ </g>
+ <g><line x1="916" y1="226" x2="775" y2="127" stroke="#83c6d0" stroke-opacity=".41" stroke-width="1.25" /><line x1="916" y1="226" x2="1000" y2="98" stroke="#83c6d0" stroke-opacity=".41" stroke-width="1.25" /><line x1="916" y1="226" x2="1071" y2="286" stroke="#83c6d0" stroke-opacity=".41" stroke-width="1.25" /><line x1="916" y1="226" x2="766" y2="344" stroke="#e7a087" stroke-opacity=".81" stroke-width="2.1" stroke-dasharray="8 7"/><line x1="1000" y1="98" x2="1123" y2="172" stroke="#83c6d0" stroke-opacity=".41" stroke-width="1.25" /><line x1="775" y1="127" x2="766" y2="344" stroke="#e7a087" stroke-opacity=".81" stroke-width="2.1" stroke-dasharray="8 7"/><line x1="916" y1="226" x2="661" y2="230" stroke="#83c6d0" stroke-opacity=".41" stroke-width="1.25" /><line x1="1071" y1="286" x2="1040" y2="396" stroke="#83c6d0" stroke-opacity=".41" stroke-width="1.25" /></g>
+ <path d="M916 226L766 344" stroke="#f6b08b" stroke-opacity=".9" stroke-width="2.6" stroke-dasharray="10 11">
+ <animate attributeName="stroke-dashoffset" from="0" to="-126" dur="6s" repeatCount="indefinite"/></path>
+ <g><g>
+ <circle cx="916" cy="226" r="48" fill="none" stroke="#ffc37a" stroke-opacity=".23" stroke-width="1.1"/>
+ <circle cx="916" cy="226" r="31" fill="#302937" stroke="#ffc37a" stroke-width="2.1"/>
+ <circle cx="916" cy="226" r="4.5" fill="#ffc37a">
+ <animate attributeName="opacity" values=".25;1;.25" dur="4s" begin="0.3s" repeatCount="indefinite"/>
+ </circle>
+ <text x="916" y="271" fill="#efd6c4" text-anchor="middle" font-size="11" font-family="monospace" letter-spacing=".8">EVENT</text>
+ </g><g>
+ <circle cx="775" cy="127" r="33" fill="none" stroke="#79c8e9" stroke-opacity=".13" stroke-width="1.1"/>
+ <circle cx="775" cy="127" r="16" fill="#14273b" stroke="#79c8e9" stroke-width="1.6"/>
+ <circle cx="775" cy="127" r="4.5" fill="#79c8e9">
+ <animate attributeName="opacity" values=".25;1;.25" dur="4s" begin="0.6s" repeatCount="indefinite"/>
+ </circle>
+ <text x="775" y="107" fill="#97b5c9" text-anchor="middle" font-size="11" font-family="monospace" letter-spacing=".8">DEVICE</text>
+ </g><g>
+ <circle cx="1000" cy="98" r="37" fill="none" stroke="#d3d4e2" stroke-opacity=".13" stroke-width="1.1"/>
+ <circle cx="1000" cy="98" r="20" fill="#14273b" stroke="#d3d4e2" stroke-width="1.6"/>
+ <circle cx="1000" cy="98" r="4.5" fill="#d3d4e2">
+ <animate attributeName="opacity" values=".25;1;.25" dur="4s" begin="0.8999999999999999s" repeatCount="indefinite"/>
+ </circle>
+ <text x="1000" y="71" fill="#97b5c9" text-anchor="middle" font-size="11" font-family="monospace" letter-spacing=".8">ACCOUNT</text>
+ </g><g>
+ <circle cx="1071" cy="286" r="34" fill="none" stroke="#d3d4e2" stroke-opacity=".13" stroke-width="1.1"/>
+ <circle cx="1071" cy="286" r="17" fill="#14273b" stroke="#d3d4e2" stroke-width="1.6"/>
+ <circle cx="1071" cy="286" r="4.5" fill="#d3d4e2">
+ <animate attributeName="opacity" values=".25;1;.25" dur="3s" begin="0.3s" repeatCount="indefinite"/>
+ </circle>
+ <text x="1071" y="321" fill="#97b5c9" text-anchor="middle" font-size="11" font-family="monospace" letter-spacing=".8">MERCHANT</text>
+ </g><g>
+ <circle cx="766" cy="344" r="36" fill="none" stroke="#fa9285" stroke-opacity=".23" stroke-width="1.1"/>
+ <circle cx="766" cy="344" r="19" fill="#302937" stroke="#fa9285" stroke-width="2.1"/>
+ <circle cx="766" cy="344" r="4.5" fill="#fa9285">
+ <animate attributeName="opacity" values=".25;1;.25" dur="4s" begin="1.2s" repeatCount="indefinite"/>
+ </circle>
+ <text x="766" y="386" fill="#efd6c4" text-anchor="middle" font-size="11" font-family="monospace" letter-spacing=".8">RELATED ENTITY</text>
+ </g><g>
+ <circle cx="1123" cy="172" r="28" fill="none" stroke="#789bb2" stroke-opacity=".13" stroke-width="1.1"/>
+ <circle cx="1123" cy="172" r="11" fill="#14273b" stroke="#789bb2" stroke-width="1.6"/>
+ <circle cx="1123" cy="172" r="4.5" fill="#789bb2">
+ <animate attributeName="opacity" values=".25;1;.25" dur="4s" begin="0.6s" repeatCount="indefinite"/>
+ </circle>
+ <text x="1123" y="152" fill="#97b5c9" text-anchor="middle" font-size="11" font-family="monospace" letter-spacing=".8">SESSION</text>
+ </g><g>
+ <circle cx="661" cy="230" r="26" fill="none" stroke="#6e91a4" stroke-opacity=".13" stroke-width="1.1"/>
+ <circle cx="661" cy="230" r="9" fill="#14273b" stroke="#6e91a4" stroke-width="1.6"/>
+ <circle cx="661" cy="230" r="4.5" fill="#6e91a4">
+ <animate attributeName="opacity" values=".25;1;.25" dur="4s" begin="0s" repeatCount="indefinite"/>
+ </circle>
+ 
+ </g><g>
+ <circle cx="1040" cy="396" r="24" fill="none" stroke="#799aab" stroke-opacity=".13" stroke-width="1.1"/>
+ <circle cx="1040" cy="396" r="7" fill="#14273b" stroke="#799aab" stroke-width="1.6"/>
+ <circle cx="1040" cy="396" r="4.5" fill="#799aab">
+ <animate attributeName="opacity" values=".25;1;.25" dur="5s" begin="0.3s" repeatCount="indefinite"/>
+ </circle>
+ 
+ </g></g>
+ <path d="M635 73H1197" stroke="#e4bd98" stroke-opacity=".22"/>
+ <text x="637" y="90" fill="#9bb2c5" font-family="monospace" font-size="11" letter-spacing="2">RELATIONSHIP VIEW / ILLUSTRATIVE</text>
+ <path d="M1177 108h18v24" fill="none" stroke="#d49c84" stroke-opacity=".7"/>
+ <path d="M641 386h19v-19" fill="none" stroke="#d49c84" stroke-opacity=".65"/>
+</g>
+</svg>
