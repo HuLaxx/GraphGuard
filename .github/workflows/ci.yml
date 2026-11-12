@@ -18,16 +18,11 @@ jobs:
         with:
           node-version: '20'
           
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 8
-          
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-        
+        run: npm --prefix frontend ci
+
       - name: Lint frontend
-        run: pnpm --filter graphguard-dashboard lint
+        run: npm --prefix frontend run lint
 
   test-frontend:
     name: Test Frontend
@@ -40,16 +35,11 @@ jobs:
         with:
           node-version: '20'
           
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 8
-          
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-        
+        run: npm --prefix frontend ci
+
       - name: Run tests
-        run: pnpm --filter graphguard-dashboard test
+        run: npm --prefix frontend run test
 
   test-backend:
     name: Test Python
