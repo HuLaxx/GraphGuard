@@ -14,9 +14,12 @@ export function LoadingScreen() {
             // If sessionStorage is blocked, still show once per mount.
         }
 
-        setIsVisible(true);
+        const showFrame = requestAnimationFrame(() => setIsVisible(true));
         const hideTimer = setTimeout(() => setIsVisible(false), 2200);
-        return () => clearTimeout(hideTimer);
+        return () => {
+            cancelAnimationFrame(showFrame);
+            clearTimeout(hideTimer);
+        };
     }, []);
 
     if (!isVisible) return null;
