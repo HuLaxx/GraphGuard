@@ -36,6 +36,12 @@ The inspected workflow invoked `pnpm install --frozen-lockfile` and `pnpm --filt
 4. Display a correctly labelled explanation and create a human-reviewable case with a durable audit event.
 5. Test disconnected infrastructure, retries, data leakage and UI mock boundaries.
 
+## Current P0 release gate (2026-11-12)
+
+- **PASS**: [Workflow 43253878251](https://github.com/HuLaxx/GraphGuard/actions/runs/43253878251), commit `5898540332e0d1d4abccd7b386960b85a211bfd8`, matches current draft PR head at time of verification.
+- Frontend ESLint and TypeScript checks passed; focused Python RAG tests passed; frontend tests passed; the **existing MLflow image** built successfully.
+- **Not claimed:** an API Docker image, a seeded Kafka->Neo4j->trained-model->case end-to-end test, GAT readiness, AWS infrastructure, or a hosted production fraud API. The image built was MLflow, not the missing API Dockerfile.
+
 ## Verification log
 - 2026-11-12: examined repository tree, README, selected source paths and GitHub Actions statuses through the connected GitHub API.
 - 2026-11-12: **No fresh test execution or AWS deployment was performed** in this audit environment. This document is not a green CI badge.
