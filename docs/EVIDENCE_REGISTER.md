@@ -1,3 +1,10 @@
+## P0 security and full CI verification — 12 November 2026
+
+- **Current reviewed commit:** `3d686625013a59c2a6b7b07743cbd7c11a9e71d4`.
+- **PASS** [GitHub Actions 43263873047](https://github.com/HuLaxx/GraphGuard/actions/runs/43263873047): frontend ESLint/TypeScript/Next production build, Python focused tests, frontend tests, existing MLflow Docker image build, and blocking high/critical Trivy dependency security scan.
+- Dependency lockfile upgraded Next.js to **16.4.6**, lodash to **4.18.1** and source-map-js to **1.2.2**; the scan passed after these changes.
+- This does not prove a GraphGuard API image, graph-to-model scoring golden path, production fraud accuracy or AWS deployment. Do not merge based on green narrow checks alone.
+
 # GraphGuard — Engineering Evidence Register
 
 Updated: 2026-11-12. Status labels refer to **observed evidence**, not intended architecture.
