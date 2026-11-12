@@ -142,7 +142,7 @@ export function RagAssistant() {
                                     <div className="mt-2 text-xs text-zinc-500 space-y-1">
                                         {msg.sources.slice(0, 4).map((source) => (
                                             <div key={source.id}>
-                                                • {source.metadata?.source || source.id} (score {source.score.toFixed(2)})
+                                                • {typeof source.metadata?.source === "string" ? source.metadata.source : source.id} (score {source.score.toFixed(2)})
                                             </div>
                                         ))}
                                     </div>
