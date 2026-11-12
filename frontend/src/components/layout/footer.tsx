@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { Github, Linkedin, Mail } from 'lucide-react';
 
-const pageLinks = [
+const pageLinks: Array<{ label: string; href: "/" | "/architecture" | "/stack" | "/demo" }> = [
     { label: 'Home', href: '/' },
     { label: 'Architecture', href: '/architecture' },
     { label: 'Tech Stack', href: '/stack' },
@@ -50,7 +50,7 @@ export function Footer() {
                                 {pageLinks.map((link) => (
                                     <li key={link.href}>
                                         <Link
-                                            href={link.href as any}
+                                            href={link.href}
                                             className="hover:text-zinc-200 transition-colors"
                                         >
                                             {link.label}
