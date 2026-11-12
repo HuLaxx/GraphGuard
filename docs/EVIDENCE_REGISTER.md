@@ -20,6 +20,12 @@ Updated: 2026-11-12. Status labels refer to **observed evidence**, not intended 
 | Python / frontend / lint CI | **Failed** on inspected main run | [GitHub Actions, 2026-11-06](https://github.com/HuLaxx/GraphGuard/actions/runs/42284437023) | Make all jobs pass on current head and record exact run |
 | Historical Python tests | Dated result, not current CI | [Saved evidence](evidence/) | Re-run on current commit; publish commands and output |
 
+## New PR verification (2026-11-12)
+
+- [PR #1 check run 43199703064](https://github.com/HuLaxx/GraphGuard/actions/runs/43199703064): **3/3 focused Python RAG tests passed** and **4/4 frontend tests passed**.
+- The same run's global frontend lint job **failed**. The first inspected lint log reports **69 errors and 14 warnings** across legacy frontend files. This is not a green PR or a full backend integration test.
+- Root cause of the earlier Python test collection failure was eager import of the serving API from `ml/serving/__init__.py`, which imported `structlog` absent from the lightweight CI environment. The import is now lazy; `httpx` is explicitly declared for the RAG modules.
+
 ## P0 workflow finding
 The inspected workflow invoked `pnpm install --frozen-lockfile` and `pnpm --filter ...`, but the repository declares npm and carries `frontend/package-lock.json`, with **no root pnpm lockfile**. That is a reproducible configuration mismatch, independent of the unknown cause of the Python test failure. The frontend also used `next lint` with Next.js 16. The linked failed run establishes the job outcomes; historical job logs could not be retrieved during this audit, so no further root cause is asserted.
 
