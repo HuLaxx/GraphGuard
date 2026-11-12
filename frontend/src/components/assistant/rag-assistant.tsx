@@ -63,8 +63,8 @@ export function RagAssistant() {
                     sources: response.sources,
                 },
             ]);
-        } catch (err: any) {
-            setError(err?.message || "RAG request failed");
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : "RAG request failed");
         } finally {
             setLoading(false);
         }
@@ -79,8 +79,8 @@ export function RagAssistant() {
             setIndexNotice(
                 `Indexed ${response.files_indexed} files (${response.indexed_chunks} chunks) into ${response.index}`
             );
-        } catch (err: any) {
-            setIndexNotice(err?.message || "Indexing failed");
+        } catch (err: unknown) {
+            setIndexNotice(err instanceof Error ? err.message : "Indexing failed");
         } finally {
             setIndexing(false);
         }
