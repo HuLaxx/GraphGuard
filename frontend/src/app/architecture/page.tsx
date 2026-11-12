@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import {
     Database,
     Server,
@@ -244,7 +245,10 @@ export default function ArchitecturePage() {
                                         {layer.components.map((comp) => (
                                             <div key={comp.name} className="bg-zinc-900/80 rounded-xl p-4 flex items-center gap-3">
                                                 <div className="w-10 h-10 rounded-lg bg-zinc-800 flex items-center justify-center flex-shrink-0">
-                                                    <img
+                                                    <Image
+                                                        unoptimized
+                                                        width={20}
+                                                        height={20}
                                                         src={getLogoUrl(comp.name)}
                                                         alt={comp.name}
                                                         className="w-5 h-5 opacity-80"
