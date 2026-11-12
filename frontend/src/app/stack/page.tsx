@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import Link from 'next/link';
@@ -260,7 +261,10 @@ export default function TechStackPage() {
                                         className={`group relative bg-zinc-900/50 border ${category.borderColor} rounded-xl p-5 hover:bg-zinc-900 hover:border-opacity-100 transition-all flex items-start gap-4`}
                                     >
                                         <div className="w-10 h-10 rounded-lg bg-zinc-800/80 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                                            <img
+                                            <Image
+                                                unoptimized
+                                                width={24}
+                                                height={24}
                                                 src={getLogoUrl(tool.name)}
                                                 alt={tool.name}
                                                 className="w-6 h-6 opacity-80 group-hover:opacity-100 transition-opacity"
