@@ -1,0 +1,38 @@
+name: One-Time GraphGuard Transitive Security Fix
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/one-time-transitive-fixes.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'audit/p0-ci-evidence-2026-11-12'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Refresh compatible patched transitive packages
+        working-directory: frontend
+        run: |
+          npm ci
+          npm update lodash source-map-js
+          npm ls lodash source-map-js
+      - name: Commit lockfile changes on draft branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add frontend/package-lock.json
+          if ! git diff --cached --quiet; then
+            git commit -m "fix(security): update lodash and source-map-js transitive versions"
+            git push origin HEAD:audit/p0-ci-evidence-2026-11-12
+          fi
