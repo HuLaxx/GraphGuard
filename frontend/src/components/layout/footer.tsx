@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { Github, Linkedin, Mail } from 'lucide-react';
 
 const pageLinks: Array<{ label: string; href: "/" | "/architecture" | "/stack" | "/demo" }> = [
@@ -29,7 +30,7 @@ export function Footer() {
                         <div className="md:col-span-2 space-y-6">
                             <Link href="/" className="flex items-center gap-3 group">
                                 <div className="w-12 h-12 rounded-xl overflow-hidden shadow-lg shadow-white/10 group-hover:shadow-white/20 transition-all duration-300 group-hover:scale-105">
-                                    <img src="/icon.svg" alt="GraphGuard" className="w-full h-full object-cover" />
+                                    <Image src="/icon.svg" alt="GraphGuard" width={48} height={48} className="w-full h-full object-cover" />
                                 </div>
                                 <span className="text-2xl font-bold bg-gradient-to-r from-zinc-200 to-zinc-400 bg-clip-text text-transparent">
                                     GraphGuard
