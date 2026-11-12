@@ -1,0 +1,38 @@
+name: One-Time Next.js Security Patch (draft branch only)
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/one-time-next-security.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'audit/p0-ci-evidence-2026-11-12'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Upgrade and lock Next.js security release
+        working-directory: frontend
+        run: |
+          npm ci
+          npm install --save-exact next@16.4.6 eslint-config-next@16.4.6
+          npm ls next eslint-config-next
+      - name: Commit package and lockfile on review branch only
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add frontend/package.json frontend/package-lock.json
+          if ! git diff --cached --quiet; then
+            git commit -m "fix(security): patch Next.js and lint config to 16.4.6"
+            git push origin HEAD:audit/p0-ci-evidence-2026-11-12
+          fi
