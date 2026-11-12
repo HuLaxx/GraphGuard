@@ -1,5 +1,8 @@
 #!/usr/bin/env node
-const { spawn } = require("node:child_process");
+import { spawn } from "node:child_process";
+import { createRequire } from "node:module";
+
+const require = createRequire(import.meta.url);
 
 const args = process.argv.slice(2);
 if (args[0] === "--") {

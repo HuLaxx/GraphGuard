@@ -13,6 +13,12 @@ import { AlertTriangle, ArrowRight, CheckCircle, Github, RefreshCw, XCircle } fr
 import type { FraudCase, GraphNode, GraphLink } from "@/types";
 import { GET_DASHBOARD_DATA, GET_SUSPICIOUS_SUBGRAPH, GET_SHAP_EXPLANATION, LABEL_CASE_MUTATION } from "@/lib/queries";
 
+type ApiCase = Pick<FraudCase, "id" | "transactionId" | "userId" | "fraudScore" | "priority" | "status" | "createdAt" | "merchantName"> & {
+    amountVal: number;
+    currencyCode: string;
+};
+type ApiGraphNode = Pick<GraphNode, "id" | "type" | "label" | "riskScore"> & { isFlagged: boolean };
+
 function DemoNotice({ isLive }: { isLive: boolean }) {
     return (
         <div
@@ -118,7 +124,7 @@ export default function DemoPage() {
     });
 
     // Transform API data to UI types
-    const cases: FraudCase[] = (dashData?.fraudQueue?.items || []).map((item: any) => ({
+    const cases: FraudCase[] = (dashData?.fraudQueue?.items || []).map((item: ApiCase) => ({
         id: item.id,
         transactionId: item.transactionId,
         userId: item.userId,
@@ -200,7 +206,7 @@ export default function DemoPage() {
             modelAccuracy: 0,
         };
 
-    const nodes: GraphNode[] = (graphData?.suspiciousSubgraph?.nodes || []).map((n: any) => ({
+    const nodes: GraphNode[] = (graphData?.suspiciousSubgraph?.nodes || []).map((n: ApiGraphNode) => ({
         id: n.id,
         type: n.type,
         label: n.label,
@@ -209,7 +215,7 @@ export default function DemoPage() {
         pagerank: n.riskScore * 0.1,
     }));
 
-    const links: GraphLink[] = (graphData?.suspiciousSubgraph?.edges || []).map((e: any) => ({
+    const links: GraphLink[] = (graphData?.suspiciousSubgraph?.edges || []).map((e: GraphLink) => ({
         source: e.source,
         target: e.target,
         amount: e.amount || 0,

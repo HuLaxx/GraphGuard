@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import {
-    Shield,
     Zap,
     Brain,
     Database,
@@ -73,7 +72,7 @@ const stats = [
     { value: "3", label: "Primary Stores", icon: Database },
 ];
 
-function FeatureCard({ feature, index }: { feature: (typeof features)[0]; index: number }) {
+function FeatureCard({ feature }: { feature: (typeof features)[0] }) {
     const [isHovered, setIsHovered] = useState(false);
 
     return (
@@ -103,7 +102,8 @@ export default function HomePage() {
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
-        setMounted(true);
+        const frame = requestAnimationFrame(() => setMounted(true));
+        return () => cancelAnimationFrame(frame);
     }, []);
 
     return (
@@ -205,7 +205,7 @@ export default function HomePage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {features.map((feature, index) => (
-                            <FeatureCard key={feature.title} feature={feature} index={index} />
+                            <FeatureCard key={feature.title} feature={feature} />
                         ))}
                     </div>
                 </div>

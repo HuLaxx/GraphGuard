@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 
 export function LoadingScreen() {
     const [isVisible, setIsVisible] = useState(false);
@@ -14,9 +15,12 @@ export function LoadingScreen() {
             // If sessionStorage is blocked, still show once per mount.
         }
 
-        setIsVisible(true);
+        const showFrame = requestAnimationFrame(() => setIsVisible(true));
         const hideTimer = setTimeout(() => setIsVisible(false), 2200);
-        return () => clearTimeout(hideTimer);
+        return () => {
+            cancelAnimationFrame(showFrame);
+            clearTimeout(hideTimer);
+        };
     }, []);
 
     if (!isVisible) return null;
@@ -36,7 +40,7 @@ export function LoadingScreen() {
                 {/* Logo */}
                 <div className="relative mb-8">
                     <div className="w-20 h-20 rounded-2xl overflow-hidden shadow-2xl shadow-white/20 animate-pulse">
-                        <img src="/icon.svg" alt="GraphGuard" className="w-full h-full object-cover" />
+                        <Image src="/icon.svg" alt="GraphGuard" width={80} height={80} className="w-full h-full object-cover" />
                     </div>
                     <div className="absolute -inset-2 rounded-3xl bg-gradient-to-r from-zinc-200 via-white to-zinc-300 opacity-20 blur-xl animate-pulse" />
                 </div>

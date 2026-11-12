@@ -63,8 +63,8 @@ export function RagAssistant() {
                     sources: response.sources,
                 },
             ]);
-        } catch (err: any) {
-            setError(err?.message || "RAG request failed");
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : "RAG request failed");
         } finally {
             setLoading(false);
         }
@@ -79,8 +79,8 @@ export function RagAssistant() {
             setIndexNotice(
                 `Indexed ${response.files_indexed} files (${response.indexed_chunks} chunks) into ${response.index}`
             );
-        } catch (err: any) {
-            setIndexNotice(err?.message || "Indexing failed");
+        } catch (err: unknown) {
+            setIndexNotice(err instanceof Error ? err.message : "Indexing failed");
         } finally {
             setIndexing(false);
         }
@@ -142,7 +142,7 @@ export function RagAssistant() {
                                     <div className="mt-2 text-xs text-zinc-500 space-y-1">
                                         {msg.sources.slice(0, 4).map((source) => (
                                             <div key={source.id}>
-                                                • {source.metadata?.source || source.id} (score {source.score.toFixed(2)})
+                                                • {typeof source.metadata?.source === "string" ? source.metadata.source : source.id} (score {source.score.toFixed(2)})
                                             </div>
                                         ))}
                                     </div>

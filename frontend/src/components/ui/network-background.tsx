@@ -2,6 +2,37 @@
 
 import { useEffect, useRef } from "react";
 
+/** Plain canvas physics object kept outside the React render/effect scope. */
+class Particle {
+    x: number;
+    y: number;
+    vx: number;
+    vy: number;
+    size: number;
+
+    constructor(width: number, height: number, speed: number) {
+        this.x = Math.random() * width;
+        this.y = Math.random() * height;
+        this.vx = (Math.random() - 0.5) * speed;
+        this.vy = (Math.random() - 0.5) * speed;
+        this.size = Math.random() * 2 + 1;
+    }
+
+    update(width: number, height: number) {
+        this.x += this.vx;
+        this.y += this.vy;
+        if (this.x < 0 || this.x > width) this.vx *= -1;
+        if (this.y < 0 || this.y > height) this.vy *= -1;
+    }
+
+    draw(ctx: CanvasRenderingContext2D) {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(255, 255, 255, 0.15)";
+        ctx.fill();
+    }
+}
+
 export function NetworkBackground() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -15,93 +46,57 @@ export function NetworkBackground() {
         let width = canvas.width = window.innerWidth;
         let height = canvas.height = window.innerHeight;
 
-        const particles: Particle[] = [];
-        const particleCount = Math.min(Math.floor(width * height / 15000), 100); // Responsive count
+        const particleCount = Math.min(Math.floor(width * height / 15000), 100);
+        const particles = Array.from({ length: particleCount }, () => new Particle(width, height, 0.5));
         const connectionDistance = 150;
-        const moveSpeed = 0.5;
-
-        class Particle {
-            x: number;
-            y: number;
-            vx: number;
-            vy: number;
-            size: number;
-
-            constructor() {
-                this.x = Math.random() * width;
-                this.y = Math.random() * height;
-                this.vx = (Math.random() - 0.5) * moveSpeed;
-                this.vy = (Math.random() - 0.5) * moveSpeed;
-                this.size = Math.random() * 2 + 1;
-            }
-
-            update() {
-                this.x += this.vx;
-                this.y += this.vy;
-
-                if (this.x < 0 || this.x > width) this.vx *= -1;
-                if (this.y < 0 || this.y > height) this.vy *= -1;
-            }
-
-            draw() {
-                if (!ctx) return;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                ctx.fillStyle = "rgba(255, 255, 255, 0.15)"; // Zinc-ish white
-                ctx.fill();
-            }
-        }
-
-        // Init
-        for (let i = 0; i < particleCount; i++) {
-            particles.push(new Particle());
-        }
+        let animationFrame = 0;
 
         const animate = () => {
-            if (!ctx) return;
             ctx.clearRect(0, 0, width, height);
 
-            // Update and draw particles
-            particles.forEach((p, index) => {
-                p.update();
-                p.draw();
+            particles.forEach((particle, index) => {
+                particle.update(width, height);
+                particle.draw(ctx);
 
-                // Draw connections
                 for (let j = index + 1; j < particles.length; j++) {
-                    const p2 = particles[j];
-                    const dx = p.x - p2.x;
-                    const dy = p.y - p2.y;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    const neighbour = particles[j];
+                    const dx = particle.x - neighbour.x;
+                    const dy = particle.y - neighbour.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
 
-                    if (dist < connectionDistance) {
+                    if (distance < connectionDistance) {
                         ctx.beginPath();
-                        ctx.strokeStyle = `rgba(255, 255, 255, ${0.1 * (1 - dist / connectionDistance)})`;
+                        ctx.strokeStyle = `rgba(255, 255, 255, ${0.1 * (1 - distance / connectionDistance)})`;
                         ctx.lineWidth = 1;
-                        ctx.moveTo(p.x, p.y);
-                        ctx.lineTo(p2.x, p2.y);
+                        ctx.moveTo(particle.x, particle.y);
+                        ctx.lineTo(neighbour.x, neighbour.y);
                         ctx.stroke();
                     }
                 }
             });
 
-            requestAnimationFrame(animate);
+            animationFrame = requestAnimationFrame(animate);
         };
-
-        animate();
 
         const handleResize = () => {
             width = canvas.width = window.innerWidth;
             height = canvas.height = window.innerHeight;
         };
 
+        animationFrame = requestAnimationFrame(animate);
         window.addEventListener("resize", handleResize);
-        return () => window.removeEventListener("resize", handleResize);
+
+        return () => {
+            cancelAnimationFrame(animationFrame);
+            window.removeEventListener("resize", handleResize);
+        };
     }, []);
 
     return (
         <canvas
             ref={canvasRef}
             className="absolute inset-0 w-full h-full pointer-events-none opacity-40"
+            aria-hidden="true"
         />
     );
 }

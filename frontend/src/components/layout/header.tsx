@@ -1,11 +1,12 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { Menu, X, Github, Play } from 'lucide-react';
 
-const navLinks = [
+const navLinks: Array<{ href: "/" | "/architecture" | "/stack" | "/demo"; label: string; highlight?: boolean }> = [
     { href: '/', label: 'Home' },
     { href: '/architecture', label: 'Architecture' },
     { href: '/stack', label: 'Tech Stack' },
@@ -41,7 +42,7 @@ export function Header() {
                     <div className="flex items-center gap-4">
                         <Link href="/" className="flex items-center gap-3 group">
                             <div className="w-9 h-9 rounded-xl overflow-hidden shadow-lg shadow-white/5 group-hover:shadow-white/20 group-hover:scale-105 transition-all">
-                                <img src="/icon.svg" alt="GraphGuard" className="w-full h-full object-cover" />
+                                <Image src="/icon.svg" alt="GraphGuard" width={36} height={36} className="w-full h-full object-cover" />
                             </div>
                             <div className="flex flex-col">
                                 <span className="text-lg font-bold bg-gradient-to-r from-zinc-100 to-zinc-400 bg-clip-text text-transparent">
@@ -79,7 +80,7 @@ export function Header() {
                                 return (
                                     <Link
                                         key={link.href}
-                                        href={link.href as any}
+                                        href={link.href}
                                         className="ml-2 flex items-center gap-2 px-5 py-2 text-sm font-medium bg-gradient-to-r from-zinc-100 to-zinc-400 text-zinc-950 rounded-full hover:from-white hover:to-zinc-300 transition-all shadow-lg shadow-white/10 hover:shadow-white/20 hover:scale-[1.02]"
                                     >
                                         <Play className="w-3 h-3 fill-current" />
@@ -92,7 +93,7 @@ export function Header() {
                             return (
                                 <Link
                                     key={link.href}
-                                    href={link.href as any}
+                                    href={link.href}
                                     className={`px-4 py-2 text-sm transition-all rounded-full hover:bg-zinc-800/50 ${isActive
                                         ? 'text-zinc-100 font-medium'
                                         : 'text-zinc-400 hover:text-zinc-200'
@@ -133,7 +134,7 @@ export function Header() {
                             {navLinks.map((link) => (
                                 <Link
                                     key={link.href}
-                                    href={link.href as any}
+                                    href={link.href}
                                     onClick={() => setMobileMenuOpen(false)}
                                     className={`px-4 py-3 text-sm rounded-lg transition-colors ${pathname === link.href
                                         ? 'text-zinc-100 bg-zinc-800'
