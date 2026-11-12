@@ -7,7 +7,7 @@
  * Goal: Display paginated fraud cases for investigation.
  */
 
-import React, { useState, memo } from 'react';
+import React, { memo } from 'react';
 
 // ============================================
 // Types
