@@ -63,7 +63,7 @@ def get_neo4j_config() -> dict:
 def get_schema_registry_config() -> dict:
     """Schema Registry configuration."""
     return {
-        'url': os.getenv('SCHEMA_REGISTRY_URL', 'http://localhost:8081')
+        'url': os.getenv('SCHEMA_REGISTRY_URL', 'http://localhost:8082')
     }
 
 
