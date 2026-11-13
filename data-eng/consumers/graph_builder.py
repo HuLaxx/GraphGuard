@@ -285,7 +285,7 @@ class GraphBuilder:
             # Confluent wire framing: 0x00 + schema ID + Avro payload.
             # A registry outage or undecodable Avro is an infrastructure/contract
             # fault, not permission to parse bytes as JSON and advance offsets.
-            if isinstance(value, bytes) and value.startswith(b"\\x00"):
+            if isinstance(value, bytes) and value.startswith(b"\x00"):
                 if self.avro_deserializer is None:
                     raise RuntimeError(
                         "Avro decoder unavailable; retain offset for replay"
