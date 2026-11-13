@@ -273,3 +273,34 @@ def test_pending_good_events_flush_before_invalid_offset_commit(graph_builder_cl
     assert builder.consumer.commit.call_count == 2
     assert builder.consumer.commit.call_args_list[0].kwargs["message"] is first
     assert builder.consumer.commit.call_args_list[1].kwargs["message"] is second
+
+
+
+def test_registry_failure_never_downgrades_confluent_avro_to_json(graph_builder_class):
+    builder = new_builder(graph_builder_class)
+    builder.allow_json_fallback = True  # Even explicit JSON fixtures cannot override Avro framing.
+    builder.avro_deserializer = MagicMock(side_effect=ValueError("registry offline"))
+    builder._send_to_dlq = MagicMock()
+    msg = MagicMock()
+    msg.value.return_value = b"\x00\x00\x00\x00\x01not-valid-avro"
+
+    with pytest.raises(RuntimeError, match="Avro/Schema Registry decode failed"):
+        builder.process_message(msg)
+
+    builder._send_to_dlq.assert_not_called()
+    builder.consumer.commit.assert_not_called()
+    builder.ledger.record.assert_not_called()
+
+
+def test_non_avro_payload_fails_closed_without_fixture_opt_in(graph_builder_class):
+    builder = new_builder(graph_builder_class)
+    builder.allow_json_fallback = False
+    builder._send_to_dlq = MagicMock()
+    msg = kafka_message(transaction())
+
+    with pytest.raises(RuntimeError, match="Unexpected non-Avro"):
+        builder.process_message(msg)
+
+    builder._send_to_dlq.assert_not_called()
+    builder.consumer.commit.assert_not_called()
+    builder.ledger.record.assert_not_called()
