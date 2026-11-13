@@ -19,8 +19,11 @@ class RecordResult:
 
 
 def canonical_payload(transaction: dict) -> str:
-    # Exclude the downstream graph-only enrichment, never source fields.
-    source = {k: v for k, v in transaction.items() if k != "payload_sha256"}
+    # Data minimization: raw IP address and card fragments are not retained
+    # in this local normalized ledger or included in graph identity.
+    # This ledger is restricted to synthetic development inputs.
+    excluded = {"payload_sha256", "ip_address", "card_last4"}
+    source = {k: v for k, v in transaction.items() if k not in excluded}
     return json.dumps(source, sort_keys=True, separators=(",", ":"), allow_nan=False)
 
 
