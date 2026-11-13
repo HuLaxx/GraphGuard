@@ -13,6 +13,7 @@ Gotchas (from spec):
 
 import os
 import json
+from math import isfinite
 from typing import Optional, List
 from datetime import datetime
 
@@ -40,7 +41,7 @@ def get_consumer_config() -> dict:
         'bootstrap.servers': os.getenv('KAFKA_BOOTSTRAP_SERVERS', 'localhost:9092'),
         'group.id': os.getenv('KAFKA_GROUP_ID', 'graph-builder'),
         'auto.offset.reset': 'earliest',
-        'enable.auto.commit': False,  # Manual commit for exactly-once
+        'enable.auto.commit': False,  # Commit only after durable graph write; at-least-once
         'session.timeout.ms': 60000,  # Gotcha: Prevent rebalancing during slow processing
         'heartbeat.interval.ms': 3000,
         'max.poll.interval.ms': 300000,  # 5 minutes
@@ -229,7 +230,8 @@ class GraphBuilder:
         Gotcha: Batch 10-20 transactions for performance.
         """
         with self.neo4j_driver.session() as session:
-            session.run(CREATE_TRANSACTION_EDGE_BATCH, transactions=transactions)
+            # Consume the result to surface server-side failures before offset commits.
+            session.run(CREATE_TRANSACTION_EDGE_BATCH, transactions=transactions).consume()
         
         logger.info(
             "Batch written to Neo4j",
@@ -237,56 +239,69 @@ class GraphBuilder:
         )
     
     def _send_to_dlq(self, message_value: bytes, error: str) -> None:
-        """Send failed message to Dead Letter Queue."""
+        """Publish a permanently invalid message to DLQ and require an ACK.
+
+        On a failed DLQ delivery, callers must retain the original Kafka offset
+        for replay. Infrastructure/Neo4j outages are *not* poison messages.
+        """
+        delivery_errors = []
+        acknowledged = []
+
+        def on_delivery(delivery_error, _message):
+            if delivery_error is not None:
+                delivery_errors.append(str(delivery_error))
+            else:
+                acknowledged.append(True)
+
         self.dlq_producer.produce(
             topic=self.DLQ_TOPIC,
             value=message_value,
-            headers={'error': error.encode('utf-8')}
+            headers={'error': error[:200].encode('utf-8')},
+            on_delivery=on_delivery,
         )
-        self.dlq_producer.flush()
-        
-        logger.warning(
-            "Message sent to DLQ",
-            error=error
-        )
-    
+        remaining = self.dlq_producer.flush(timeout=10)
+        if remaining or delivery_errors or not acknowledged:
+            raise RuntimeError("DLQ delivery not acknowledged; Kafka offset was not committed")
+
+        logger.warning("Permanently invalid event routed to DLQ", error=error[:200])
+
     def _flush_buffer(self) -> None:
-        """Flush the transaction buffer to Neo4j."""
+        """Graph write before synchronous offset commit: replay on transient failures.
+
+        Graph upserts must remain idempotent: a crash after graph commit but
+        before Kafka offset commit will legitimately replay some messages.
+        """
         if not self.buffer:
             return
-        
+
         try:
             self._create_transaction_edges_batch(self.buffer)
-            
-            # Commit offsets for processed messages
             for msg in self.pending_messages:
-                self.consumer.commit(message=msg)
-            
-            logger.info(
-                "Buffer flushed and offsets committed",
-                transactions=len(self.buffer)
-            )
-            
-        except Exception as e:
+                committed = self.consumer.commit(message=msg, asynchronous=False)
+                if committed and any(getattr(part, "error", None) for part in committed):
+                    raise RuntimeError("Kafka returned an offset-commit error")
+        except Exception as exc:
             logger.error(
-                "Failed to flush buffer",
-                error=str(e),
-                transactions=len(self.buffer)
+                "Graph write or offset commit failed; retaining uncommitted batch",
+                error=str(exc),
+                transactions=len(self.buffer),
             )
-            # Send all to DLQ
-            for msg in self.pending_messages:
-                self._send_to_dlq(msg.value(), str(e))
-                self.consumer.commit(message=msg)
-        
-        # Clear buffer
+            # Do not classify a Neo4j outage as bad input, DLQ valid records, or
+            # discard the buffer. The caller may retry or restart from Kafka.
+            raise
+
+        logger.info("Graph batch persisted and offsets committed", transactions=len(self.buffer))
         self.buffer = []
         self.pending_messages = []
-    
+
     def process_message(self, msg) -> None:
-        """Process a single Kafka message."""
+        """Decode/validate events; route only malformed input to DLQ.
+
+        Database failures happen outside the validation handler so they
+        propagate without advancing Kafka offsets.
+        """
+        value = msg.value()
         try:
-            # Deserialize message
-            value = msg.value()
             txn = None
             if isinstance(value, bytes) and self.avro_deserializer is not None:
                 try:
@@ -294,44 +309,48 @@ class GraphBuilder:
                         value,
                         SerializationContext(self.TOPIC, MessageField.VALUE)
                     )
-                except Exception as e:
-                    logger.warning("Avro deserialization failed", error=str(e))
-                    txn = None
+                except (ValueError, TypeError, UnicodeError) as exc:
+                    logger.warning("Avro decoding failed; trying JSON fixture format", error=str(exc))
 
             if txn is None:
-                if isinstance(value, bytes):
-                    txn = json.loads(value.decode('utf-8'))
-                else:
-                    txn = value
+                txn = json.loads(value.decode('utf-8')) if isinstance(value, bytes) else value
 
             if not isinstance(txn, dict):
-                raise ValueError("Invalid transaction payload")
-            
-            if isinstance(txn.get('timestamp'), datetime):
-                txn['timestamp'] = int(txn['timestamp'].timestamp() * 1000)
-            
-            # Add to buffer
-            self.buffer.append(txn)
-            self.pending_messages.append(msg)
-            
-            logger.debug(
-                "Message buffered",
-                transaction_id=txn.get('transaction_id'),
-                buffer_size=len(self.buffer)
-            )
-            
-            # Flush if buffer is full
-            if len(self.buffer) >= self.BATCH_SIZE:
-                self._flush_buffer()
-                
-        except Exception as e:
-            logger.error(
-                "Failed to process message",
-                error=str(e)
-            )
-            self._send_to_dlq(msg.value(), f"ProcessingError: {e}")
-            self.consumer.commit(message=msg)
-    
+                raise ValueError("Transaction must be a JSON object")
+            required_ids = ("transaction_id", "user_id", "merchant_id", "device_id")
+            if any(not isinstance(txn.get(k), str) or not txn[k].strip() for k in required_ids):
+                raise ValueError("Transaction contains missing or invalid entity identifiers")
+            amount = txn.get("amount")
+            if isinstance(amount, bool) or not isinstance(amount, (int, float)) or not isfinite(amount) or amount <= 0:
+                raise ValueError("Transaction amount must be positive and finite")
+            currency = txn.get("currency")
+            if not isinstance(currency, str) or len(currency) != 3 or not currency.isalpha() or currency.upper() != currency:
+                raise ValueError("Transaction currency must be a three-letter uppercase code")
+            event_time = txn.get("timestamp")
+            if isinstance(event_time, datetime):
+                if event_time.tzinfo is None or event_time.utcoffset() is None:
+                    raise ValueError("Transaction timestamps must include timezone")
+                txn["timestamp"] = int(event_time.timestamp() * 1000)
+            elif isinstance(event_time, bool) or not isinstance(event_time, int) or event_time <= 0:
+                raise ValueError("Transaction timestamp must be a positive epoch-millis integer")
+            event_key = txn.get("idempotency_key")
+            if not isinstance(event_key, str) or len(event_key) != 64 or any(c not in "0123456789abcdef" for c in event_key):
+                raise ValueError("Transaction idempotency key must be a SHA-256 hex digest")
+        except (ValueError, TypeError, UnicodeError, json.JSONDecodeError) as exc:
+            logger.warning("Invalid transaction input", error=str(exc))
+            # Do not commit until DLQ has acknowledged the poison message.
+            self._send_to_dlq(value, f"InvalidTransaction: {type(exc).__name__}")
+            self.consumer.commit(message=msg, asynchronous=False)
+            return
+
+        self.buffer.append(txn)
+        self.pending_messages.append(msg)
+        logger.debug("Transaction buffered", transaction_id=txn["transaction_id"], buffer_size=len(self.buffer))
+        if len(self.buffer) >= self.BATCH_SIZE:
+            # This is deliberately outside the validation try/except. Neo4j
+            # outage must not turn legitimate transactions into a DLQ loss.
+            self._flush_buffer()
+
     def run(self, max_messages: Optional[int] = None) -> None:
         """
         Main consumer loop.
@@ -374,9 +393,11 @@ class GraphBuilder:
         except KeyboardInterrupt:
             logger.info("Interrupted by user")
         finally:
-            # Flush any remaining messages
-            self._flush_buffer()
-            self.close()
+            # Always close connections, even if flushing raises due to a DB outage.
+            try:
+                self._flush_buffer()
+            finally:
+                self.close()
     
     def close(self) -> None:
         """Clean up resources."""
