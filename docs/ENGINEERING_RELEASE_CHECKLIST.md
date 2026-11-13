@@ -18,10 +18,10 @@ Mark [x] only when supported by a reproducible test on an identified commit. A g
 - [x] Malformed numeric amounts, identifiers, timestamps, currencies and schema outages have focused handling tests. [PR #2](https://github.com/HuLaxx/GraphGuard/pull/2).
 - [ ] Verify version-1 Avro contract and consumer validation against the actual published Avro path (code added on stacked P1 branch; integration is JSON-fixture-only).
 - [ ] Validate source timestamp and provenance end-to-end in the real Avro path.
-- [ ] Run the new disposable Kafka/Neo4j CI integration and inspect assertions (test harness authored; result pending).
-- [ ] Verify local SQLite source-ledger durability, replay and Kafka offset provenance on P1 branch; code and unit tests added, CI not yet confirmed.
+- [x] Ran disposable Kafka/Neo4j JSON-fixture integration: real broker events, graph projection, same-ID conflict DLQ, duplicate and replay verification. [CI 43492440036](https://github.com/HuLaxx/GraphGuard/actions/runs/43492440036), commit `dc892a0`.
+- [x] Verified local SQLite ledger persistence, topic/partition/offset provenance and replay after restart on commit `dc892a0` (23 Python tests plus real-broker integration). [CI 43492440036](https://github.com/HuLaxx/GraphGuard/actions/runs/43492440036).
 - [ ] Prove Kafka → validated store → Neo4j nodes/edges in a running integration test.
-- [ ] Verify transaction-ID uniqueness with canonical SHA-256, a persistent conflict inbox, Neo4j uniqueness constraints and acknowledged DLQ; migration behaviour on existing graphs also needs review.
+- [x] Verified canonical SHA-256 / duplicate / conflicting-ID path with SQLite ledger and graph identity checks on synthetic fixtures, including real Kafka/Neo4j integration at `dc892a0`. Legacy-graph migration remains unverified. [CI 43492440036](https://github.com/HuLaxx/GraphGuard/actions/runs/43492440036).
 - [ ] Verify duplicate delivery, restarts, broker outage, graph outage, poison event, DLQ failure and replay without silent loss.
 - [ ] Compute past-only graph features with event-time windows, deterministic entity resolution and no future leakage.
 - [ ] Train/load a real versioned model artifact and score the new transaction; prove exact model hash/version.
@@ -57,5 +57,5 @@ Mark [x] only when supported by a reproducible test on an identified commit. A g
 
 ## Release decision
 - **Current gate:** P0 CI and focused at-least-once recovery-policy tests verified on draft branches; real Kafka/Neo4j/model/case integration **not verified**.
-- **Current draft branch:** feature/graphguard-durable-ingestion-2026-11-14, stacked on PR #2. Broker-backed ingest harness and durable identity handling are authored but require successful CI and review. Keep ML claims limited until baseline data experiments are reproducible.
+- **Current draft PR:** [#3](https://github.com/HuLaxx/GraphGuard/pull/3), stacked on PR #2. Real Kafka/Neo4j synthetic-fixture integration and durable identity handling passed on reviewed commit `dc892a0`; newer changes still require latest-head CI and review. Keep ML claims limited until baseline data experiments are reproducible.
 - **Never claim:** production bank fraud detection, fairness guarantees, live customers, GAT readiness or AWS deployment without exact evidence.
