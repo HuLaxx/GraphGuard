@@ -71,3 +71,22 @@ def test_non_finite_payload_rejected_before_persist(tmp_path):
         ledger.record(transaction(float("nan")), topic="transactions.raw", partition=0, offset=3)
     assert ledger.connection.execute("SELECT COUNT(*) FROM transactions").fetchone()[0] == 0
     ledger.close()
+
+
+def test_backward_compatible_schema_defaults_do_not_create_false_conflict(tmp_path):
+    ledger = TransactionLedger(str(tmp_path / "defaults.db"))
+    older = transaction(17)
+    explicit = dict(older, amount=17.0, schema_version=1)
+    assert ledger.record(older, topic="transactions.raw", partition=0, offset=1).status == "new"
+    assert ledger.record(explicit, topic="transactions.raw", partition=0, offset=2).status == "duplicate"
+    ledger.close()
+
+
+def test_private_payment_fields_are_not_persisted(tmp_path):
+    ledger = TransactionLedger(str(tmp_path / "private.db"))
+    event = dict(transaction(), ip_address="192.0.2.9", card_last4="1234")
+    ledger.record(event, topic="transactions.raw", partition=0, offset=1)
+    stored = ledger.connection.execute("SELECT payload_json FROM transactions").fetchone()[0]
+    assert "192.0.2.9" not in stored
+    assert "1234" not in stored
+    ledger.close()
