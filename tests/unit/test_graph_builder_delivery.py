@@ -43,6 +43,7 @@ def graph_builder_class(monkeypatch):
         monkeypatch.setitem(sys.modules, name, stub)
 
     source = Path(__file__).resolve().parents[2] / "data-eng/consumers/graph_builder.py"
+    monkeypatch.syspath_prepend(str(source.parent))
     spec = importlib.util.spec_from_file_location("graphguard_delivery_test", source)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -58,6 +59,8 @@ def new_builder(cls):
     builder._create_transaction_edges_batch = MagicMock()
     builder.buffer = []
     builder.pending_messages = []
+    builder.ledger = MagicMock()
+    builder.ledger.record.return_value = types.SimpleNamespace(status="new", payload_hash="a" * 64)
     return builder
 
 
@@ -181,8 +184,13 @@ def test_neo4j_result_consumed_before_batch_is_acknowledged(graph_builder_class)
     graph_builder_class._create_transaction_edges_batch(builder, transaction_batch)
 
     session = builder.neo4j_driver.session.return_value.__enter__.return_value
-    session.run.assert_called_once()
-    session.run.return_value.consume.assert_called_once()
+    session.execute_write.assert_called_once()
+    callback, transactions = session.execute_write.call_args.args
+    assert transactions == transaction_batch
+    tx = MagicMock()
+    tx.run.return_value.single.return_value = {"applied": 1}
+    callback(tx, transactions)
+    tx.run.assert_called_once()
 
 
 def test_schema_registry_unavailable_preserves_valid_avro_offset(graph_builder_class):
@@ -198,3 +206,70 @@ def test_schema_registry_unavailable_preserves_valid_avro_offset(graph_builder_c
     builder._send_to_dlq.assert_not_called()
     builder.consumer.commit.assert_not_called()
     assert builder.buffer == []
+
+
+def test_projection_rejects_conflicting_graph_node(graph_builder_class):
+    tx = MagicMock()
+    tx.run.return_value.single.return_value = {"applied": 0}
+    with pytest.raises(RuntimeError, match="identity mismatch"):
+        graph_builder_class._write_batch(tx, [transaction()])
+
+
+def test_source_write_failure_does_not_commit_or_graph(graph_builder_class):
+    builder = new_builder(graph_builder_class)
+    builder.ledger.record.side_effect = OSError("disk full")
+    msg = kafka_message(transaction())
+    with pytest.raises(OSError, match="disk full"):
+        builder.process_message(msg)
+    builder.consumer.commit.assert_not_called()
+    builder._create_transaction_edges_batch.assert_not_called()
+
+
+def test_duplicate_event_still_replays_graph_after_prior_failure(graph_builder_class):
+    builder = new_builder(graph_builder_class)
+    builder.BATCH_SIZE = 1
+    builder.ledger.record.return_value = types.SimpleNamespace(status="duplicate", payload_hash="f" * 64)
+    builder.process_message(kafka_message(transaction()))
+    assert builder._create_transaction_edges_batch.call_args.args[0][0]["payload_sha256"] == "f" * 64
+    builder.consumer.commit.assert_called_once()
+
+
+def test_conflicting_same_id_goes_to_dlq_without_graph_mutation(graph_builder_class):
+    builder = new_builder(graph_builder_class)
+    builder.ledger.record.return_value = types.SimpleNamespace(status="conflict", payload_hash="b" * 64)
+    builder._send_to_dlq = MagicMock()
+    msg = kafka_message(transaction())
+    builder.process_message(msg)
+    builder._send_to_dlq.assert_called_once()
+    assert builder._send_to_dlq.call_args.args[1] == "TransactionIdConflict"
+    builder.consumer.commit.assert_called_once_with(message=msg, asynchronous=False)
+    builder._create_transaction_edges_batch.assert_not_called()
+    assert builder.buffer == []
+
+
+def test_pending_good_events_flush_before_conflict_offset_commit(graph_builder_class):
+    builder = new_builder(graph_builder_class)
+    builder.BATCH_SIZE = 15
+    first, second = kafka_message(transaction()), kafka_message(transaction())
+    builder.process_message(first)
+    builder.ledger.record.return_value = types.SimpleNamespace(status="conflict", payload_hash="b" * 64)
+    builder._send_to_dlq = MagicMock()
+    builder.process_message(second)
+    assert builder._create_transaction_edges_batch.call_count == 1
+    assert builder.consumer.commit.call_count == 2
+    assert builder.consumer.commit.call_args_list[0].kwargs["message"] is first
+    assert builder.consumer.commit.call_args_list[1].kwargs["message"] is second
+
+
+def test_pending_good_events_flush_before_invalid_offset_commit(graph_builder_class):
+    builder = new_builder(graph_builder_class)
+    builder.BATCH_SIZE = 15
+    first = kafka_message(transaction())
+    second = kafka_message({"transaction_id": "missing-fields"})
+    builder.process_message(first)
+    builder._send_to_dlq = MagicMock()
+    builder.process_message(second)
+    assert builder._create_transaction_edges_batch.call_count == 1
+    assert builder.consumer.commit.call_count == 2
+    assert builder.consumer.commit.call_args_list[0].kwargs["message"] is first
+    assert builder.consumer.commit.call_args_list[1].kwargs["message"] is second

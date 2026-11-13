@@ -64,7 +64,7 @@ jobs:
           
       - name: Run pytest
         run: |
-          pytest tests/unit/test_rag.py tests/unit/test_graph_builder_delivery.py -v
+          pytest tests/unit/test_rag.py tests/unit/test_graph_builder_delivery.py tests/unit/test_transaction_ledger.py -v
 
   security:
     name: High / Critical Dependency Security Scan
@@ -97,3 +97,28 @@ jobs:
           tags: graphguard/mlflow:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  ingestion-integration:
+    name: Real Kafka / Neo4j ingestion integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install integration test dependencies
+        run: |
+          pip install -r requirements-ci.txt -r requirements-ingestion-ci.txt
+      - name: Start disposable broker and graph database
+        run: docker compose -f docker-compose.ingestion.yml up -d --wait
+      - name: Test duplicate, conflict and replay with real services
+        env:
+          GRAPHGUARD_INGESTION_INTEGRATION: "1"
+        run: pytest tests/integration/test_ingest_kafka_neo4j.py -v
+      - name: Show service logs on failure
+        if: failure()
+        run: docker compose -f docker-compose.ingestion.yml logs --no-color --tail=150
+      - name: Tear down disposable services
+        if: always()
+        run: docker compose -f docker-compose.ingestion.yml down --remove-orphans
