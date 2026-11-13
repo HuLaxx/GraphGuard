@@ -252,3 +252,22 @@ def test_unreachable_registry_does_not_commit_and_recovery_replays(tmp_path, mon
     start_builder(OutageBuilder, group, ledger_path, monkeypatch).run(max_messages=1)
     assert_graph_record(transaction_id, 17.25)
     assert_ledger(ledger_path, transaction_id, expected_conflicts=0)
+
+
+
+def test_producer_rejects_naive_or_nonfinite_transaction_fields():
+    with pytest.raises(ValueError, match="timezone-aware"):
+        TransactionEvent(
+            transaction_id="synthetic-naive-clock",
+            user_id="synthetic-user",
+            merchant_id="synthetic-merchant",
+            device_id="synthetic-device",
+            amount=10.0,
+            currency="GBP",
+            timestamp=datetime(2026, 9, 21, 12, 0),  # intentionally missing tzinfo
+            ip_address="192.0.2.11",
+            card_last4="1234",
+        )
+
+    with pytest.raises(ValueError):
+        make_event("synthetic-infinite-amount", amount=float("inf"))
