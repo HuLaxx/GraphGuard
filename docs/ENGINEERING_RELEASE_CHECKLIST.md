@@ -1,6 +1,6 @@
 # GraphGuard — Engineering Release Checklist (evidence-gated)
 
-**Updated:** 2026-11-13 | **Target:** defensible Applied ML / Graph Data Engineering / MLOps flagship | **Status:** DRAFT, NOT 10/10
+**Updated:** 2026-11-14 | **Target:** defensible Applied ML / Graph Data Engineering / MLOps flagship | **Status:** DRAFT, NOT 10/10
 
 Mark [x] only when supported by a reproducible test on an identified commit. A green narrow CI suite does **not** prove broker-backed ingestion, fraud accuracy or production readiness. Link every supported release claim in [EVIDENCE_REGISTER.md](EVIDENCE_REGISTER.md). This system supports **human investigation** and must never present a score as proof of wrongdoing.
 
@@ -16,11 +16,12 @@ Mark [x] only when supported by a reproducible test on an identified commit. A g
 ## P1 — Real transaction → graph → investigation golden path
 - [x] A failed Neo4j batch no longer silently DLQs valid transactions while committing offsets; mock-client tests support at-least-once retry policy. [PR #2](https://github.com/HuLaxx/GraphGuard/pull/2).
 - [x] Malformed numeric amounts, identifiers, timestamps, currencies and schema outages have focused handling tests. [PR #2](https://github.com/HuLaxx/GraphGuard/pull/2).
-- [ ] Version Avro event schema, validate fully, maintain event/transaction identity, source timestamp and provenance.
-- [ ] Seed one explicitly **synthetic** transaction and produce into a real local Kafka broker.
-- [ ] Persist a durable source-of-truth before graph projection; retain source identity and replay position.
+- [ ] Verify version-1 Avro contract and consumer validation against the actual published Avro path (code added on stacked P1 branch; integration is JSON-fixture-only).
+- [ ] Validate source timestamp and provenance end-to-end in the real Avro path.
+- [ ] Run the new disposable Kafka/Neo4j CI integration and inspect assertions (test harness authored; result pending).
+- [ ] Verify local SQLite source-ledger durability, replay and Kafka offset provenance on P1 branch; code and unit tests added, CI not yet confirmed.
 - [ ] Prove Kafka → validated store → Neo4j nodes/edges in a running integration test.
-- [ ] Enforce transaction-ID uniqueness with content hash and quarantine **conflicting** same-ID payloads.
+- [ ] Verify transaction-ID uniqueness with canonical SHA-256, a persistent conflict inbox, Neo4j uniqueness constraints and acknowledged DLQ; migration behaviour on existing graphs also needs review.
 - [ ] Verify duplicate delivery, restarts, broker outage, graph outage, poison event, DLQ failure and replay without silent loss.
 - [ ] Compute past-only graph features with event-time windows, deterministic entity resolution and no future leakage.
 - [ ] Train/load a real versioned model artifact and score the new transaction; prove exact model hash/version.
@@ -56,5 +57,5 @@ Mark [x] only when supported by a reproducible test on an identified commit. A g
 
 ## Release decision
 - **Current gate:** P0 CI and focused at-least-once recovery-policy tests verified on draft branches; real Kafka/Neo4j/model/case integration **not verified**.
-- **Next smallest PR:** test broker-backed transaction ingest + durable identity conflict handling on synthetic fixtures. Keep ML claims limited until baseline data experiments are reproducible.
+- **Current draft branch:** feature/graphguard-durable-ingestion-2026-11-14, stacked on PR #2. Broker-backed ingest harness and durable identity handling are authored but require successful CI and review. Keep ML claims limited until baseline data experiments are reproducible.
 - **Never claim:** production bank fraud detection, fairness guarantees, live customers, GAT readiness or AWS deployment without exact evidence.
