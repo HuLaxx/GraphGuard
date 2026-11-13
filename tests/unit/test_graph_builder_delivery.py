@@ -198,7 +198,7 @@ def test_schema_registry_unavailable_preserves_valid_avro_offset(graph_builder_c
     builder.allow_json_fallback = False
     builder._send_to_dlq = MagicMock()
     msg = MagicMock()
-    msg.value.return_value = b"\\x00\\x01not-JSON-avro-fixture"
+    msg.value.return_value = b"\x00\x00\x00\x00\x01synthetic-avro-fixture"
 
     with pytest.raises(RuntimeError, match="Avro decoder unavailable"):
         builder.process_message(msg)
