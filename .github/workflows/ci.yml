@@ -112,10 +112,10 @@ jobs:
           pip install -r requirements-ci.txt -r requirements-ingestion-ci.txt
       - name: Start disposable broker and graph database
         run: docker compose -f docker-compose.ingestion.yml up -d --wait
-      - name: Test duplicate, conflict and replay with real services
+      - name: Test JSON fixtures and Avro / Schema Registry with real services
         env:
           GRAPHGUARD_INGESTION_INTEGRATION: "1"
-        run: pytest tests/integration/test_ingest_kafka_neo4j.py -v
+        run: pytest tests/integration/test_ingest_kafka_neo4j.py tests/integration/test_avro_registry.py -v
       - name: Show service logs on failure
         if: failure()
         run: docker compose -f docker-compose.ingestion.yml logs --no-color --tail=150
