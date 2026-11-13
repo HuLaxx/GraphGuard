@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, develop, 'feature/**']
   pull_request:
-    branches: [main]
+    branches: [main, 'audit/**', 'feature/**']
 
 jobs:
   lint:
@@ -64,7 +64,7 @@ jobs:
           
       - name: Run pytest
         run: |
-          pytest tests/unit/test_rag.py -v
+          pytest tests/unit/test_rag.py tests/unit/test_graph_builder_delivery.py -v
 
   security:
     name: High / Critical Dependency Security Scan

@@ -53,3 +53,13 @@ The inspected workflow invoked `pnpm install --frozen-lockfile` and `pnpm --filt
 - 2026-11-12: examined repository tree, README, selected source paths and GitHub Actions statuses through the connected GitHub API.
 - 2026-11-12: **No fresh test execution or AWS deployment was performed** in this audit environment. This document is not a green CI badge.
 - Attach future PR runs, dataset hashes, command outputs and measurement artifacts below before upgrading a status to Verified.
+
+## P1 at-least-once transaction recovery — 13 November 2026
+
+- [Draft PR #2](https://github.com/HuLaxx/GraphGuard/pull/2), stacked on existing P0 PR #1. All changes are review-branch only; no production operations.
+- [GitHub Actions 43427933012](https://github.com/HuLaxx/GraphGuard/actions/runs/43427933012), source SHA `d838dadb3841c7cfd21604ba3a32776b0b23de11`, verified the **14 focused Python tests passed**, including eleven new mock-client recovery cases; the frontend lint/test and high/critical security-scan jobs also passed. The MLflow image build was pending at this evidence-register update; check its final result before marking all jobs green.
+- Graph builder now waits for Neo4j query result consumption before synchronously committing Kafka offsets. Failed graph writes or offset commits propagate and leave messages replayable instead of sending valid transactions to DLQ and committing them.
+- The DLQ path requires a delivery callback acknowledgment before committing the original invalid message; a DLQ outage must not advance the source offset. Numeric and contract metadata are checked before buffering.
+- Avro/schema registry failure now preserves the original offset instead of treating undecodable bytes as poisoned JSON. Synthetic JSON fixture mode is opt-in with `GRAPHGUARD_JSON_FIXTURE_MODE=true`.
+- **Boundary:** tests run the real GraphBuilder policy methods but stub Kafka, Neo4j, schema registry and structured logging clients. They are **not** broker-backed integration or verified recovery under process restarts, rebalances and partial graph commits. One Neo4j `MERGE` batch is idempotent by node/edge identity but ON MATCH fields can be overwritten by conflicting duplicate IDs; transaction conflict control remains to be built.
+- **Not verified:** full graph scoring/ML/SHAP, auditable investigator case, dataset licensing and leakage checks, complete auth hardening, a production Docker API image or AWS deployment. Provisioned cloud resources: none.
