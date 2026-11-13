@@ -317,6 +317,9 @@ class GraphBuilder:
                 txn["timestamp"] = int(event_time.timestamp() * 1000)
             elif isinstance(event_time, bool) or not isinstance(event_time, int) or event_time <= 0:
                 raise ValueError("Transaction timestamp must be a positive epoch-millis integer")
+            version = txn.get("schema_version", 1)
+            if type(version) is not int or version != 1:
+                raise ValueError("Unsupported transaction schema_version")
             event_key = txn.get("idempotency_key")
             if not isinstance(event_key, str) or len(event_key) != 64 or any(c not in "0123456789abcdef" for c in event_key):
                 raise ValueError("Transaction idempotency key must be a SHA-256 hex digest")
