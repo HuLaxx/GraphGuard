@@ -54,6 +54,7 @@ def new_builder(cls):
     builder.consumer = MagicMock()
     builder.dlq_producer = MagicMock()
     builder.avro_deserializer = None
+    builder.allow_json_fallback = True
     builder._create_transaction_edges_batch = MagicMock()
     builder.buffer = []
     builder.pending_messages = []
@@ -182,3 +183,18 @@ def test_neo4j_result_consumed_before_batch_is_acknowledged(graph_builder_class)
     session = builder.neo4j_driver.session.return_value.__enter__.return_value
     session.run.assert_called_once()
     session.run.return_value.consume.assert_called_once()
+
+
+def test_schema_registry_unavailable_preserves_valid_avro_offset(graph_builder_class):
+    builder = new_builder(graph_builder_class)
+    builder.allow_json_fallback = False
+    builder._send_to_dlq = MagicMock()
+    msg = MagicMock()
+    msg.value.return_value = b"\\x00\\x01not-JSON-avro-fixture"
+
+    with pytest.raises(RuntimeError, match="Avro decoder unavailable"):
+        builder.process_message(msg)
+
+    builder._send_to_dlq.assert_not_called()
+    builder.consumer.commit.assert_not_called()
+    assert builder.buffer == []
