@@ -158,6 +158,11 @@ class GraphBuilder:
         # Initialize Schema Registry client + Avro deserializer
         self.schema_registry = SchemaRegistryClient(get_schema_registry_config())
         self.avro_deserializer = None
+        # JSON payloads are reserved for explicitly opted-in synthetic fixtures.
+        # Silently treating a registry outage as bad JSON can lose valid Avro events.
+        self.allow_json_fallback = (
+            os.getenv("GRAPHGUARD_JSON_FIXTURE_MODE", "false").lower() == "true"
+        )
         schema_path = os.path.join(
             os.path.dirname(__file__),
             '..', 'schemas', 'transaction_event.avsc'
@@ -313,6 +318,10 @@ class GraphBuilder:
                     logger.warning("Avro decoding failed; trying JSON fixture format", error=str(exc))
 
             if txn is None:
+                if isinstance(value, bytes) and not self.allow_json_fallback:
+                    raise RuntimeError(
+                        "Avro decoder unavailable or failed; retain offset for replay"
+                    )
                 txn = json.loads(value.decode('utf-8')) if isinstance(value, bytes) else value
 
             if not isinstance(txn, dict):
