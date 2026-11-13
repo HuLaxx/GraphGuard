@@ -9,14 +9,14 @@ Not ML scoring, a live bank connection, or a deployed service.
 The disposable test environment uses localhost port 9092 for Kafka, 7687 for
 Neo4j, and **8082** for Schema Registry (the registry's container port is 8081).
 
-\`\`\`bash
+```bash
 python -m pip install -r requirements-ci.txt -r requirements-ingestion-ci.txt
 docker compose -f docker-compose.ingestion.yml up -d --wait
 GRAPHGUARD_INGESTION_INTEGRATION=1 pytest \
     tests/integration/test_ingest_kafka_neo4j.py \
     tests/integration/test_avro_registry.py -v
 docker compose -f docker-compose.ingestion.yml down --remove-orphans
-\`\`\`
+```
 
 CI executes the same commands using temporary services; it must pass against
 the **current commit** before this milestone is accepted.
@@ -25,7 +25,7 @@ the **current commit** before this milestone is accepted.
 
 1. The actual TransactionProducer serializes synthetic Pydantic events with
    the version-one Avro schema and obtains schema IDs from the live registry.
-2. The registered subject is \`transactions.avro.acceptance-value\`. The
+2. The registered subject is `transactions.avro.acceptance-value`. The
    produced record has Confluent's Avro magic byte and a non-zero schema ID,
    not a JSON fixture.
 3. GraphBuilder resolves the schema ID through its real deserializer with
@@ -49,13 +49,13 @@ schemas and broker rebalance under concurrent partitions remain untested.
 
 ## Contract boundaries
 
-- The Avro schema defines \`schema_version=1\`. A new producer version needs
+- The Avro schema defines `schema_version=1`. A new producer version needs
   compatibility testing and a documented migration.
 - Confluent wire-framed messages are never interpreted as JSON on failure.
   An unavailable registry or unreadable schema ID fails closed with the
   original Kafka offset available for replay; operators must investigate
   permanent poison Avro records to prevent a stuck consumer.
-- JSON is allowed only with \`GRAPHGUARD_JSON_FIXTURE_MODE=true\` for
+- JSON is allowed only with `GRAPHGUARD_JSON_FIXTURE_MODE=true` for
   explicitly synthetic tests, not as a silent provider fallback.
 - The ledger is local SQLite/WAL for a reproducible demo. It is not a
   horizontally scalable, access-controlled system of record. Kafka commits
