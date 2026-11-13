@@ -63,3 +63,25 @@ The inspected workflow invoked `pnpm install --frozen-lockfile` and `pnpm --filt
 - Avro/schema registry failure now preserves the original offset instead of treating undecodable bytes as poisoned JSON. Synthetic JSON fixture mode is opt-in with `GRAPHGUARD_JSON_FIXTURE_MODE=true`.
 - **Boundary:** tests run the real GraphBuilder policy methods but stub Kafka, Neo4j, schema registry and structured logging clients. They are **not** broker-backed integration or verified recovery under process restarts, rebalances and partial graph commits. One Neo4j `MERGE` batch is idempotent by node/edge identity but ON MATCH fields can be overwritten by conflicting duplicate IDs; transaction conflict control remains to be built.
 - **Not verified:** full graph scoring/ML/SHAP, auditable investigator case, dataset licensing and leakage checks, complete auth hardening, a production Docker API image or AWS deployment. Provisioned cloud resources: none.
+
+## P1 local durable ingestion candidate — 14 November 2026 (unverified pending CI)
+
+- Review branch: `feature/graphguard-durable-ingestion-2026-11-14`, stacked on [PR #2](https://github.com/HuLaxx/GraphGuard/pull/2); NOT merged or deployed.
+- Added `data-eng/consumers/transaction_ledger.py`: SQLite/WAL with full sync, transaction-ID uniqueness, canonical content SHA-256, immutable first accepted normalized source payload, partition/offset provenance and an append-only conflicting-ID inbox. Identical retries project again to repair a crash after source write; conflicting versions never replace the first ledger record.
+- The source ledger deliberately does not persist raw IP addresses or card fragments. **Only use explicitly synthetic fixtures:** this local file is not an access-controlled production system or a substitute for governed data retention.
+- GraphBuilder writes normalized source before graph projection. The graph uses unique ID constraints and a hash gate; count assertions execute inside a Neo4j write transaction before Kafka offset commit. Existing graph nodes without hashes require reconciliation instead of silent overwrite.
+- Added `tests/unit/test_transaction_ledger.py` and expanded `tests/unit/test_graph_builder_delivery.py` for restart, duplicate/conflict, disk failure, ordering and graph hash mismatch. Results are not yet independently observed on this new branch.
+- Added `docker-compose.ingestion.yml` and `tests/integration/test_ingest_kafka_neo4j.py` (opt-in), with disposable local Kafka and Neo4j; tests publish JSON fixtures on a real broker then query actual graph state, including a restart replay. This is **not** Avro+Schema Registry or a complete source-to-case journey.
+- CI now includes the new unit tests and a separate Docker-backed integration job. Verify actual green run and link it before marking this milestone done.
+- No AWS infrastructure, paid services, deployment, ML accuracy or analyst workflow is claimed.
+
+### Reproduction for reviewers (synthetic fixtures only)
+
+```bash
+python -m pip install -r requirements-ci.txt -r requirements-ingestion-ci.txt
+docker compose -f docker-compose.ingestion.yml up -d --wait
+GRAPHGUARD_INGESTION_INTEGRATION=1 pytest tests/integration/test_ingest_kafka_neo4j.py -v
+docker compose -f docker-compose.ingestion.yml down --remove-orphans
+```
+
+Known limitations: SQLite is a single-node local ledger; no transaction spanning SQLite, Kafka and Neo4j exists. Recovery relies on at-least-once Kafka replay and idempotent projection, not exactly-once delivery. Broker outages, partial commits, same-ID conflict behavior on existing legacy graph data, partition rebalancing, schema-registry outages and deployed auth require further verification.
