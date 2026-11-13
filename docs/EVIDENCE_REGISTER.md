@@ -94,3 +94,14 @@ Known limitations: SQLite is a single-node local ledger; no transaction spanning
 - **PASS** frontend tests; **PASS** lint/typecheck/Next.js build; **PASS** high/critical dependency scan on that commit. Existing MLflow image build was queued when this snapshot was written.
 - Subsequent branch changes normalize schema defaults and add additional privacy/identity unit tests. They are **not** counted as verified by the older run; check latest-head CI before merging.
 - No Schema Registry/Avro wire-format integration, production cases, fraud accuracy claim, managed cloud resources or full golden path is demonstrated by this result.
+
+## P1 — real Avro + Schema Registry acceptance (14 November 2026)
+
+- **PASS, code SHA `c6ed9f400a71d3b7ffdd6fca80a2baf233576ccd`:** [CI run 43504349301](https://github.com/HuLaxx/GraphGuard/actions/runs/43504349301) completed with all six jobs successful. This evidence was observed from GitHub Actions jobs and logs.
+- **27 focused Python unit tests passed.** The suite includes prior recovery policy, durable ledger, synthetic data privacy checks, and new fail-closed Avro framing tests. These unit methods use stubbed service clients.
+- **4 real-service integration tests passed** on disposable Kafka, Neo4j and Confluent Schema Registry. Existing JSON-fixture ingestion remains separate from actual `TransactionProducer` Avro wire records. The Avro test verifies a registry subject/schema ID, persistent ledger, duplicate replay, immutable graph identity and conflicting same-ID DLQ.
+- **Recovery:** a real consumer with an unreachable registry endpoint fails to decode without committing its source offset; a fresh consumer on the **same group** decodes and persists the record after the URL is restored. This simulates a network outage; it does not shut down the registry container.
+- **PASS** frontend tests, frontend ESLint/typecheck/production build, high/critical Trivy manifest scan, and existing MLflow image build. A built MLflow image is not an API image.
+- **Changed code:** `data-eng/producers/transaction_ingester.py`, `data-eng/consumers/graph_builder.py`, `tests/integration/test_avro_registry.py`, `tests/unit/test_graph_builder_delivery.py`, `requirements-ingestion-ci.txt`, `docker-compose.ingestion.yml`, `.github/workflows/ci.yml`; reproduction: [AVRO_INGESTION.md](AVRO_INGESTION.md).
+- **Boundary:** schema evolution (backward/forward compatibility), arbitrary damaged wire data, rebalance and multi-partition offset behaviour, legacy graph migration, model scoring, analyst review, IAM/production auth and AWS remain unverified.
+- These are PR-branch observations. The main branch has not been merged or certified. No cloud resources or paid services were provisioned.
