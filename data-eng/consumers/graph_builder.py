@@ -282,22 +282,29 @@ class GraphBuilder:
         """
         value = msg.value()
         try:
-            txn = None
-            if isinstance(value, bytes) and self.avro_deserializer is not None:
+            # Confluent wire framing: 0x00 + schema ID + Avro payload.
+            # A registry outage or undecodable Avro is an infrastructure/contract
+            # fault, not permission to parse bytes as JSON and advance offsets.
+            if isinstance(value, bytes) and value.startswith(b"\\x00"):
+                if self.avro_deserializer is None:
+                    raise RuntimeError(
+                        "Avro decoder unavailable; retain offset for replay"
+                    )
                 try:
                     txn = self.avro_deserializer(
-                        value,
-                        SerializationContext(self.TOPIC, MessageField.VALUE)
+                        value, SerializationContext(self.TOPIC, MessageField.VALUE)
                     )
-                except (ValueError, TypeError, UnicodeError) as exc:
-                    logger.warning("Avro decoding failed; trying JSON fixture format", error=str(exc))
-
-            if txn is None:
-                if isinstance(value, bytes) and not self.allow_json_fallback:
+                except Exception as exc:
                     raise RuntimeError(
-                        "Avro decoder unavailable or failed; retain offset for replay"
-                    )
-                txn = json.loads(value.decode('utf-8')) if isinstance(value, bytes) else value
+                        "Avro/Schema Registry decode failed; retain offset for replay"
+                    ) from exc
+            elif self.allow_json_fallback:
+                # Only explicitly opted-in synthetic test fixtures accept JSON.
+                txn = json.loads(value.decode("utf-8")) if isinstance(value, bytes) else value
+            else:
+                raise RuntimeError(
+                    "Unexpected non-Avro transaction; retain offset for investigation"
+                )
 
             if not isinstance(txn, dict):
                 raise ValueError("Transaction must be a JSON object")
