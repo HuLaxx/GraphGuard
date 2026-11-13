@@ -24,6 +24,11 @@ def canonical_payload(transaction: dict) -> str:
     # This ledger is restricted to synthetic development inputs.
     excluded = {"payload_sha256", "ip_address", "card_last4"}
     source = {k: v for k, v in transaction.items() if k not in excluded}
+    # Writer-schema defaults and a double amount have the same identity
+    # whether supplied explicitly or resolved by a compatible reader.
+    source.setdefault("schema_version", 1)
+    if isinstance(source.get("amount"), (int, float)) and not isinstance(source["amount"], bool):
+        source["amount"] = float(source["amount"])
     return json.dumps(source, sort_keys=True, separators=(",", ":"), allow_nan=False)
 
 
