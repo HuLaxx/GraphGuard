@@ -24,6 +24,8 @@ from confluent_kafka.serialization import SerializationContext, MessageField
 from neo4j import GraphDatabase
 import structlog
 
+from transaction_ledger import TransactionLedger
+
 # Configure structured logging
 logger = structlog.get_logger(__name__)
 
@@ -69,58 +71,31 @@ def get_schema_registry_config() -> dict:
 # Cypher Queries (Spec Lines 865-888)
 # ============================================
 
-CREATE_TRANSACTION_EDGE = """
-MERGE (u:User {id: $user_id})
-ON CREATE SET u.created_at = timestamp()
-
-MERGE (m:Merchant {id: $merchant_id})
-ON CREATE SET m.created_at = timestamp()
-
-MERGE (d:Device {id: $device_id})
-ON CREATE SET d.first_seen = $timestamp
-SET d.last_seen = $timestamp
-
-MERGE (t:Transaction {id: $transaction_id})
-ON CREATE SET t.amount = $amount,
-              t.timestamp = $timestamp,
-              t.currency = $currency,
-              t.fraud_score = 0.0,
-              t.status = 'PENDING'
-ON MATCH SET t.amount = $amount,
-             t.timestamp = $timestamp,
-             t.currency = $currency
-
-MERGE (u)-[:PERFORMED]->(t)
-MERGE (t)-[:PAID_TO]->(m)
-MERGE (t)-[:USED_DEVICE]->(d)
-"""
-
-# Batch version for performance
 CREATE_TRANSACTION_EDGE_BATCH = """
+// Only the original canonical content is allowed to create graph relationships.
+// Existing nodes from older, unverified pipelines must be reconciled first.
 UNWIND $transactions AS txn
-MERGE (u:User {id: txn.user_id})
-ON CREATE SET u.created_at = timestamp()
-
-MERGE (m:Merchant {id: txn.merchant_id})
-ON CREATE SET m.created_at = timestamp()
-
-MERGE (d:Device {id: txn.device_id})
-ON CREATE SET d.first_seen = txn.timestamp
-SET d.last_seen = txn.timestamp
-
 MERGE (t:Transaction {id: txn.transaction_id})
-ON CREATE SET t.amount = txn.amount,
+ON CREATE SET t.payload_sha256 = txn.payload_sha256,
+              t.amount = txn.amount,
               t.timestamp = txn.timestamp,
               t.currency = txn.currency,
               t.fraud_score = 0.0,
               t.status = 'PENDING'
-ON MATCH SET t.amount = txn.amount,
-             t.timestamp = txn.timestamp,
-             t.currency = txn.currency
-
+WITH txn, t
+WHERE t.payload_sha256 = txn.payload_sha256
+MERGE (u:User {id: txn.user_id})
+ON CREATE SET u.created_at = timestamp()
+MERGE (m:Merchant {id: txn.merchant_id})
+ON CREATE SET m.created_at = timestamp()
+MERGE (d:Device {id: txn.device_id})
+ON CREATE SET d.first_seen = txn.timestamp
+SET d.last_seen = CASE WHEN d.last_seen IS NULL OR d.last_seen < txn.timestamp
+                       THEN txn.timestamp ELSE d.last_seen END
 MERGE (u)-[:PERFORMED]->(t)
 MERGE (t)-[:PAID_TO]->(m)
 MERGE (t)-[:USED_DEVICE]->(d)
+RETURN count(t) AS applied
 """
 
 
@@ -186,6 +161,14 @@ class GraphBuilder:
         # Verify Neo4j connection
         self.neo4j_driver.verify_connectivity()
         
+        # A durable, local source ledger is written before any derived graph write.
+        # This development implementation is NOT distributed exactly-once.
+        ledger_path = os.getenv(
+            "GRAPHGUARD_LEDGER_PATH",
+            os.path.join(os.path.dirname(__file__), "..", "..", ".local", "transaction-ledger.sqlite3"),
+        )
+        self.ledger = TransactionLedger(ledger_path)
+
         # Transaction buffer for batching
         self.buffer: List[dict] = []
         self.pending_messages = []
@@ -198,51 +181,43 @@ class GraphBuilder:
         )
     
     def _create_indexes(self) -> None:
-        """Create Neo4j indexes for performance."""
+        """Enforce graph identity before accepting source events."""
         with self.neo4j_driver.session() as session:
-            # User index
-            session.run("CREATE INDEX user_id_index IF NOT EXISTS FOR (u:User) ON (u.id)")
-            # Merchant index
-            session.run("CREATE INDEX merchant_id_index IF NOT EXISTS FOR (m:Merchant) ON (m.id)")
-            # Device index
-            session.run("CREATE INDEX device_id_index IF NOT EXISTS FOR (d:Device) ON (d.id)")
-            # Transaction index
-            session.run("CREATE INDEX txn_id_index IF NOT EXISTS FOR (t:Transaction) ON (t.id)")
-            session.run("CREATE INDEX txn_timestamp_index IF NOT EXISTS FOR (t:Transaction) ON (t.timestamp)")
-        
-        logger.info("Neo4j indexes created/verified")
-    
-    def _create_transaction_edge(self, txn: dict) -> None:
-        """
-        Create a single transaction edge in Neo4j.
-        Reference: Specification.md Lines 863-888
-        """
-        with self.neo4j_driver.session() as session:
+            for label, name in (
+                ("User", "graphguard_user_id_unique"),
+                ("Merchant", "graphguard_merchant_id_unique"),
+                ("Device", "graphguard_device_id_unique"),
+                ("Transaction", "graphguard_transaction_id_unique"),
+            ):
+                session.run(
+                    f"CREATE CONSTRAINT {name} IF NOT EXISTS FOR (n:{label}) REQUIRE n.id IS UNIQUE"
+                ).consume()
             session.run(
-                CREATE_TRANSACTION_EDGE,
-                user_id=txn['user_id'],
-                merchant_id=txn['merchant_id'],
-                device_id=txn['device_id'],
-                amount=txn['amount'],
-                timestamp=txn['timestamp'],
-                transaction_id=txn['transaction_id'],
-                currency=txn.get('currency', 'USD')
-            )
-    
+                "CREATE INDEX txn_timestamp_index IF NOT EXISTS FOR (t:Transaction) ON (t.timestamp)"
+            ).consume()
+
+        logger.info("Neo4j identity constraints created/verified")
+
+    def _create_transaction_edge(self, txn: dict) -> None:
+        """Single-event projection follows the same identity safety as a batch."""
+        self._create_transaction_edges_batch([txn])
+
+    @staticmethod
+    def _write_batch(tx, transactions: List[dict]) -> None:
+        result = tx.run(CREATE_TRANSACTION_EDGE_BATCH, transactions=transactions)
+        record = result.single()
+        if record is None or record["applied"] != len(transactions):
+            # Raising within execute_write rolls back the entire graph transaction.
+            # An existing graph without payload_sha256 requires migration, not overwrite.
+            raise RuntimeError("Neo4j transaction identity mismatch; refusing graph projection")
+
     def _create_transaction_edges_batch(self, transactions: List[dict]) -> None:
-        """
-        Create multiple transaction edges in one query (batched).
-        Gotcha: Batch 10-20 transactions for performance.
-        """
+        """Atomic graph projection; count and identity checked before commit."""
         with self.neo4j_driver.session() as session:
-            # Consume the result to surface server-side failures before offset commits.
-            session.run(CREATE_TRANSACTION_EDGE_BATCH, transactions=transactions).consume()
-        
-        logger.info(
-            "Batch written to Neo4j",
-            batch_size=len(transactions)
-        )
-    
+            session.execute_write(self._write_batch, transactions)
+
+        logger.info("Batch written to Neo4j", batch_size=len(transactions))
+
     def _send_to_dlq(self, message_value: bytes, error: str) -> None:
         """Publish a permanently invalid message to DLQ and require an ACK.
 
@@ -347,11 +322,27 @@ class GraphBuilder:
                 raise ValueError("Transaction idempotency key must be a SHA-256 hex digest")
         except (ValueError, TypeError, UnicodeError, json.JSONDecodeError) as exc:
             logger.warning("Invalid transaction input", error=str(exc))
-            # Do not commit until DLQ has acknowledged the poison message.
+            # Commit the earlier valid events before any later poison offset.
+            if self.buffer:
+                self._flush_buffer()
             self._send_to_dlq(value, f"InvalidTransaction: {type(exc).__name__}")
             self.consumer.commit(message=msg, asynchronous=False)
             return
 
+        # Durable source write is deliberately outside the validation handler.
+        # Storage failures retain Kafka offsets and are never classified as poison.
+        receipt = self.ledger.record(
+            txn, topic=msg.topic(), partition=msg.partition(), offset=msg.offset()
+        )
+        if receipt.status == "conflict":
+            if self.buffer:
+                self._flush_buffer()
+            # Keep the original immutable source and graph untouched.
+            self._send_to_dlq(value, "TransactionIdConflict")
+            self.consumer.commit(message=msg, asynchronous=False)
+            logger.warning("Transaction identity conflict quarantined", transaction_id=txn["transaction_id"])
+            return
+        txn["payload_sha256"] = receipt.payload_hash
         self.buffer.append(txn)
         self.pending_messages.append(msg)
         logger.debug("Transaction buffered", transaction_id=txn["transaction_id"], buffer_size=len(self.buffer))
@@ -412,6 +403,7 @@ class GraphBuilder:
         """Clean up resources."""
         self.consumer.close()
         self.neo4j_driver.close()
+        self.ledger.close()
         self.dlq_producer.flush()
         
         logger.info("GraphBuilder closed")
