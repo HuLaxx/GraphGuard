@@ -87,3 +87,26 @@ temporal validation over multiple periods, sample uncertainty, calibrated
 predictions if used for decisions, and human-review feedback.
 Next milestone is **versioned source-to-model scoring** with actual model
 hash checks and measured SHAP, followed by authenticated case audit.
+
+## Measured evidence — CI 43611311872 (14 November 2026)
+
+**Exact training code SHA:** `462e7c682bedd2595f672ef09f21d8333f06a114`; [GitHub Actions run](https://github.com/HuLaxx/GraphGuard/actions/runs/43611311872). All 7 jobs passed; 6 dedicated ML unit tests passed and the generated artifacts were uploaded.
+
+| Synthetic held-out test metric (144 transactions, 16 positive) | Logistic regression | XGBoost |
+| --- | ---: | ---: |
+| Average precision / PR-AUC | 0.6887 | 0.7650 |
+| ROC-AUC | 0.9072 | 0.9409 |
+| Precision@25 | 0.52 | 0.52 |
+| Recall at validation-selected operating threshold | 0.7500 | 0.8125 |
+| Realized false-positive rate | 0.0625 | 0.09375 |
+| Brier score, lower is better | 0.0824 | 0.0695 |
+| Ten-bin ECE, lower is better | 0.1120 | 0.0630 |
+
+Selected model by validation PR-AUC: **XGBoost** (validation AP 0.8786 vs 0.8328 for logistic regression). These numbers are **specific to this generator, fixed seed, fixed period and dependency versions**. A 5% validation FPR target is **not maintained on test**; neither model should be promoted based on these synthetic figures.
+
+Source dataset SHA-256:
+`100b3ef3ae97ef7ea0d040de0bdbe31a6109cfe39f958d66eb3aeec57f0d3306`
+
+Model SHA-256: logistic `35acf88762b6f54701f1d2453876b74b3fb9fca39b4dfa3d09d097d11235aece`; XGBoost `87e40983a9294b60b3441c41f7c3c79ea1d0f7461d032cb6f429f1129a43a20e`.
+
+The CI artifact `graphguard-pit-ml-synthetic-baselines` includes both models, the synthetic records and full manifest. No deployed inference endpoint or registered production model exists.
