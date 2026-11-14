@@ -122,3 +122,30 @@ jobs:
       - name: Tear down disposable services
         if: always()
         run: docker compose -f docker-compose.ingestion.yml down --remove-orphans
+
+  ml-baselines:
+    name: Synthetic point-in-time ML baselines
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install CPU-only baseline dependencies
+        run: python -m pip install -r requirements-ml-ci.txt
+      - name: Run deterministic ML leakage and artifact tests
+        run: python -m pytest tests/unit/test_pit_baselines.py -v
+      - name: Train both models and generate inspectable synthetic metrics
+        run: python -m ml.training.pit_baselines --count 720 --seed 42 --output-dir .local/ml-baselines
+      - name: Upload synthetic-only report and model artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: graphguard-pit-ml-synthetic-baselines
+          path: |
+            .local/ml-baselines/manifest.json
+            .local/ml-baselines/synthetic_records.jsonl
+            .local/ml-baselines/logistic_baseline.json
+            .local/ml-baselines/xgboost_baseline.json
+          if-no-files-found: error
+          retention-days: 14

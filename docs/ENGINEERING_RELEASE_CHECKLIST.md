@@ -24,16 +24,16 @@ Mark [x] only when supported by a reproducible test on an identified commit. A g
 - [x] Verified canonical SHA-256 / duplicate / conflicting-ID path with SQLite ledger and graph identity checks on synthetic fixtures, including real Kafka/Neo4j integration at `dc892a0`. Legacy-graph migration remains unverified. [CI 43492440036](https://github.com/HuLaxx/GraphGuard/actions/runs/43492440036).
 - [ ] Verify duplicate delivery, restarts, broker outage, graph outage, poison event, DLQ failure and replay without silent loss.
 - [x] Implemented and tested `pit-v1` historical graph-context aggregates from accepted ledger relationships, with strict event-time/receipt-order cutoffs, immutable snapshots, late arrivals, mixed currencies and replay. **Synthetic single-ledger scope only.** [PR #5](https://github.com/HuLaxx/GraphGuard/pull/5), [34 Python tests](https://github.com/HuLaxx/GraphGuard/actions/runs/43584978727), [5 real-service tests](https://github.com/HuLaxx/GraphGuard/actions/runs/43584904390). Cross-provider entity resolution still requires validation.
-- [ ] Train/load a real versioned model artifact and score the new transaction; prove exact model hash/version.
+- [ ] Offline synthetic LR/XGBoost models are saved and XGBoost reload is verified with SHA-256, but **live Kafka → approved versioned scorer → explanation/case integration is NOT DONE**. [PR #6](https://github.com/HuLaxx/GraphGuard/pull/6).
 - [ ] Display a correctly labelled explanation (SHAP = attribution, **not causation**).
 - [ ] Create an authenticated human-review case, record a decision and persist immutable audit history.
 - [ ] Run one seeded command sequence proving source → graph → features → model → explanation → analyst case.
 
 ## P2 — Reproducible ML and model governance
-- [ ] Record dataset licence, synthetic/public limitations, class balance, deidentification and schema.
-- [ ] Logistic regression and XGBoost baselines with deterministic environment/seeds and chronological holdout.
-- [ ] Test entity leakage, identity overlap, target leakage and feature availability at decision time.
-- [ ] Report PR-AUC, recall at stated FPR, precision@K, calibration, review volume and uncertainty with scripts/artifacts.
+- [x] Recorded in-repo synthetic-generator provenance, seed, class distribution, dataset hash, split dates, explicit feature schema and no external dataset licence. **External licensed real/public dataset evidence remains open.** [PR #6](https://github.com/HuLaxx/GraphGuard/pull/6), [CI 43611311872](https://github.com/HuLaxx/GraphGuard/actions/runs/43611311872).
+- [x] Trained logistic regression and XGBoost on deterministic seed-42 `pit-v1` synthetic snapshots, strict chronological 65/15/20 holdout and train-only weights/scaling; saved versioned JSON artifacts with hashes. [CI 43611311872](https://github.com/HuLaxx/GraphGuard/actions/runs/43611311872).
+- [ ] Source identity is excluded from an explicit feature allowlist; repeat-user/device overlap is **audited** and test-label-isolation assertions pass. Remaining: independent entity-disjoint cold-start and true feature-availability validation on public data. [PR #6](https://github.com/HuLaxx/GraphGuard/pull/6).
+- [ ] Reported measured validation/test PR-AUC, ROC-AUC, precision@25, recall/realized FPR and Brier/ECE in downloadable synthetic manifest. **Remaining:** confidence intervals, calibration corrections and review volume/cost simulations. Test FPR exceeded the validation 5% budget (XGBoost 9.375%). [CI 43611311872](https://github.com/HuLaxx/GraphGuard/actions/runs/43611311872).
 - [ ] SHAP feature-attribution plots validated on actual scored instances; no causal or individual-accusation claims.
 - [ ] Model registry/provenance, MLflow experiment tracking and audited promote/rollback.
 - [ ] Drift, model health and human-review feedback loops with thresholds, false-positive monitoring and rollback test.
@@ -56,6 +56,6 @@ Mark [x] only when supported by a reproducible test on an identified commit. A g
 - [ ] Publish GraphGuard as lead ML/MLOps example **only when** real source-to-case golden path is independently reproducible.
 
 ## Release decision
-- **Current gate:** `pit-v1` temporal features verified for synthetic events with 34 focused Python tests (new CI suite) and 5 real Kafka/Neo4j/Schema Registry integration tests (previous implementation SHA). **Complete model → SHAP → analyst-case golden path remains unverified.** Current PR head must also pass required CI before review/merge.
-- **Current draft PR:** [#5](https://github.com/HuLaxx/GraphGuard/pull/5), stacked on [#4](https://github.com/HuLaxx/GraphGuard/pull/4) → [#3](https://github.com/HuLaxx/GraphGuard/pull/3) → [#2](https://github.com/HuLaxx/GraphGuard/pull/2) → [#1](https://github.com/HuLaxx/GraphGuard/pull/1). Next: reproducible chronological ML baselines and point-in-time feature availability, with no unsupported production scoring claim. Keep drafts for review.
+- **Current gate:** first synthetic ML baseline experiment trained and measured on SHA `462e7c6` with all seven CI jobs passing, [CI 43611311872](https://github.com/HuLaxx/GraphGuard/actions/runs/43611311872). **Models are offline experimental artifacts, not fraud production predictions.** Full model → SHAP → analyst-case path remains unverified.
+- **Current draft PR:** [#6](https://github.com/HuLaxx/GraphGuard/pull/6), stacked on [#5](https://github.com/HuLaxx/GraphGuard/pull/5) → [#4](https://github.com/HuLaxx/GraphGuard/pull/4) → [#3](https://github.com/HuLaxx/GraphGuard/pull/3) → [#2](https://github.com/HuLaxx/GraphGuard/pull/2) → [#1](https://github.com/HuLaxx/GraphGuard/pull/1). Next: hash-verified offline model scoring from a real synthetic Kafka event and then actual SHAP on the same instance. Retain all drafts pending review and approval.
 - **Never claim:** production bank fraud detection, fairness guarantees, live customers, GAT readiness or AWS deployment without exact evidence.
