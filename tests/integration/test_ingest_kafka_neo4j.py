@@ -42,7 +42,7 @@ def synthetic_event(amount=17.25):
 
 
 def publish_events():
-    admin = AdminClient({"bootstrap.servers": "localhost:9092"})
+    admin = AdminClient({"bootstrap.servers": "127.0.0.1:9092"})
     for topic in ("transactions.raw", "transactions.dlq"):
         futures = admin.create_topics([NewTopic(topic, num_partitions=1, replication_factor=1)])
         for name, future in futures.items():
@@ -57,7 +57,7 @@ def publish_events():
         synthetic_event(999.0),  # same ID with different content -> conflict DLQ
         {"transaction_id": "bad-transaction"},  # invalid -> DLQ
     ]
-    producer = Producer({"bootstrap.servers": "localhost:9092", "acks": "all"})
+    producer = Producer({"bootstrap.servers": "127.0.0.1:9092", "acks": "all"})
     errors = []
 
     def delivered(err, _msg):
@@ -75,7 +75,7 @@ def run_consumer(group_id: str, ledger_path: Path, monkeypatch):
     monkeypatch.setenv("GRAPHGUARD_JSON_FIXTURE_MODE", "true")
     builder = GraphBuilder(
         consumer_config={
-            "bootstrap.servers": "localhost:9092",
+            "bootstrap.servers": "127.0.0.1:9092",
             "group.id": group_id,
             "auto.offset.reset": "earliest",
             "enable.auto.commit": False,
@@ -138,7 +138,7 @@ def test_kafka_ledger_neo4j_conflict_and_restart_replay(tmp_path, monkeypatch):
     ledger.close()
 
     dlq = Consumer({
-        "bootstrap.servers": "localhost:9092",
+        "bootstrap.servers": "127.0.0.1:9092",
         "group.id": "graphguard-integration-dlq-" + uuid.uuid4().hex,
         "auto.offset.reset": "earliest",
     })
