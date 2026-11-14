@@ -44,7 +44,7 @@ TransactionEvent = producer_module.TransactionEvent
 TransactionProducer = producer_module.TransactionProducer
 GraphBuilder = builder_module.GraphBuilder
 
-KAFKA_URL = "localhost:9092"
+KAFKA_URL = "127.0.0.1:9092"
 REGISTRY_URL = "http://127.0.0.1:8082"
 NEO4J_URL = "bolt://localhost:7687"
 NEO4J_AUTH = ("neo4j", "graphguard-integration-only")
