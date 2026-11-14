@@ -61,6 +61,7 @@ def new_builder(cls):
     builder.pending_messages = []
     builder.ledger = MagicMock()
     builder.ledger.record.return_value = types.SimpleNamespace(status="new", payload_hash="a" * 64)
+    builder.feature_store = MagicMock()
     return builder
 
 
@@ -304,3 +305,28 @@ def test_non_avro_payload_fails_closed_without_fixture_opt_in(graph_builder_clas
     builder._send_to_dlq.assert_not_called()
     builder.consumer.commit.assert_not_called()
     builder.ledger.record.assert_not_called()
+
+
+def test_feature_snapshot_is_created_before_kafka_offset_commit(graph_builder_class):
+    builder = new_builder(graph_builder_class)
+    message = kafka_message(transaction())
+    builder.buffer = [transaction()]
+    builder.pending_messages = [message]
+    calls = []
+    builder._create_transaction_edges_batch.side_effect = lambda _: calls.append("graph")
+    builder.feature_store.snapshot_for.side_effect = lambda _: calls.append("features")
+    builder.consumer.commit.side_effect = lambda **_: calls.append("commit")
+    builder._flush_buffer()
+    assert calls == ["graph", "features", "commit"]
+
+
+def test_feature_materialization_failure_retains_uncommitted_source_offset(graph_builder_class):
+    builder = new_builder(graph_builder_class)
+    message = kafka_message(transaction())
+    builder.buffer = [transaction()]
+    builder.pending_messages = [message]
+    builder.feature_store.snapshot_for.side_effect = OSError("SQLite unavailable")
+    with pytest.raises(OSError, match="SQLite unavailable"):
+        builder._flush_buffer()
+    builder.consumer.commit.assert_not_called()
+    assert builder.buffer and builder.pending_messages == [message]
