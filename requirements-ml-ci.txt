@@ -1,0 +1,6 @@
+# Standalone, CPU-only deterministic baseline dependencies.
+# No heavy GAT, Feast, Torch, paid inference API or cloud credentials.
+pytest>=8.0,<10.0
+numpy>=1.26,<3.0
+scikit-learn>=1.4,<2.0
+xgboost>=2.0.3,<4.0
