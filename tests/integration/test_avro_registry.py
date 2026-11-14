@@ -271,3 +271,71 @@ def test_producer_rejects_naive_or_nonfinite_transaction_fields():
 
     with pytest.raises(ValueError):
         make_event("synthetic-infinite-amount", amount=float("inf"))
+
+
+
+class TemporalFeatureProducer(TransactionProducer):
+    TOPIC = "transactions.pit.acceptance"
+
+
+class TemporalFeatureBuilder(GraphBuilder):
+    TOPIC = TemporalFeatureProducer.TOPIC
+    DLQ_TOPIC = "transactions.pit.acceptance.dlq"
+
+
+def test_real_avro_ingestion_materializes_past_only_features(tmp_path, monkeypatch):
+    """Real producer/registry/broker/graph plus immutable ledger features."""
+    from datetime import timedelta
+    from transaction_ledger import TransactionLedger
+
+    create_topics(TemporalFeatureProducer.TOPIC, TemporalFeatureBuilder.DLQ_TOPIC)
+    baseline = datetime(2026, 9, 21, 12, 0, tzinfo=timezone.utc)
+
+    def at(event_id, hours):
+        source = make_event(event_id)
+        return source.model_copy(update={"timestamp": baseline + timedelta(hours=hours)})
+
+    # A future *event time* arrives at Kafka before the target event.
+    publish(TemporalFeatureProducer, [
+        at("synthetic-pit-historical", -1),
+        at("synthetic-pit-future", 1),
+        at("synthetic-pit-target", 0),
+    ])
+    ledger_path = tmp_path / "temporal-features.sqlite3"
+    group = "graphguard-pit-" + uuid.uuid4().hex
+    start_builder(TemporalFeatureBuilder, group, ledger_path, monkeypatch).run(max_messages=3)
+
+    assert_graph_record("synthetic-pit-target", 17.25)
+    ledger = TransactionLedger(str(ledger_path))
+    try:
+        original_row = ledger.connection.execute(
+            """SELECT features_json, features_sha256
+               FROM transaction_feature_snapshots
+               WHERE transaction_id='synthetic-pit-target' AND feature_version='pit-v1'"""
+        ).fetchone()
+        assert original_row is not None
+        snapshot = json.loads(original_row[0])
+        assert snapshot["features"]["user_txn_count_24h"] == 1
+        assert snapshot["features"]["device_txn_count_7d"] == 1
+        assert snapshot["features"]["user_same_currency_amount_sum_24h"] == 17.25
+        assert "ip_address" not in original_row[0]
+        assert "card_last4" not in original_row[0]
+    finally:
+        ledger.close()
+
+    # A late-arriving historical event cannot mutate the target's first decision.
+    publish(TemporalFeatureProducer, [at("synthetic-pit-late", -0.5)])
+    start_builder(TemporalFeatureBuilder, group, ledger_path, monkeypatch).run(max_messages=1)
+    ledger = TransactionLedger(str(ledger_path))
+    try:
+        replayed_row = ledger.connection.execute(
+            """SELECT features_json, features_sha256
+               FROM transaction_feature_snapshots
+               WHERE transaction_id='synthetic-pit-target' AND feature_version='pit-v1'"""
+        ).fetchone()
+        assert replayed_row == original_row
+        assert ledger.connection.execute(
+            "SELECT COUNT(*) FROM transaction_feature_snapshots"
+        ).fetchone()[0] == 4
+    finally:
+        ledger.close()
