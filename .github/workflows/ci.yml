@@ -64,7 +64,7 @@ jobs:
           
       - name: Run pytest
         run: |
-          pytest tests/unit/test_rag.py tests/unit/test_graph_builder_delivery.py tests/unit/test_transaction_ledger.py -v
+          pytest tests/unit/test_rag.py tests/unit/test_graph_builder_delivery.py tests/unit/test_transaction_ledger.py tests/unit/test_point_in_time_features.py -v
 
   security:
     name: High / Critical Dependency Security Scan
