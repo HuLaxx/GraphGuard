@@ -25,6 +25,7 @@ from neo4j import GraphDatabase
 import structlog
 
 from transaction_ledger import TransactionLedger
+from point_in_time_features import PointInTimeFeatureStore
 
 # Configure structured logging
 logger = structlog.get_logger(__name__)
@@ -168,6 +169,7 @@ class GraphBuilder:
             os.path.join(os.path.dirname(__file__), "..", "..", ".local", "transaction-ledger.sqlite3"),
         )
         self.ledger = TransactionLedger(ledger_path)
+        self.feature_store = PointInTimeFeatureStore(self.ledger.connection)
 
         # Transaction buffer for batching
         self.buffer: List[dict] = []
@@ -256,6 +258,11 @@ class GraphBuilder:
 
         try:
             self._create_transaction_edges_batch(self.buffer)
+            # Materialize a stable, label-free feature snapshot only after
+            # the graph write succeeds and before acknowledging Kafka offsets.
+            # A crash here is repaired by replaying the same source ID.
+            for txn in self.buffer:
+                self.feature_store.snapshot_for(txn["transaction_id"])
             for msg in self.pending_messages:
                 committed = self.consumer.commit(message=msg, asynchronous=False)
                 if committed and any(getattr(part, "error", None) for part in committed):
