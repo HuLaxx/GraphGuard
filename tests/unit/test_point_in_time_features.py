@@ -138,8 +138,18 @@ def test_window_boundaries_and_data_contract_fail_closed(tmp_path):
     features = PointInTimeFeatureStore(ledger.connection).snapshot_for("target")["features"]
     assert features["user_txn_count_24h"] == 1
 
-    # An invalid accepted-record fixture cannot silently enter model features.
-    put(ledger, event("bad", T + HOUR, amount=float("nan")), 4)
+    # Simulate a corrupted ledger payload (record() normally rejects NaN).
+    put(ledger, event("bad", T + HOUR), 4)
+    bad = ledger.connection.execute(
+        "SELECT payload_json FROM transactions WHERE transaction_id='bad'"
+    ).fetchone()[0]
+    corrupted = json.loads(bad)
+    corrupted["timestamp"] = 0
+    ledger.connection.execute(
+        "UPDATE transactions SET payload_json=? WHERE transaction_id='bad'",
+        (json.dumps(corrupted),),
+    )
+    ledger.connection.commit()
     with pytest.raises(ValueError):
         PointInTimeFeatureStore(ledger.connection).snapshot_for("bad")
     assert ledger.connection.execute(
