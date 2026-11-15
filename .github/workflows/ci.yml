@@ -134,8 +134,8 @@ jobs:
           python-version: '3.11'
       - name: Install CPU-only baseline dependencies
         run: python -m pip install -r requirements-ml-ci.txt
-      - name: Run deterministic ML leakage, artifact and verified scoring tests
-        run: python -m pytest tests/unit/test_pit_baselines.py tests/unit/test_verified_pit_scorer.py -v
+      - name: Test ML baselines, verified inference and native SHAP reconstruction
+        run: python -m pytest tests/unit/test_pit_baselines.py tests/unit/test_verified_pit_scorer.py tests/unit/test_verified_shap.py -v
       - name: Train both models and generate inspectable synthetic metrics
         run: python -m ml.training.pit_baselines --count 720 --seed 42 --output-dir .local/ml-baselines
       - name: Upload synthetic-only report and model artifacts
