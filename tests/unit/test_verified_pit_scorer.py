@@ -181,3 +181,39 @@ def test_caller_cannot_insert_fabricated_first_research_score(trained_and_ingest
     assert ledger.connection.execute(
         "SELECT COUNT(*) FROM transaction_research_scores"
     ).fetchone()[0] == 0
+
+
+
+def test_both_approved_model_formats_are_loadable_when_manifest_is_re_pinned(
+    trained_and_ingested,
+):
+    folder, _, _, ledger, event = trained_and_ingested
+    path = folder / "manifest.json"
+    manifest = json.loads(path.read_text())
+    for selected in ("logistic_regression", "xgboost"):
+        manifest["selected_by_validation_pr_auc"] = selected
+        path.write_bytes(
+            json.dumps(manifest, sort_keys=True, separators=(",", ":")).encode() + b"\n"
+        )
+        trusted_pin = sha(path)
+        scorer = VerifiedSyntheticScorer(
+            folder, expected_manifest_sha256=trusted_pin,
+        )
+        scored = scorer.score(ledger.connection, event["transaction_id"])
+        assert scored["model_name"] == selected
+        assert scored["manifest_sha256"] == trusted_pin
+        assert 0 <= scored["score"] <= 1
+
+
+def test_model_feature_allowlist_mismatch_fails_even_with_fresh_manifest_pin(
+    trained_and_ingested,
+):
+    folder, _, _, _, _ = trained_and_ingested
+    path = folder / "manifest.json"
+    manifest = json.loads(path.read_text())
+    manifest["feature_columns"] = list(reversed(manifest["feature_columns"]))
+    path.write_bytes(
+        json.dumps(manifest, sort_keys=True, separators=(",", ":")).encode() + b"\n"
+    )
+    with pytest.raises(ScoringContractError, match="feature/version contract"):
+        VerifiedSyntheticScorer(folder, expected_manifest_sha256=sha(path))
