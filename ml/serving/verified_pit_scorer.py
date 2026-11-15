@@ -1,6 +1,6 @@
 """Fail-closed, hash-pinned OFFLINE inference for synthetic GraphGuard events.
 
-This module scores accepted \`pit-v1\` ledger snapshots without importing the
+This module scores accepted `pit-v1` ledger snapshots without importing the
 existing API's heuristic explanations or issuing automated accusations.
 The manifest SHA must be pinned out-of-band (e.g. the trusted CI artifact).
 """
