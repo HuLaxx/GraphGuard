@@ -178,8 +178,10 @@ def test_caller_cannot_insert_fabricated_first_research_score(trained_and_ingest
     forged = dict(genuine, score=1.0 if genuine["score"] != 1.0 else 0.0)
     with pytest.raises(ScoringContractError, match="not verified by the pinned scorer"):
         save_research_score(ledger.connection, forged, scorer=scorer)
+    # A rejected forged *first* write must not even create the score table.
     assert ledger.connection.execute(
-        "SELECT COUNT(*) FROM transaction_research_scores"
+        "SELECT COUNT(*) FROM sqlite_master "
+        "WHERE type='table' AND name='transaction_research_scores'"
     ).fetchone()[0] == 0
 
 
