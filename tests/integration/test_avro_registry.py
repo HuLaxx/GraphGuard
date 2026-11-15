@@ -339,3 +339,78 @@ def test_real_avro_ingestion_materializes_past_only_features(tmp_path, monkeypat
         ).fetchone()[0] == 4
     finally:
         ledger.close()
+
+
+
+class VerifiedInferenceProducer(TransactionProducer):
+    TOPIC = "transactions.pit.verified-score"
+
+
+class VerifiedInferenceBuilder(GraphBuilder):
+    TOPIC = VerifiedInferenceProducer.TOPIC
+    DLQ_TOPIC = "transactions.pit.verified-score.dlq"
+
+
+def test_real_avro_transaction_scores_against_hash_pinned_training_artifact(
+    tmp_path, monkeypatch,
+):
+    """End-to-end *synthetic* Avro ingestion -> PIT -> native ML score.
+
+    The model is trained offline on separate synthetic samples, then loaded
+    from disk with an independently supplied manifest SHA. No API, RAG,
+    SHAP, accusation, or automated operational decision is exercised.
+    """
+    import hashlib
+    from transaction_ledger import TransactionLedger
+    from ml.training.pit_baselines import run_experiment
+    from ml.serving.verified_pit_scorer import (
+        RESEARCH_STATUS, VerifiedSyntheticScorer, save_research_score,
+    )
+
+    create_topics(VerifiedInferenceProducer.TOPIC, VerifiedInferenceBuilder.DLQ_TOPIC)
+    model_dir = tmp_path / "approved-model"
+    manifest = run_experiment(model_dir, count=240, seed=42)
+    manifest_sha = hashlib.sha256((model_dir / "manifest.json").read_bytes()).hexdigest()
+
+    # Real registered Avro bytes -> real Kafka -> real Neo4j + durable ledger
+    # and per-transaction point-in-time feature snapshots.
+    original = make_event("synthetic-end-to-end-model-score", amount=17.25)
+    publish(VerifiedInferenceProducer, [original])
+    path = tmp_path / "accepted-source.sqlite3"
+    group = "graphguard-native-score-" + uuid.uuid4().hex
+    start_builder(VerifiedInferenceBuilder, group, path, monkeypatch).run(max_messages=1)
+    assert_graph_record(original.transaction_id, 17.25)
+
+    ledger = TransactionLedger(str(path))
+    try:
+        scorer = VerifiedSyntheticScorer(
+            model_dir, expected_manifest_sha256=manifest_sha,
+        )
+        result = scorer.score(ledger.connection, original.transaction_id)
+        assert result["status"] == RESEARCH_STATUS
+        assert result["model_name"] == manifest["selected_by_validation_pr_auc"]
+        assert result["model_sha256"] in manifest["artifacts_sha256"].values()
+        assert result["feature_version"] == "pit-v1"
+        assert 0.0 <= result["score"] <= 1.0
+        assert len(result["feature_snapshot_sha256"]) == 64
+        save_research_score(ledger.connection, result)
+    finally:
+        ledger.close()
+
+    # Actual Kafka replay under a different consumer group must not change
+    # the first accepted source, PIT snapshot, or research score.
+    start_builder(
+        VerifiedInferenceBuilder,
+        "graphguard-native-score-replay-" + uuid.uuid4().hex,
+        path, monkeypatch,
+    ).run(max_messages=1)
+    ledger = TransactionLedger(str(path))
+    try:
+        again = scorer.score(ledger.connection, original.transaction_id)
+        assert again == result
+        save_research_score(ledger.connection, again)
+        assert ledger.connection.execute(
+            "SELECT COUNT(*) FROM transaction_research_scores"
+        ).fetchone()[0] == 1
+    finally:
+        ledger.close()
