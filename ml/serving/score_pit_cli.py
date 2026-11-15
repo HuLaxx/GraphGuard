@@ -38,7 +38,7 @@ def main():
     with sqlite3.connect(f"file:{args.ledger.resolve()}?mode=rw", uri=True) as connection:
         score = scorer.score(connection, args.transaction_id)
         if args.persist_research_score:
-            save_research_score(connection, score)
+            save_research_score(connection, score, scorer=scorer)
     print(json.dumps(score, sort_keys=True, indent=2))
 
 
