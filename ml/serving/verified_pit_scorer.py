@@ -192,14 +192,22 @@ class VerifiedSyntheticScorer:
         }
 
 
-def save_research_score(connection: sqlite3.Connection, result: dict) -> dict:
+def save_research_score(connection: sqlite3.Connection, result: dict, *, scorer: VerifiedSyntheticScorer) -> dict:
     """Append a stable local research record; idempotent on exact rerun.
 
     Never updates source transactions, prior snapshots or human decisions.
     The saved row contains no IP, card fragment, customer text or fraud label.
     """
-    if result.get("status") != RESEARCH_STATUS:
+    if not isinstance(result, dict) or result.get("status") != RESEARCH_STATUS:
         raise ScoringContractError("Only non-decision research scores may be stored")
+    if not isinstance(scorer, VerifiedSyntheticScorer):
+        raise ScoringContractError("Trusted hash-pinned scorer required to save a score")
+    # Do not trust caller-provided probabilities or metadata, even in the
+    # optional research-only write path. Re-evaluate authoritative persisted
+    # features using the independently pinned artifact before INSERT.
+    verified = scorer.score(connection, result.get("transaction_id", ""))
+    if result != verified:
+        raise ScoringContractError("Research score is not verified by the pinned scorer")
     connection.execute(
         """CREATE TABLE IF NOT EXISTS transaction_research_scores (
              transaction_id TEXT NOT NULL,
