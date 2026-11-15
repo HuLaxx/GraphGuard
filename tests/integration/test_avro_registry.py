@@ -393,7 +393,7 @@ def test_real_avro_transaction_scores_against_hash_pinned_training_artifact(
         assert result["feature_version"] == "pit-v1"
         assert 0.0 <= result["score"] <= 1.0
         assert len(result["feature_snapshot_sha256"]) == 64
-        save_research_score(ledger.connection, result)
+        save_research_score(ledger.connection, result, scorer=scorer)
     finally:
         ledger.close()
 
@@ -408,7 +408,7 @@ def test_real_avro_transaction_scores_against_hash_pinned_training_artifact(
     try:
         again = scorer.score(ledger.connection, original.transaction_id)
         assert again == result
-        save_research_score(ledger.connection, again)
+        save_research_score(ledger.connection, again, scorer=scorer)
         assert ledger.connection.execute(
             "SELECT COUNT(*) FROM transaction_research_scores"
         ).fetchone()[0] == 1
