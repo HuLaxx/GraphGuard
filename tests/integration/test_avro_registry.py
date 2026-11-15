@@ -354,17 +354,20 @@ class VerifiedInferenceBuilder(GraphBuilder):
 def test_real_avro_transaction_scores_against_hash_pinned_training_artifact(
     tmp_path, monkeypatch,
 ):
-    """End-to-end *synthetic* Avro ingestion -> PIT -> native ML score.
+    """End-to-end *synthetic* Avro -> PIT -> native score -> actual SHAP.
 
     The model is trained offline on separate synthetic samples, then loaded
-    from disk with an independently supplied manifest SHA. No API, RAG,
-    SHAP, accusation, or automated operational decision is exercised.
+    with a pinned manifest SHA. No hosted API, live account, automated
+    decision, human case or production deployment is exercised.
     """
     import hashlib
     from transaction_ledger import TransactionLedger
     from ml.training.pit_baselines import run_experiment
     from ml.serving.verified_pit_scorer import (
         RESEARCH_STATUS, VerifiedSyntheticScorer, save_research_score,
+    )
+    from ml.explainability.verified_shap import (
+        explain_transaction, save_research_explanation,
     )
 
     create_topics(VerifiedInferenceProducer.TOPIC, VerifiedInferenceBuilder.DLQ_TOPIC)
@@ -394,6 +397,17 @@ def test_real_avro_transaction_scores_against_hash_pinned_training_artifact(
         assert 0.0 <= result["score"] <= 1.0
         assert len(result["feature_snapshot_sha256"]) == 64
         save_research_score(ledger.connection, result, scorer=scorer)
+        explanation = explain_transaction(
+            ledger.connection, original.transaction_id, scorer=scorer,
+        )
+        assert explanation["verified_model_probability"] == result["score"]
+        assert explanation["model_sha256"] == result["model_sha256"]
+        assert explanation["feature_snapshot_sha256"] == result["feature_snapshot_sha256"]
+        assert explanation["reconstruction_abs_error"] <= 2e-5
+        assert len(explanation["all_features"]) == 12
+        assert len(explanation["explanation_sha256"]) == 64
+        assert "not causal" in explanation["non_causal_notice"].lower()
+        save_research_explanation(ledger.connection, explanation, scorer=scorer)
     finally:
         ledger.close()
 
@@ -409,8 +423,18 @@ def test_real_avro_transaction_scores_against_hash_pinned_training_artifact(
         again = scorer.score(ledger.connection, original.transaction_id)
         assert again == result
         save_research_score(ledger.connection, again, scorer=scorer)
+        repeated_shap = explain_transaction(
+            ledger.connection, original.transaction_id, scorer=scorer,
+        )
+        assert repeated_shap == explanation
+        save_research_explanation(
+            ledger.connection, repeated_shap, scorer=scorer,
+        )
         assert ledger.connection.execute(
             "SELECT COUNT(*) FROM transaction_research_scores"
+        ).fetchone()[0] == 1
+        assert ledger.connection.execute(
+            "SELECT COUNT(*) FROM transaction_research_explanations"
         ).fetchone()[0] == 1
     finally:
         ledger.close()
