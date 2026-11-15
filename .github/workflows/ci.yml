@@ -109,10 +109,10 @@ jobs:
           python-version: '3.11'
       - name: Install integration test dependencies
         run: |
-          pip install -r requirements-ci.txt -r requirements-ingestion-ci.txt
+          pip install -r requirements-ci.txt -r requirements-ingestion-ci.txt -r requirements-ml-ci.txt
       - name: Start disposable broker and graph database
         run: docker compose -f docker-compose.ingestion.yml up -d --wait
-      - name: Test JSON fixtures and Avro / Schema Registry with real services
+      - name: Test JSON and Avro with real services, PIT features and verified model scoring
         env:
           GRAPHGUARD_INGESTION_INTEGRATION: "1"
         run: pytest tests/integration/test_ingest_kafka_neo4j.py tests/integration/test_avro_registry.py -v
@@ -134,8 +134,8 @@ jobs:
           python-version: '3.11'
       - name: Install CPU-only baseline dependencies
         run: python -m pip install -r requirements-ml-ci.txt
-      - name: Run deterministic ML leakage and artifact tests
-        run: python -m pytest tests/unit/test_pit_baselines.py -v
+      - name: Run deterministic ML leakage, artifact and verified scoring tests
+        run: python -m pytest tests/unit/test_pit_baselines.py tests/unit/test_verified_pit_scorer.py -v
       - name: Train both models and generate inspectable synthetic metrics
         run: python -m ml.training.pit_baselines --count 720 --seed 42 --output-dir .local/ml-baselines
       - name: Upload synthetic-only report and model artifacts
