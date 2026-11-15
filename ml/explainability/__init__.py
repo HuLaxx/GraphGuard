@@ -1,13 +1,22 @@
-# ML Explainability Module
-"""
-Explainability tools for fraud detection models.
-Reference: Specification.md Lines 1766-1879
-"""
+"""GraphGuard explainability tools.
 
-from .shap_analysis import FraudExplainer
-from .graph_visualization import GraphVisualizer
+Heavy optional SHAP, PyTorch/Graphviz and graph visualisation modules are
+loaded only when explicitly used. CPU-only native XGBoost TreeSHAP must
+not eagerly import the legacy visualisation stack.
+"""
+from importlib import import_module
 
-__all__ = [
-    "FraudExplainer",
-    "GraphVisualizer"
-]
+__all__ = ["FraudExplainer", "GraphVisualizer"]
+
+_EXPORTS = {
+    "FraudExplainer": ".shap_analysis",
+    "GraphVisualizer": ".graph_visualization",
+}
+
+
+def __getattr__(name: str):
+    if name not in _EXPORTS:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    value = getattr(import_module(_EXPORTS[name], __name__), name)
+    globals()[name] = value
+    return value
