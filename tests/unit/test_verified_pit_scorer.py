@@ -65,11 +65,11 @@ def test_verified_model_scores_real_source_snapshot_and_replay(trained_and_inges
     ]
     assert len(result["feature_snapshot_sha256"]) == 64
 
-    saved = save_research_score(ledger.connection, result)
+    saved = save_research_score(ledger.connection, result, scorer=scorer)
     assert saved == result
     assert ledger.record(event, topic="synthetic.avro", partition=0, offset=1).status == "duplicate"
     assert scorer.score(ledger.connection, event["transaction_id"]) == result
-    assert save_research_score(ledger.connection, result) == result
+    assert save_research_score(ledger.connection, result, scorer=scorer) == result
     assert ledger.connection.execute("SELECT COUNT(*) FROM transaction_research_scores").fetchone()[0] == 1
     assert ledger.connection.execute("SELECT COUNT(*) FROM transactions").fetchone()[0] == 1
 
@@ -163,8 +163,21 @@ def test_untrusted_prediction_cannot_overwrite_first_record(trained_and_ingested
     folder, digest, _, ledger, event = trained_and_ingested
     scorer = VerifiedSyntheticScorer(folder, expected_manifest_sha256=digest)
     result = scorer.score(ledger.connection, event["transaction_id"])
-    save_research_score(ledger.connection, result)
+    save_research_score(ledger.connection, result, scorer=scorer)
     tampered = dict(result, score=0.0 if result["score"] > 0 else 1.0)
-    with pytest.raises(ScoringContractError, match="overwrite prior"):
-        save_research_score(ledger.connection, tampered)
+    with pytest.raises(ScoringContractError, match="not verified by the pinned scorer"):
+        save_research_score(ledger.connection, tampered, scorer=scorer)
     assert ledger.connection.execute("SELECT COUNT(*) FROM transaction_research_scores").fetchone()[0] == 1
+
+
+
+def test_caller_cannot_insert_fabricated_first_research_score(trained_and_ingested):
+    folder, digest, _, ledger, event = trained_and_ingested
+    scorer = VerifiedSyntheticScorer(folder, expected_manifest_sha256=digest)
+    genuine = scorer.score(ledger.connection, event["transaction_id"])
+    forged = dict(genuine, score=1.0 if genuine["score"] != 1.0 else 0.0)
+    with pytest.raises(ScoringContractError, match="not verified by the pinned scorer"):
+        save_research_score(ledger.connection, forged, scorer=scorer)
+    assert ledger.connection.execute(
+        "SELECT COUNT(*) FROM transaction_research_scores"
+    ).fetchone()[0] == 0
