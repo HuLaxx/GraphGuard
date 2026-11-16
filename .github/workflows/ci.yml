@@ -109,7 +109,7 @@ jobs:
           python-version: '3.11'
       - name: Install integration test dependencies
         run: |
-          pip install -r requirements-ci.txt -r requirements-ingestion-ci.txt -r requirements-ml-ci.txt
+          pip install -r requirements-ci.txt -r requirements-ingestion-ci.txt -r requirements-review-ci.txt
       - name: Start disposable broker and graph database
         run: docker compose -f docker-compose.ingestion.yml up -d --wait
       - name: Test JSON and Avro with real services, PIT features and verified model scoring
@@ -133,9 +133,9 @@ jobs:
         with:
           python-version: '3.11'
       - name: Install CPU-only baseline dependencies
-        run: python -m pip install -r requirements-ml-ci.txt
-      - name: Test ML baselines, verified inference and native SHAP reconstruction
-        run: python -m pytest tests/unit/test_pit_baselines.py tests/unit/test_verified_pit_scorer.py tests/unit/test_verified_shap.py -v
+        run: python -m pip install -r requirements-review-ci.txt
+      - name: Test ML, verified SHAP and signed human-review audit
+        run: python -m pytest tests/unit/test_pit_baselines.py tests/unit/test_verified_pit_scorer.py tests/unit/test_verified_shap.py tests/unit/test_synthetic_review.py -v
       - name: Train both models and generate inspectable synthetic metrics
         run: python -m ml.training.pit_baselines --count 720 --seed 42 --output-dir .local/ml-baselines
       - name: Upload synthetic-only report and model artifacts

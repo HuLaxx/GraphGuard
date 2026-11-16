@@ -1,6 +1,6 @@
 # GraphGuard — Engineering Release Checklist (evidence-gated)
 
-**Updated:** 2026-11-15 | **Target:** defensible Applied ML / Graph Data Engineering / MLOps flagship | **Status:** DRAFT, NOT 10/10
+**Updated:** 2026-11-16 | **Target:** defensible Applied ML / Graph Data Engineering / MLOps flagship | **Status:** DRAFT, NOT 10/10
 
 Mark [x] only when supported by a reproducible test on an identified commit. A green narrow CI suite does **not** prove broker-backed ingestion, fraud accuracy or production readiness. Link every supported release claim in [EVIDENCE_REGISTER.md](EVIDENCE_REGISTER.md). This system supports **human investigation** and must never present a score as proof of wrongdoing.
 
@@ -27,8 +27,8 @@ Mark [x] only when supported by a reproducible test on an identified commit. A g
 - [x] **Synthetic-only** real Avro → Kafka → Neo4j/ledger → `pit-v1` features → **hash-pinned trained model research score**, with untrusted-write hardening and replay. [PR #7](https://github.com/HuLaxx/GraphGuard/pull/7), [all 7 jobs green + 16 unit tests CI 43687400391](https://github.com/HuLaxx/GraphGuard/actions/runs/43687400391). **Hosted API, analyst case and production deployment remain unverified.**
 - [x] **Verified genuine native TreeSHAP or analytic linear Shapley** for the same pinned, accepted synthetic model event, with all log-odds features rebuilding the verified score, hashes and replay-stable local research record. [PR #8](https://github.com/HuLaxx/GraphGuard/pull/8), [30 ML unit + 6 real-service tests, 7/7 jobs green CI 43711547865](https://github.com/HuLaxx/GraphGuard/actions/runs/43711547865). **This is CLI/numerical evidence; production UI and human case remain unverified.**
 - [ ] Display attribution in an authenticated UI with a clear model-versus-causality disclaimer; numeric local CLI is complete, production UI is not.
-- [ ] Create an authenticated human-review case, record a decision and persist immutable audit history.
-- [ ] Run one seeded command sequence proving source → graph → features → model → explanation → analyst case.
+- [x] **Signed local synthetic analyst demo**: exact source/feature/model/SHAP hashes anchor a review case; HMAC-signed short-lived analyst/admin tokens enforce review actions, admin-only closure; append-only SQLite events with hash-chain + HMAC and trigger protection; replay-safe, version-checked. [PR #9](https://github.com/HuLaxx/GraphGuard/pull/9), [37 focused + 6 real integration tests; 7/7 green jobs CI 43922849789](https://github.com/HuLaxx/GraphGuard/actions/runs/43922849789). **Not enterprise OIDC, externally anchored audit, production deployed auth or real customer decisions.**
+- [x] Real-service deterministic synthetic acceptance test verifies **Avro → Kafka/Registry → Neo4j → `pit-v1` → trained model → SHAP → signed analyst case → admin decision → Kafka replay** in disposable services. [CI 43922849789](https://github.com/HuLaxx/GraphGuard/actions/runs/43922849789). [ ] A polished **single-command standalone demo launcher** that also starts and tears down Docker remains outstanding.
 
 ## P2 — Reproducible ML and model governance
 - [x] Recorded in-repo synthetic-generator provenance, seed, class distribution, dataset hash, split dates, explicit feature schema and no external dataset licence. **External licensed real/public dataset evidence remains open.** [PR #6](https://github.com/HuLaxx/GraphGuard/pull/6), [CI 43611311872](https://github.com/HuLaxx/GraphGuard/actions/runs/43611311872).
@@ -42,7 +42,7 @@ Mark [x] only when supported by a reproducible test on an identified commit. A g
 - [ ] Bound RAG retrieval to real indexed documents with verifiable citations and prompt-injection tests.
 
 ## P3 — Security, reliability, cloud and costs
-- [ ] Enforce reviewer/admin roles; minimise PII, mask identifiers and restrict case access/retention.
+- [ ] **Local signed reviewer/admin roles and minimized synthetic source records implemented** in [PR #9](https://github.com/HuLaxx/GraphGuard/pull/9), with HMAC-protected audit and explicit per-request authentication in the local service. **Still required for P3:** real OIDC/SSO/MFA, token revocation and key rotation, multi-user/data retention/access policies, independent audit anchoring, privacy threat model and production audit tests.
 - [ ] Structured logs, tracing where useful, alert thresholds and broker/graph/model runbooks.
 - [ ] Failure/recovery drills and load/latency measurements with reproducible scripts and datasets.
 - [ ] Costed optional AWS S3/artifacts, EventBridge/Step Functions, on-demand training/serving, CloudWatch, IAM/OIDC and Secrets Manager.
@@ -57,6 +57,6 @@ Mark [x] only when supported by a reproducible test on an identified commit. A g
 - [ ] Publish GraphGuard as lead ML/MLOps example **only when** real source-to-case golden path is independently reproducible.
 
 ## Release decision
-- **Current gate:** verified synthetic registered Avro source → graph → `pit-v1` snapshot → hash-pinned trained model → **genuine signed log-odds SHAP** plus replay, on code SHA `bad49230`, [CI 43711547865](https://github.com/HuLaxx/GraphGuard/actions/runs/43711547865): seven green jobs, 30 ML unit tests and six Docker-backed integration tests. **No real customer/fraud, authenticated analyst case or deployed API.**
-- **Current draft PR:** [#8](https://github.com/HuLaxx/GraphGuard/pull/8), stacked on [#7](https://github.com/HuLaxx/GraphGuard/pull/7) → [#6](https://github.com/HuLaxx/GraphGuard/pull/6) → [#5](https://github.com/HuLaxx/GraphGuard/pull/5) → [#4](https://github.com/HuLaxx/GraphGuard/pull/4) → [#3](https://github.com/HuLaxx/GraphGuard/pull/3) → [#2](https://github.com/HuLaxx/GraphGuard/pull/2) → [#1](https://github.com/HuLaxx/GraphGuard/pull/1). **Next:** authenticated reviewer and append-only synthetic decision history linked to SHAP/model/feature hashes; leave all PRs draft until reviewed.
+- **Current gate:** synthetic source-to-**signed local human review decision** proven in code SHA `aac70762`, [CI 43922849789](https://github.com/HuLaxx/GraphGuard/actions/runs/43922849789): **7/7 green jobs, 37 focused Python/ML/review unit tests, 6 real-service integration tests**. No production auth, UI wiring, external dataset, compliance-grade audit or deployment; final docs-head CI must separately pass.
+- **Current draft PR:** [#9](https://github.com/HuLaxx/GraphGuard/pull/9), stacked on [#8](https://github.com/HuLaxx/GraphGuard/pull/8) → [#7](https://github.com/HuLaxx/GraphGuard/pull/7) → [#6](https://github.com/HuLaxx/GraphGuard/pull/6) → [#5](https://github.com/HuLaxx/GraphGuard/pull/5) → [#4](https://github.com/HuLaxx/GraphGuard/pull/4) → [#3](https://github.com/HuLaxx/GraphGuard/pull/3) → [#2](https://github.com/HuLaxx/GraphGuard/pull/2) → [#1](https://github.com/HuLaxx/GraphGuard/pull/1). **Next:** local synthetic analyst UI wired to this exact signed API, SHAP plots and verifiable case timeline. Keep all drafts unmerged until review.
 - **Never claim:** production bank fraud detection, fairness guarantees, live customers, GAT readiness or AWS deployment without exact evidence.

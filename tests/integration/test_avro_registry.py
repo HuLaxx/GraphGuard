@@ -369,6 +369,9 @@ def test_real_avro_transaction_scores_against_hash_pinned_training_artifact(
     from ml.explainability.verified_shap import (
         explain_transaction, save_research_explanation,
     )
+    from ml.review.auth import issue_demo_token
+    from ml.review.case_store import SyntheticReviewStore
+    import secrets
 
     create_topics(VerifiedInferenceProducer.TOPIC, VerifiedInferenceBuilder.DLQ_TOPIC)
     model_dir = tmp_path / "approved-model"
@@ -408,6 +411,35 @@ def test_real_avro_transaction_scores_against_hash_pinned_training_artifact(
         assert len(explanation["explanation_sha256"]) == 64
         assert "not causal" in explanation["non_causal_notice"].lower()
         save_research_explanation(ledger.connection, explanation, scorer=scorer)
+
+        # Actual analyst and admin identity are authenticated via locally
+        # minted, short-lived signed demo tokens, not arbitrary POST actors.
+        review_key = secrets.token_urlsafe(48).encode("utf-8")
+        audit_key = secrets.token_urlsafe(48).encode("utf-8")
+        cases = SyntheticReviewStore(
+            ledger.connection, scorer=scorer,
+            reviewer_signing_key=review_key, audit_signing_key=audit_key,
+        )
+        analyst = issue_demo_token(review_key, subject="synthetic.analyst", role="analyst")
+        admin = issue_demo_token(review_key, subject="synthetic.admin", role="admin")
+        opened = cases.open_case(
+            analyst, original.transaction_id,
+            request_id="kafka-integration-case-open-001",
+        )
+        assert opened["status"] == "OPEN"
+        assert opened["evidence"]["explanation_sha256"] == explanation["explanation_sha256"]
+        escalated = cases.decide(
+            analyst, opened["case_id"], action="escalate",
+            request_id="kafka-integration-escalate-001", expected_version=0,
+        )
+        assert escalated["status"] == "ESCALATED"
+        reviewed = cases.decide(
+            admin, opened["case_id"], action="close_review_complete",
+            request_id="kafka-integration-admin-close-001", expected_version=1,
+        )
+        assert reviewed["status"] == "CLOSED_REVIEW_COMPLETE"
+        assert reviewed["version"] == 2
+        assert reviewed["events"][-1]["reviewer_role"] == "admin"
     finally:
         ledger.close()
 
@@ -436,5 +468,13 @@ def test_real_avro_transaction_scores_against_hash_pinned_training_artifact(
         assert ledger.connection.execute(
             "SELECT COUNT(*) FROM transaction_research_explanations"
         ).fetchone()[0] == 1
+        case_replay = SyntheticReviewStore(
+            ledger.connection, scorer=scorer,
+            reviewer_signing_key=review_key, audit_signing_key=audit_key,
+        )
+        assert case_replay.get_case(admin, opened["case_id"]) == reviewed
+        assert ledger.connection.execute(
+            "SELECT COUNT(*) FROM synthetic_review_events"
+        ).fetchone()[0] == 3
     finally:
         ledger.close()
