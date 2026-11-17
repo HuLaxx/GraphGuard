@@ -58,9 +58,9 @@ The consumer and Neo4j tools reconstruct relationships that flat records can hid
 
 **03 / What is the estimated risk?**
 
-XGBoost training and FastAPI scoring form the model-oriented path. Evaluation and calibration still matter.
+A reproducible synthetic-only logistic/XGBoost baseline trains on past-only `pit-v1` features. The hash-pinned local scorer is tested; the legacy hosted API is a separate, unverified serving path.
 
-[Model training](ml/training/train_xgboost_rigorous.py) · [Score endpoint](ml/serving/api.py)
+[Reproducible baselines](ml/training/pit_baselines.py) · [Verified offline scoring](ml/serving/verified_pit_scorer.py)
 
 </td>
 <td width="50%" valign="top">
@@ -69,7 +69,7 @@ XGBoost training and FastAPI scoring form the model-oriented path. Evaluation an
 
 SHAP tooling and explanatory charts make model contributions inspectable; an explanation is not causal proof.
 
-[SHAP analysis](ml/explainability/shap_analysis.py) · [Explanation chart](frontend/src/components/dashboard/shap-chart.tsx)
+[Verified native TreeSHAP](ml/explainability/verified_shap.py) · [Signed review attribution chart](frontend/src/components/review/verified-shap-chart.tsx)
 
 </td>
 </tr>
@@ -78,20 +78,36 @@ SHAP tooling and explanatory charts make model contributions inspectable; an exp
 
 **05 / What should the analyst review?**
 
-The case queue, graph visualization and GraphQL models translate technical outputs into an investigation interface.
+The new signed **local** analyst case UI reads real synthetic case records, SHAP values and review history from the verified FastAPI review service. The separate GraphQL demo may still be illustrative.
 
-[Investigation desk](frontend/src/app/cases/page.tsx) · [GraphQL schema](backend/graphql/schema.py) · [Fraud queue](frontend/src/components/dashboard/fraud-queue.tsx)
+[Signed case desk](frontend/src/app/cases/page.tsx) · [Review API](ml/review/app.py) · [Local quickstart](docs/LOCAL_REVIEW_DASHBOARD.md)
 
 </td>
 </tr>
 </table>
+
+## Verified local synthetic case desk (stacked review branch)
+
+The updated [case desk](frontend/src/app/cases/page.tsx) does **not** ship with a mock fallback. It only renders the cases and signed native TreeSHAP values returned by the local review API, and reports when the API is unavailable or a token has expired. Analysts may escalate a synthetic case; only a signed demo admin may close one. Review history remains linked to source, feature, model and explanation hashes.
+
+After installing Python and Node dependencies:
+
+```bash
+python -m pip install -r requirements-review-ci.txt
+npm --prefix frontend ci
+python -m ml.review.run_local_demo
+```
+
+Open `http://127.0.0.1:3000/cases` and use the private local reviewer token generated in `.local/graphguard-review/reviewer_tokens.json`. **Never publish or commit this file.** The quickstart directly seeds the local ledger to make the UI easy to reproduce; the full registered Avro → Kafka/Schema Registry → Neo4j → real model → SHAP → signed case journey is independently exercised in Docker-backed GitHub Actions integration tests.
+
+This is a **synthetic-only review system**, not a deployed fraud classifier, a real customer case, enterprise SSO or a compliance-grade audit record. [Full reproducibility and security limitations](docs/LOCAL_REVIEW_DASHBOARD.md).
 
 ## Inside the investigation desk
 
 <div align="center">
 <img src="docs/assets/graphguard-demo.gif" width="86%" alt="Existing GraphGuard demo animation; an interface preview, not evidence of a connected live backend" />
 
-<sub>Existing repository demo capture. The frontend contains sample cases and mock graph relationships, so a visible case is not necessarily a processed real transaction.</sub>
+<sub>Legacy illustrative demo capture, **not** a screenshot of the newer signed local analyst case desk. The separate GraphQL demo can show illustrative/fallback data.</sub>
 </div>
 
 Beyond a generic analytics dashboard, the project includes a [demo view](frontend/src/app/demo/page.tsx), [case investigation page](frontend/src/app/cases/page.tsx), [network graph](frontend/src/components/dashboard/network-graph.tsx), [SHAP component](frontend/src/components/dashboard/shap-chart.tsx) and [local-first RAG assistant](frontend/src/components/assistant/rag-assistant.tsx).
@@ -101,6 +117,7 @@ Beyond a generic analytics dashboard, the project includes a [demo view](fronten
 | Where | What's represented |
 | :--- | :--- |
 | **Hosted project website** | Lightweight frontend experience; mocked/fallback data is possible. Current live integration was **not** independently checked for this README refresh. |
+| **Signed local analyst desk (`/cases`)** | Uses locally generated synthetic transactions, a real trained model, native SHAP values and short-lived signed demo reviewer identities. Runs **only in local development**; no publicly hosted case API. |
 | **Local Docker services** | Compose files for PostgreSQL, Neo4j, Kafka, Flink and monitoring. Services require local resources and configuration. |
 | **Python API and frontend** | Started separately; scoring, graph, model and RAG capabilities depend on credentials, services and available artifacts. |
 | **Proposed hosted architecture** | Terraform and managed-service targets are plans/templates, not proof of completed production deployment. |
