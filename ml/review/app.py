@@ -96,6 +96,24 @@ def create_local_review_app(*, ledger_path: Path, artifact_dir: Path,
         # No model weights, secret, actor, ledger or case data in health.
         return {"status": "local-synthetic-review-only", "operational": False}
 
+    @api.get("/session")
+    def session(token: str = Depends(review_token),
+                db: SyntheticReviewStore = Depends(store)):
+        return db.session(token)
+
+    @api.get("/cases")
+    def list_cases(token: str = Depends(review_token),
+                   db: SyntheticReviewStore = Depends(store)):
+        return db.list_cases(token)
+
+    @api.get("/cases/{case_id}/explanation")
+    def get_explanation(case_id: str, token: str = Depends(review_token),
+                        db: SyntheticReviewStore = Depends(store)):
+        try:
+            return db.get_explanation(token, case_id)
+        except KeyError:
+            raise HTTPException(status_code=404, detail="Case not found")
+
     @api.post("/cases", status_code=201)
     def create_case(body: CreateCase, token: str = Depends(review_token),
                     db: SyntheticReviewStore = Depends(store)):
