@@ -201,3 +201,51 @@ jobs:
             .local/security/npm-production.json
           retention-days: 7
           if-no-files-found: error
+
+  npm-security-candidate:
+    name: P0 npm remediation trial (non-mutating)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    continue-on-error: true
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Prepare controlled dependency candidate without committing
+        run: node scripts/prepare-npm-security-candidate.mjs
+      - name: Resolve pinned lock and apply only semver-safe transitive patches
+        run: |
+          npm --prefix frontend install --package-lock-only --ignore-scripts --no-fund --no-audit
+          npm --prefix frontend audit fix --package-lock-only --ignore-scripts --no-fund || true
+          npm --prefix frontend ci
+      - name: Verify candidate lint, types, frontend tests and Next build
+        run: |
+          npm --prefix frontend run lint
+          npm --prefix frontend run type-check
+          npm --prefix frontend run test
+          npm --prefix frontend run build
+      - name: Audit candidate full and production lockfiles
+        if: always()
+        run: |
+          npm --prefix frontend audit --json > .local/security/candidate-full.json || true
+          npm --prefix frontend audit --omit=dev --json > .local/security/candidate-production.json || true
+          node scripts/print-npm-audit.mjs .local/security/candidate-full.json candidate-full
+          node scripts/print-npm-audit.mjs .local/security/candidate-production.json candidate-production
+      - name: Emit inspectable changed dependency tree for manual PR updates
+        if: always()
+        run: node scripts/print-npm-security-patch.mjs
+      - name: Upload proposal reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: graphguard-npm-proposal
+          path: |
+            .local/security/candidate-full.json
+            .local/security/candidate-production.json
+            frontend/package-lock.json
+            frontend/package.json
+          if-no-files-found: warn
+          retention-days: 7
