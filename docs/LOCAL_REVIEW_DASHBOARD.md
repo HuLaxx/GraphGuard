@@ -26,6 +26,14 @@ Tokens expire after 600 seconds; stop/restart the runner to mint fresh local tok
 
 The runner binds the Python review service to **127.0.0.1:8765** and Next development to **127.0.0.1:3000**. Ctrl-C terminates both. It does not expose an HTTPS endpoint or launch any cloud service.
 
+To perform the **real local HTTP smoke** against both servers (on a separate disposable workspace, without opening a browser):
+
+```bash
+python -m ml.review.run_local_demo --workspace .local/graphguard-http-smoke --smoke
+```
+
+The smoke command starts Next.js and FastAPI on loopback, checks the rendered `/cases` page, verifies the signed reviewer session, retrieves a saved case and **actual native SHAP** through the same-origin Next proxy, submits a signed analyst escalation, reads back the persisted audit chain and then tears both servers down. GitHub Actions runs this in an independent CI job. This proves real HTTP connectivity, **not** pixel-perfect Playwright/browser automation or the Kafka-backed source for the quick-start fixture.
+
 ### What the dashboard does and does not prove
 
 | Verified component | Scope |
@@ -63,7 +71,7 @@ CI also starts disposable Kafka, Confluent Schema Registry and Neo4j and execute
 - No deployed public GraphGuard review UI or cloud API. No Terraform apply, AWS account usage or billable resources. A Vercel-hosted version of this page cannot connect to the local signing service.
 - This experiment uses **synthetic labels** and GBP-only model fixtures. Prior synthetic XGBoost holdout false-positive rate was **9.375%**, above the validation-selected 5% target. This is not real-world fraud model performance or an automated decision rule.
 - Published SHAP values are correlations with model output, **not causal explanations**, individual accusations or fairness certification.
-- No signed browser-based e2e automation under Playwright or performance measurement yet; the React/Vitest component tests, backend TestClient tests and full Kafka/Docker integration are distinct, inspectable checks.
+- No Playwright browser automation or performance measurement yet; the new Next+FastAPI **HTTP smoke** is distinct from React/Vitest tests and from the full Kafka/Docker acceptance suite.
 - No production auth rate-limiting, external log anchoring, full dependency lockfile audit, public data validation, model registry/rollback, drift alerts or tested AWS deployment. Those remain explicit P0–P4 gates.
 
 **Source and evidence:** [PR #10](https://github.com/HuLaxx/GraphGuard/pull/10) and [GraphGuard release checklist](ENGINEERING_RELEASE_CHECKLIST.md). Do not call this a fully production-ready 10/10 system solely because the synthetic golden path runs.
