@@ -173,3 +173,31 @@ jobs:
         run: |
           echo "Review smoke failed. The runner never logs tokens or signing keys."
           echo "Inspect the failing process output above. Avoid publishing .local artifacts."
+
+  npm-audit-inventory:
+    name: npm full / production advisory inventory
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Capture explicit full and production npm advisory reports
+        run: |
+          mkdir -p .local/security
+          npm --prefix frontend audit --json > .local/security/npm-full.json || true
+          npm --prefix frontend audit --omit=dev --json > .local/security/npm-production.json || true
+      - name: Print traceable advisory package, installed ranges and safe fix hints
+        run: |
+          node scripts/print-npm-audit.mjs .local/security/npm-full.json full
+          node scripts/print-npm-audit.mjs .local/security/npm-production.json production
+      - name: Upload inspectable npm audit JSON reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: graphguard-npm-audit-2026-11-17
+          path: |
+            .local/security/npm-full.json
+            .local/security/npm-production.json
+          retention-days: 7
+          if-no-files-found: error
