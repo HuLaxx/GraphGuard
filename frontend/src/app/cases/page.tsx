@@ -10,7 +10,7 @@ import {
 } from "@/lib/signed-review";
 import {
     Activity, ArrowRight, CheckCircle2, ClipboardList, ExternalLink,
-    LockKeyhole, LogOut, RefreshCw, ShieldCheck, TriangleAlert,
+    LockKeyhole, LogOut, RefreshCw, ShieldCheck, AlertTriangle,
 } from "lucide-react";
 
 type CaseList = { scope: string; cases: ReviewCase[] };
@@ -238,7 +238,7 @@ export default function CasesPage() {
 
                 {failure && (
                     <div role="alert" className="flex gap-3 rounded-2xl border border-rose-400/30 bg-rose-500/10 p-4 text-sm text-rose-100">
-                        <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
+                        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
                         <p>{failure}</p>
                     </div>
                 )}
