@@ -293,3 +293,80 @@ def test_provenance_retained_without_raw_secret_or_sensitive_payload(local_revie
         assert "jti" in raw
         assert "reviewer_id" in raw
         assert opened["audit_head_sha256"] == hashlib.sha256(rows[-1][0].encode()).hexdigest()
+
+
+
+def test_signed_dashboard_session_list_and_exact_model_derived_shap(local_review):
+    fix = local_review
+    api = fix["api"]
+    assert api.get("/session").status_code == 401
+    assert api.get("/cases").status_code == 401
+    assert api.get("/cases", headers=headers(fix["analyst"])).json() == {
+        "scope": "SYNTHETIC_LOCAL_REVIEW_ONLY", "cases": [],
+    }
+    session = api.get("/session", headers=headers(fix["analyst"]))
+    assert session.status_code == 200
+    assert session.json() == {
+        "subject": "analyst.one", "role": "analyst",
+        "scope": "SYNTHETIC_LOCAL_REVIEW_ONLY",
+    }
+    opened = open_case(fix)
+    listed = api.get("/cases", headers=headers(fix["other"]))
+    assert listed.status_code == 200
+    assert listed.json()["cases"] == [opened]
+    explained = api.get(
+        "/cases/" + opened["case_id"] + "/explanation",
+        headers=headers(fix["admin"]),
+    )
+    assert explained.status_code == 200, explained.text
+    payload = explained.json()
+    assert payload["scope"] == "SYNTHETIC_ONLY_RESEARCH_EXPLANATION"
+    assert payload["explanation_sha256"] == opened["evidence"]["explanation_sha256"]
+    assert payload["model_sha256"] == opened["evidence"]["model_sha256"]
+    assert payload["source_payload_sha256"] == opened["evidence"]["source_payload_sha256"]
+    assert payload["feature_snapshot_sha256"] == opened["evidence"]["feature_snapshot_sha256"]
+    assert payload["verified_model_probability"] == opened["evidence"]["score"]
+    assert payload["reconstruction_abs_error"] <= 2e-5
+    assert len(payload["all_features"]) == 12
+    assert "not causal" in payload["non_causal_notice"].lower()
+    assert api.get(
+        "/cases/" + opened["case_id"] + "/explanation",
+    ).status_code == 401
+
+
+def test_dashboard_explanation_rejects_modified_research_record(local_review):
+    fix = local_review
+    opened = open_case(fix)
+    with sqlite3.connect(fix["ledger"]) as connection:
+        connection.execute(
+            """UPDATE transaction_research_explanations
+               SET explanation_json='{}'
+               WHERE transaction_id=?""",
+            (fix["target"],),
+        )
+        connection.commit()
+    response = fix["api"].get(
+        "/cases/" + opened["case_id"] + "/explanation",
+        headers=headers(fix["analyst"]),
+    )
+    assert response.status_code == 409
+    assert response.json()["detail"] == "Synthetic evidence integrity verification failed"
+
+
+def test_dashboard_list_requires_signed_token_and_returns_verified_case_only(local_review):
+    fix = local_review
+    opened = open_case(fix)
+    assert fix["api"].get(
+        "/cases", headers=headers("wrong-token"),
+    ).status_code == 401
+    with sqlite3.connect(fix["ledger"]) as connection:
+        connection.execute(
+            "UPDATE transaction_feature_snapshots SET features_sha256=? WHERE transaction_id=?",
+            ("b" * 64, fix["target"]),
+        )
+        connection.commit()
+    rejected = fix["api"].get(
+        "/cases", headers=headers(fix["analyst"]),
+    )
+    assert rejected.status_code == 409
+    assert opened["status"] == "OPEN"
