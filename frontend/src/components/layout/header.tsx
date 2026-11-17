@@ -6,10 +6,11 @@ import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { Menu, X, Github, Play } from 'lucide-react';
 
-const navLinks: Array<{ href: "/" | "/architecture" | "/stack" | "/demo"; label: string; highlight?: boolean }> = [
+const navLinks: Array<{ href: "/" | "/architecture" | "/stack" | "/demo" | "/cases"; label: string; highlight?: boolean }> = [
     { href: '/', label: 'Home' },
     { href: '/architecture', label: 'Architecture' },
     { href: '/stack', label: 'Tech Stack' },
+    { href: '/cases', label: 'Case Desk' },
     { href: '/demo', label: 'Live Demo', highlight: true },
 ];
 
