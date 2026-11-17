@@ -13,6 +13,7 @@ import signal
 import subprocess
 import sys
 import time
+from urllib import request as http_request
 
 from ml.review.auth import issue_demo_token
 from ml.review.seed_local_demo import prepare_demo
@@ -45,7 +46,77 @@ def _refresh_private_tokens(workspace: Path, review_secret: str):
         temporary.unlink(missing_ok=True)
 
 
-def run_local(workspace: Path):
+def _request_json(path: str, token: str, *, body: dict | None = None) -> dict:
+    req = http_request.Request(
+        "http://127.0.0.1:3000/review-local/" + path,
+        data=None if body is None else json.dumps(body).encode("utf-8"),
+        headers={
+            "Authorization": "Bearer " + token,
+            **({} if body is None else {"Content-Type": "application/json"}),
+        },
+        method="GET" if body is None else "POST",
+    )
+    with http_request.urlopen(req, timeout=10) as response:
+        if response.status not in (200, 201):
+            raise RuntimeError("Local review HTTP smoke returned non-success")
+        return json.load(response)
+
+
+def _smoke_browser_proxy(workspace: Path, processes):
+    """Real loopback HTTP proof of Next route + signed API + native SHAP.
+
+    This is NOT a full browser automation or Kafka-backed UI smoke test.
+    """
+    token = json.loads(
+        (workspace / "reviewer_tokens.json").read_text(encoding="utf-8")
+    )["analyst"]
+    deadline = time.monotonic() + 150
+    ready = False
+    last_failure = "local services not ready"
+    while time.monotonic() < deadline:
+        if any(proc.poll() is not None for proc in processes):
+            raise RuntimeError("Local review service exited before HTTP smoke")
+        try:
+            with http_request.urlopen("http://127.0.0.1:3000/cases", timeout=6) as response:
+                html = response.read().decode("utf-8")
+                if response.status != 200 or "From a model signal" not in html:
+                    raise RuntimeError("Signed case page not rendered")
+            who = _request_json("session", token)
+            if who["scope"] != "SYNTHETIC_LOCAL_REVIEW_ONLY" or who["role"] != "analyst":
+                raise RuntimeError("Signed reviewer identity differs from seed")
+            ready = True
+            break
+        except Exception as error:
+            last_failure = type(error).__name__
+            time.sleep(1)
+    if not ready:
+        raise RuntimeError("Loopback Next+FastAPI startup smoke failed: " + last_failure)
+
+    listing = _request_json("cases", token)
+    if len(listing.get("cases", [])) != 1:
+        raise RuntimeError("Seeded synthetic case queue differs")
+    case = listing["cases"][0]
+    explanation = _request_json("cases/" + case["case_id"] + "/explanation", token)
+    if (
+        explanation["explanation_sha256"] != case["evidence"]["explanation_sha256"]
+        or explanation["model_sha256"] != case["evidence"]["model_sha256"]
+        or explanation["verified_model_probability"] != case["evidence"]["score"]
+        or len(explanation["all_features"]) != 12
+    ):
+        raise RuntimeError("Native model explanation is not the saved case evidence")
+    updated = _request_json("cases/" + case["case_id"] + "/actions", token, body={
+        "action": "escalate", "request_id": "http-demo-smoke-escalate-001",
+        "expected_version": 0,
+    })
+    if updated["status"] != "ESCALATED" or updated["version"] != 1:
+        raise RuntimeError("Signed HTTP review state transition failed")
+    reloaded = _request_json("cases/" + case["case_id"], token)
+    if reloaded["audit_head_sha256"] != updated["audit_head_sha256"]:
+        raise RuntimeError("Signed review audit was not persisted")
+    print("PASS: actual local Next case page → signed API → SHAP → human review audit", flush=True)
+
+
+def run_local(workspace: Path, *, smoke: bool = False):
     workspace = workspace.resolve()
     if not workspace.exists():
         prepare_demo(workspace)
@@ -92,6 +163,9 @@ def run_local(workspace: Path):
         print("Private signed demo tokens: " + str(workspace / "reviewer_tokens.json"), flush=True)
         print("Sample accepted synthetic ID: synthetic-ui-review-002", flush=True)
         print("Local fixture bypasses Kafka; real Kafka→case verified in CI. Ctrl-C to stop.", flush=True)
+        if smoke:
+            _smoke_browser_proxy(workspace, processes)
+            return
         while all(proc.poll() is None for proc in processes):
             time.sleep(0.5)
         raise RuntimeError("One of the local review services exited early")
@@ -116,8 +190,10 @@ def run_local(workspace: Path):
 def main():
     parser = argparse.ArgumentParser(description="One-command signed GraphGuard synthetic local UI")
     parser.add_argument("--workspace", type=Path, default=Path(".local/graphguard-review"))
+    parser.add_argument("--smoke", action="store_true",
+                        help="Start both servers, assert local HTTP score/SHAP/review, then tear down")
     args = parser.parse_args()
-    run_local(args.workspace)
+    run_local(args.workspace, smoke=args.smoke)
 
 
 if __name__ == "__main__":
