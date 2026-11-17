@@ -43,10 +43,10 @@ function DemoNotice({ isLive }: { isLive: boolean }) {
                     </div>
                     <div>
                         <h3 className={`${isLive ? "text-emerald-200" : "text-amber-200"} font-bold`}>
-                            {isLive ? "Live Data" : "Demo Mode"}
+                            {isLive ? "API endpoint reachable" : "Offline demo"}
                         </h3>
                         <p className={`${isLive ? "text-emerald-300/70" : "text-amber-300/70"} text-xs`}>
-                            {isLive ? "Connected to API - Real-time updates" : "Using fallback data"}
+                            {isLive ? "Health check passed; data provenance not certified" : "No verified live backend connection"}
                         </p>
                     </div>
                 </div>
@@ -55,13 +55,13 @@ function DemoNotice({ isLive }: { isLive: boolean }) {
                     <p className={`${isLive ? "text-emerald-100/80" : "text-amber-100/80"} text-sm`}>
                         {isLive ? (
                             <>
-                                GraphQL connected to{" "}
-                                <span className="text-emerald-300 font-semibold">Neo4j + Redis</span>
+                                Health endpoint responded. GraphQL and{" "}
+                                <span className="text-emerald-300 font-semibold">data source status remain independently unverified</span>
                             </>
                         ) : (
                             <>
-                                Free hosted demo. For{" "}
-                                <span className="text-amber-300 font-semibold">full pipeline</span> - run locally.
+                                No verified live cases. For{" "}
+                                <span className="text-amber-300 font-semibold">the tested synthetic pipeline</span> - run locally.
                             </>
                         )}
                     </p>
@@ -279,7 +279,7 @@ export default function DemoPage() {
                                     }`}
                                 ></span>
                             </span>
-                            {isLive ? "Live Data" : "Demo Mode"}
+                            {isLive ? "API endpoint reachable" : "Offline demo"}
                         </div>
                         <h1 className="text-4xl font-bold text-zinc-100">Fraud Operations Dashboard</h1>
                         <p className="text-zinc-400 max-w-2xl">

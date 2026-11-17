@@ -342,3 +342,60 @@ class SyntheticReviewStore:
         except Exception:
             self.conn.rollback()
             raise
+
+    def session(self, signed_token: str) -> dict:
+        """Verify identity server-side; return only safe demo role information."""
+        actor = self._actor(signed_token)
+        return {
+            "subject": actor["subject"],
+            "role": actor["role"],
+            "scope": "SYNTHETIC_LOCAL_REVIEW_ONLY",
+        }
+
+    def list_cases(self, signed_token: str, *, limit: int = 25) -> dict:
+        """Single-tenant synthetic queue; every case is integrity-checked.
+
+        All signed demo reviewers can see all synthetic cases. This is NOT
+        multi-tenant authorization and must not be deployed for real data.
+        """
+        self._actor(signed_token)
+        if type(limit) is not int or limit < 1 or limit > 25:
+            raise ReviewConflict("Invalid local case-list limit")
+        ids = self.conn.execute(
+            """SELECT case_id FROM synthetic_review_cases
+               ORDER BY created_at_utc DESC, case_id DESC LIMIT ?""",
+            (limit,),
+        ).fetchall()
+        return {
+            "scope": "SYNTHETIC_LOCAL_REVIEW_ONLY",
+            "cases": [self.get_case(signed_token, row[0]) for row in ids],
+        }
+
+    def get_explanation(self, signed_token: str, case_id: str) -> dict:
+        """Return real, reverified model-derived SHAP only for a saved case."""
+        view = self.get_case(signed_token, case_id)
+        explanation = explain_transaction(
+            self.conn, view["transaction_id"], scorer=self.scorer,
+        )
+        evidence = view["evidence"]
+        for key in (
+            "manifest_sha256", "model_sha256", "source_payload_sha256",
+            "feature_snapshot_sha256", "explanation_sha256",
+        ):
+            if explanation.get(key) != evidence.get(key):
+                raise ReviewIntegrityError("Case explanation differs from evidence anchor")
+        if explanation.get("verified_model_probability") != evidence.get("score"):
+            raise ReviewIntegrityError("Case score and explanation differ")
+        recorded = self.conn.execute(
+            """SELECT explanation_json, explanation_sha256
+               FROM transaction_research_explanations
+               WHERE transaction_id=? AND manifest_sha256=? AND explainer_version=?""",
+            (
+                view["transaction_id"], evidence["manifest_sha256"],
+                evidence["explainer_version"],
+            ),
+        ).fetchone()
+        canonical = _canonical(explanation)
+        if recorded != (canonical, _sha(canonical)):
+            raise ReviewIntegrityError("Stored explanation differs from verified model")
+        return explanation

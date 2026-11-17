@@ -149,3 +149,27 @@ jobs:
             .local/ml-baselines/xgboost_baseline.json
           if-no-files-found: error
           retention-days: 14
+
+  local-review-http-smoke:
+    name: Signed local case dashboard HTTP smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install local-review backend dependencies
+        run: python -m pip install -r requirements-review-ci.txt
+      - name: Install Next.js frontend dependencies
+        run: npm --prefix frontend ci
+      - name: Start real loopback Next + Python API and verify synthetic case/SHAP/review
+        run: python -m ml.review.run_local_demo --workspace .local/graphguard-http-smoke --smoke
+      - name: Show sanitized local service failure logs
+        if: failure()
+        run: |
+          echo "Review smoke failed. The runner never logs tokens or signing keys."
+          echo "Inspect the failing process output above. Avoid publishing .local artifacts."
