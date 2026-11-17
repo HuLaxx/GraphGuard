@@ -370,3 +370,73 @@ def test_dashboard_list_requires_signed_token_and_returns_verified_case_only(loc
     )
     assert rejected.status_code == 409
     assert opened["status"] == "OPEN"
+
+
+
+def test_one_command_demo_seed_is_private_and_creates_actual_verified_case(tmp_path):
+    from ml.review.seed_local_demo import prepare_demo
+    workspace = tmp_path / "signed-demo"
+    report = prepare_demo(workspace)
+    assert report["synthetic_cases"] == 1
+    assert report["unopened_synthetic_transaction"] == "synthetic-ui-review-002"
+    assert "bypasses Kafka" in report["note"]
+    private_file = workspace / "private_config.json"
+    tokens_file = workspace / "reviewer_tokens.json"
+    assert private_file.is_file() and tokens_file.is_file()
+    assert private_file.stat().st_mode & 0o077 == 0
+    assert tokens_file.stat().st_mode & 0o077 == 0
+    config = json.loads(private_file.read_text())
+    tokens = json.loads(tokens_file.read_text())
+    assert config["GRAPHGUARD_DEMO_REVIEW_KEY"] != config["GRAPHGUARD_DEMO_AUDIT_KEY"]
+    assert report["model_manifest_sha256"] == config["GRAPHGUARD_TRUSTED_MANIFEST_SHA256"]
+    assert verify_demo_token(
+        config["GRAPHGUARD_DEMO_REVIEW_KEY"].encode(), tokens["analyst"],
+    )["role"] == "analyst"
+    assert verify_demo_token(
+        config["GRAPHGUARD_DEMO_REVIEW_KEY"].encode(), tokens["admin"],
+    )["role"] == "admin"
+    app = create_local_review_app(
+        ledger_path=Path(config["GRAPHGUARD_LEDGER_PATH"]),
+        artifact_dir=Path(config["GRAPHGUARD_MODEL_DIR"]),
+        expected_manifest_sha256=config["GRAPHGUARD_TRUSTED_MANIFEST_SHA256"],
+        reviewer_signing_secret=config["GRAPHGUARD_DEMO_REVIEW_KEY"],
+        audit_signing_secret=config["GRAPHGUARD_DEMO_AUDIT_KEY"],
+    )
+    client = TestClient(app)
+    queue = client.get("/cases", headers=headers(tokens["analyst"]))
+    assert queue.status_code == 200, queue.text
+    assert queue.json()["cases"][0]["case_id"] == report["case_id"]
+    explained = client.get(
+        "/cases/" + report["case_id"] + "/explanation",
+        headers=headers(tokens["analyst"]),
+    )
+    assert explained.status_code == 200, explained.text
+    assert explained.json()["explanation_sha256"] == (
+        queue.json()["cases"][0]["evidence"]["explanation_sha256"]
+    )
+    # The workspace contains a *second* accepted event that can be reviewed.
+    created = client.post(
+        "/cases", headers=headers(tokens["analyst"]),
+        json={
+            "transaction_id": report["unopened_synthetic_transaction"],
+            "request_id": "second-review-fixture-0001",
+        },
+    )
+    assert created.status_code == 201, created.text
+    assert created.json()["status"] == "OPEN"
+    with pytest.raises(FileExistsError):
+        prepare_demo(workspace)
+
+
+def test_private_demo_tokens_can_refresh_without_exposing_signing_secrets(tmp_path):
+    from ml.review.seed_local_demo import prepare_demo
+    from ml.review.run_local_demo import _refresh_private_tokens
+    workspace = tmp_path / "rotatable-demo"
+    prepare_demo(workspace)
+    config = json.loads((workspace / "private_config.json").read_text())
+    original = json.loads((workspace / "reviewer_tokens.json").read_text())
+    _refresh_private_tokens(workspace, config["GRAPHGUARD_DEMO_REVIEW_KEY"])
+    regenerated = json.loads((workspace / "reviewer_tokens.json").read_text())
+    assert regenerated["analyst"] != original["analyst"]
+    assert (workspace / "reviewer_tokens.json").stat().st_mode & 0o077 == 0
+    assert config["GRAPHGUARD_DEMO_REVIEW_KEY"] not in json.dumps(regenerated)
