@@ -11,7 +11,7 @@ const navLinks: Array<{ href: "/" | "/architecture" | "/stack" | "/demo" | "/cas
     { href: '/architecture', label: 'Architecture' },
     { href: '/stack', label: 'Tech Stack' },
     { href: '/cases', label: 'Case Desk' },
-    { href: '/demo', label: 'Live Demo', highlight: true },
+    { href: '/demo', label: 'GraphQL Demo', highlight: true },
 ];
 
 export function Header() {
