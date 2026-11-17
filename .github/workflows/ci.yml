@@ -192,6 +192,8 @@ jobs:
         run: |
           node scripts/print-npm-audit.mjs .local/security/npm-full.json full
           node scripts/print-npm-audit.mjs .local/security/npm-production.json production
+      - name: Block production high and critical npm advisories
+        run: npm --prefix frontend audit --omit=dev --audit-level=high
       - name: Upload inspectable npm audit JSON reports
         uses: actions/upload-artifact@v4
         with:
