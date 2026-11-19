@@ -16,7 +16,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           
       - name: Install dependencies
         run: npm --prefix frontend ci
@@ -39,7 +39,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           
       - name: Install dependencies
         run: npm --prefix frontend ci
@@ -161,7 +161,7 @@ jobs:
           python-version: '3.11'
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
       - name: Install local-review backend dependencies
         run: python -m pip install -r requirements-review-ci.txt
       - name: Install Next.js frontend dependencies
@@ -182,7 +182,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
       - name: Capture explicit full and production npm advisory reports
         run: |
           mkdir -p .local/security
@@ -194,7 +194,10 @@ jobs:
           node scripts/print-npm-audit.mjs .local/security/npm-production.json production
       - name: Block production high and critical npm advisories
         run: npm --prefix frontend audit --omit=dev --audit-level=high
+      - name: Block full-tree high and critical npm advisories
+        run: npm --prefix frontend audit --audit-level=high
       - name: Upload inspectable npm audit JSON reports
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: graphguard-npm-audit-2026-11-17
@@ -204,51 +207,3 @@ jobs:
           retention-days: 7
           if-no-files-found: error
 
-  npm-security-candidate:
-    name: P0 npm remediation trial (non-mutating)
-    if: github.event_name == 'push' && github.ref == 'refs/heads/feature/graphguard-p0-npm-security-audit-2026-11-17'
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    continue-on-error: true
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - name: Prepare controlled dependency candidate without committing
-        run: node scripts/prepare-npm-security-candidate.mjs
-      - name: Resolve pinned lock and apply only semver-safe transitive patches
-        run: |
-          npm --prefix frontend install --package-lock-only --ignore-scripts --no-fund --no-audit
-          npm --prefix frontend audit fix --package-lock-only --ignore-scripts --no-fund || true
-          npm --prefix frontend ci
-      - name: Verify candidate lint, types, frontend tests and Next build
-        run: |
-          npm --prefix frontend run lint
-          npm --prefix frontend run type-check
-          npm --prefix frontend run test
-          npm --prefix frontend run build
-      - name: Audit candidate full and production lockfiles
-        if: always()
-        run: |
-          npm --prefix frontend audit --json > .local/security/candidate-full.json || true
-          npm --prefix frontend audit --omit=dev --json > .local/security/candidate-production.json || true
-          node scripts/print-npm-audit.mjs .local/security/candidate-full.json candidate-full
-          node scripts/print-npm-audit.mjs .local/security/candidate-production.json candidate-production
-      - name: Emit inspectable changed dependency tree for manual PR updates
-        if: always()
-        run: node scripts/print-npm-security-patch.mjs
-      - name: Upload proposal reports
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: graphguard-npm-proposal
-          path: |
-            .local/security/candidate-full.json
-            .local/security/candidate-production.json
-            frontend/package-lock.json
-            frontend/package.json
-          if-no-files-found: warn
-          retention-days: 7
