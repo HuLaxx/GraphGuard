@@ -25,7 +25,7 @@ jobs:
         with:
           python-version: '3.11'
       - name: Install CPU-only pinned-range research stack
-        run: python -m pip install -r requirements-ml-ci.txt
+        run: |\n          python -m pip install -r requirements-ml-ci.txt\n          python -m pip install 'pandas>=2.1,<4' 'structlog>=24,<26' 'prometheus-client>=0.19,<1'
       - name: Verify test-period isolation, invalid inputs and reproducibility
         run: python -m pytest -q tests/unit/test_synthetic_calibration_drift.py
       - name: Produce inspectable synthetic calibration and drift report
