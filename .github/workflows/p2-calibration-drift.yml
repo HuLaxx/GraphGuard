@@ -1,0 +1,49 @@
+name: GraphGuard P2 Calibration and Drift Evaluation
+
+on:
+  pull_request:
+    branches: [main, 'feature/**']
+    paths:
+      - 'ml/monitoring/synthetic_calibration_drift.py'
+      - 'tests/unit/test_synthetic_calibration_drift.py'
+      - '.github/workflows/p2-calibration-drift.yml'
+  push:
+    branches: ['feature/**']
+    paths:
+      - 'ml/monitoring/synthetic_calibration_drift.py'
+      - 'tests/unit/test_synthetic_calibration_drift.py'
+      - '.github/workflows/p2-calibration-drift.yml'
+permissions:
+  contents: read
+jobs:
+  offline-research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install CPU-only pinned-range research stack
+        run: python -m pip install -r requirements-ml-ci.txt
+      - name: Verify test-period isolation, invalid inputs and reproducibility
+        run: python -m pytest -q tests/unit/test_synthetic_calibration_drift.py
+      - name: Produce inspectable synthetic calibration and drift report
+        run: |
+          python -m ml.monitoring.synthetic_calibration_drift --count 720 --seed 42 --output "$RUNNER_TEMP/calibration-drift.json"
+          python - "$RUNNER_TEMP/calibration-drift.json" <<'PY'
+          import json, sys
+          r = json.load(open(sys.argv[1]))
+          assert r["rows"] == {"train": 468, "validation": 108, "test": 144}
+          assert r["scope"] == "SYNTHETIC_ONLY_RESEARCH_DO_NOT_DEPLOY"
+          assert len(r["drift_reference_train_vs_test_psi"]) == 13
+          assert r["raw_test"]["n"] == 144
+          assert r["calibrated_test"]["n"] == 144
+          print("PASS: validation-only calibration and untouched synthetic test")
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: graphguard-synthetic-calibration-drift
+          path: ${{ runner.temp }}/calibration-drift.json
+          if-no-files-found: error
+          retention-days: 14
