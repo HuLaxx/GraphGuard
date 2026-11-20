@@ -122,9 +122,9 @@ resource "aws_iam_role_policy" "github_analytics" {
         ]
       },
       {
-        Sid    = "ReadModelArtifactsOnly"
-        Effect = "Allow"
-        Action = ["s3:GetObject"]
+        Sid      = "ReadModelArtifactsOnly"
+        Effect   = "Allow"
+        Action   = ["s3:GetObject"]
         Resource = [format("%s/model-artifacts/*", aws_s3_bucket.lake.arn)]
       },
       {

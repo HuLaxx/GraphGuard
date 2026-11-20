@@ -1,4 +1,4 @@
-name: GraphGuard P3 Terraform Offline Validation
+name: GraphGuard P4 Terraform Offline Validation
 
 on:
   push:
