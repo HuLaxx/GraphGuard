@@ -220,7 +220,7 @@ jobs:
 
   local-review-real-chromium:
     name: Real signed Chromium analyst case review
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     permissions:
       contents: read
