@@ -8,7 +8,7 @@
 
 A graph-informed fraud investigation project exploring **event ingestion, relationship analysis, XGBoost scoring, explainability and case review**.
 
-[**Inspect the demo**](https://graph-guard-frontend.vercel.app) · [**Follow the evidence**](#follow-the-evidence) · [**Evidence register**](#evidence-register) · [**Run locally**](#open-the-case-locally)
+[**Inspect the demo**](https://graph-guard-frontend.vercel.app) · [**Follow the evidence**](#follow-the-evidence) · [**Evidence register**](#evidence-register) · [**Progress & release gates**](docs/PROGRESS_SCORECARD.md) · [**Run locally**](#open-the-case-locally)
 
 <sub>The animated hero uses fictional entities and relationships. It is not live transaction data, a measured risk score or an actual investigation.</sub>
 
