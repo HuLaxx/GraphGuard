@@ -78,7 +78,7 @@ def run_browser_acceptance(workspace: Path, processes, *, evidence_dir: Path) ->
         credential = page.get_by_label("Operator-issued reviewer token")
         credential.fill("invalid-signed-token")
         page.get_by_role("button", name="Verify signed session").click()
-        expect(page.get_by_role("alert")).to_contain_text("401", timeout=20000)
+        expect(page.get_by_role("alert").filter(has_text="401").first).to_be_visible(timeout=20000)
         assert "Signed local session" not in page.locator("main").inner_text()
         steps.append("invalid_signed_token_denied")
 
