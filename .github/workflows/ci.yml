@@ -115,7 +115,16 @@ jobs:
       - name: Test JSON and Avro with real services, PIT features and verified model scoring
         env:
           GRAPHGUARD_INGESTION_INTEGRATION: "1"
+          GRAPHGUARD_BROKER_CASE_EVIDENCE_PATH: ${{ runner.temp }}/broker-to-review-case.json
         run: pytest tests/integration/test_ingest_kafka_neo4j.py tests/integration/test_avro_registry.py -v
+      - name: Publish broker-source → case model and signed audit evidence
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: graphguard-same-event-broker-to-case
+          path: ${{ runner.temp }}/broker-to-review-case.json
+          if-no-files-found: error
+          retention-days: 14
       - name: Show service logs on failure
         if: failure()
         run: docker compose -f docker-compose.ingestion.yml logs --no-color --tail=150
