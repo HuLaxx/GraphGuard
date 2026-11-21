@@ -134,10 +134,10 @@ def run_browser_acceptance(workspace: Path, processes, *, evidence_dir: Path) ->
     ledger_path = workspace / "synthetic_ledger.sqlite3"
     with sqlite3.connect(f"file:{ledger_path}?mode=ro", uri=True) as db:
         rows = db.execute(
-            "SELECT action FROM synthetic_review_events "
+            "SELECT event_json FROM synthetic_review_events "
             "WHERE case_id=? ORDER BY sequence", (case_id,)
         ).fetchall()
-    assert [row[0] for row in rows] == [
+    assert [json.loads(row[0])["action"] for row in rows] == [
         "case_opened", "escalate", "close_review_complete"
     ]
     report = {
