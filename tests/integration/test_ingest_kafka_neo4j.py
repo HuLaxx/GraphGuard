@@ -157,3 +157,175 @@ def test_kafka_ledger_neo4j_conflict_and_restart_replay(tmp_path, monkeypatch):
         assert any("InvalidTransaction" in reason for reason in reasons)
     finally:
         dlq.close()
+
+
+    # Same accepted broker event is now followed through actual model inference,
+    # native SHAP evidence and a real signed reviewer HTTP workflow. The older
+    # local-case demo seeded the ledger independently; this one does not.
+    import hashlib
+    import secrets
+    import sqlite3
+
+    from fastapi.testclient import TestClient
+
+    from ml.review.app import create_local_review_app
+    from ml.review.auth import issue_demo_token
+    from ml.training.pit_baselines import run_experiment
+
+    artifacts = tmp_path / "frozen-synthetic-model"
+    run_experiment(artifacts, count=240, seed=42)
+    pinned_manifest = hashlib.sha256(
+        (artifacts / "manifest.json").read_bytes()
+    ).hexdigest()
+
+    with sqlite3.connect(ledger_path) as source_connection:
+        source = source_connection.execute(
+            "SELECT payload_sha256 FROM transactions WHERE transaction_id=?",
+            ("test-txn-identity-001",),
+        ).fetchone()
+        assert source is not None
+        feature = source_connection.execute(
+            "SELECT features_sha256 FROM transaction_feature_snapshots "
+            "WHERE transaction_id=?",
+            ("test-txn-identity-001",),
+        ).fetchone()
+        assert feature is not None
+
+    neo4j_driver = GraphDatabase.driver(
+        "bolt://localhost:7687", auth=("neo4j", "graphguard-integration-only")
+    )
+    try:
+        with neo4j_driver.session() as session:
+            graph = session.run(
+                "MATCH (t:Transaction {id:$id}) "
+                "RETURN t.payload_sha256 AS source_hash",
+                id="test-txn-identity-001",
+            ).single()
+            assert graph is not None
+            assert graph["source_hash"] == source[0]
+    finally:
+        neo4j_driver.close()
+
+    reviewer_secret = secrets.token_urlsafe(48)
+    audit_secret = secrets.token_urlsafe(48)
+    app = create_local_review_app(
+        ledger_path=ledger_path,
+        artifact_dir=artifacts,
+        expected_manifest_sha256=pinned_manifest,
+        reviewer_signing_secret=reviewer_secret,
+        audit_signing_secret=audit_secret,
+    )
+    analyst = issue_demo_token(
+        reviewer_secret.encode(), subject="synthetic.analyst", role="analyst"
+    )
+    admin = issue_demo_token(
+        reviewer_secret.encode(), subject="synthetic.admin", role="admin"
+    )
+    client = TestClient(app)
+    unauth = client.post(
+        "/cases", json={
+            "transaction_id": "test-txn-identity-001",
+            "request_id": "broker-case-open-001",
+        },
+    )
+    assert unauth.status_code == 401
+    opened = client.post(
+        "/cases",
+        headers={"Authorization": "Bearer " + analyst},
+        json={
+            "transaction_id": "test-txn-identity-001",
+            "request_id": "broker-case-open-001",
+        },
+    )
+    assert opened.status_code == 201, opened.text
+    case = opened.json()
+    assert case["status"] == "OPEN"
+    assert case["version"] == 0
+    assert case["evidence"]["scope"] == "SYNTHETIC_ONLY_HUMAN_REVIEW_DEMO"
+    assert case["evidence"]["source_payload_sha256"] == source[0]
+    assert case["evidence"]["feature_snapshot_sha256"] == feature[0]
+    assert case["evidence"]["manifest_sha256"] == pinned_manifest
+    assert 0 <= case["evidence"]["score"] <= 1
+    cid = case["case_id"]
+    explanation = client.get(
+        f"/cases/{cid}/explanation",
+        headers={"Authorization": "Bearer " + analyst},
+    )
+    assert explanation.status_code == 200, explanation.text
+    assert explanation.json()["explanation_sha256"] == case["evidence"]["explanation_sha256"]
+    assert explanation.json()["model_sha256"] == case["evidence"]["model_sha256"]
+
+    escalated = client.post(
+        f"/cases/{cid}/actions",
+        headers={"Authorization": "Bearer " + analyst},
+        json={
+            "action": "escalate",
+            "request_id": "broker-case-escalate-001",
+            "expected_version": 0,
+        },
+    )
+    assert escalated.status_code == 200, escalated.text
+    assert escalated.json()["status"] == "ESCALATED"
+    closed = client.post(
+        f"/cases/{cid}/actions",
+        headers={"Authorization": "Bearer " + admin},
+        json={
+            "action": "close_review_complete",
+            "request_id": "broker-case-close-001",
+            "expected_version": 1,
+        },
+    )
+    assert closed.status_code == 200, closed.text
+    assert closed.json()["status"] == "CLOSED_REVIEW_COMPLETE"
+    assert closed.json()["version"] == 2
+    assert len(closed.json()["events"]) == 3
+    reloaded = client.get(
+        f"/cases/{cid}", headers={"Authorization": "Bearer " + admin}
+    )
+    assert reloaded.status_code == 200, reloaded.text
+    assert reloaded.json() == closed.json()
+    with sqlite3.connect(ledger_path) as connection:
+        assert connection.execute(
+            "SELECT count(*) FROM transactions"
+        ).fetchone()[0] == 1
+        assert connection.execute(
+            "SELECT count(*) FROM transaction_research_scores"
+        ).fetchone()[0] == 1
+        assert connection.execute(
+            "SELECT count(*) FROM transaction_research_explanations"
+        ).fetchone()[0] == 1
+        assert connection.execute(
+            "SELECT count(*) FROM synthetic_review_cases"
+        ).fetchone()[0] == 1
+
+    report = {
+        "scope": "same_broker_source_synthetic_human_review_only",
+        "transaction_id": "test-txn-identity-001",
+        "source_payload_sha256": source[0],
+        "graph_source_sha256": graph["source_hash"],
+        "feature_snapshot_sha256": feature[0],
+        "model_manifest_sha256": pinned_manifest,
+        "model_sha256": case["evidence"]["model_sha256"],
+        "explanation_sha256": case["evidence"]["explanation_sha256"],
+        "case_id": cid,
+        "audit_head_sha256": closed.json()["audit_head_sha256"],
+        "review_transitions": [
+            event["action"] for event in closed.json()["events"]
+        ],
+        "final_status": "CLOSED_REVIEW_COMPLETE",
+        "limitations": [
+            "Synthetic source events only, one reviewer tenant and local SQLite.",
+            "The real graph is corroborated, but the fitted model reads the independently "
+            "persisted PIT source ledger; this does not prove graph-embedding inference.",
+            "TestClient is signed HTTP ASGI, not an actual Chromium browser.",
+            "Closing a case is a human review state, not fraud guilt.",
+        ],
+    }
+    destination = os.getenv("GRAPHGUARD_BROKER_CASE_EVIDENCE_PATH")
+    if destination:
+        Path(destination).write_text(
+            json.dumps(report, sort_keys=True, indent=2) + "\n", encoding="utf-8"
+        )
+    print(
+        "PASS: SAME Kafka/Neo4j source → PIT model → SHAP → signed human case audit"
+    )
