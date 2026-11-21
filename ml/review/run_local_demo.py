@@ -116,7 +116,8 @@ def _smoke_browser_proxy(workspace: Path, processes):
     print("PASS: actual local Next case page → signed API → SHAP → human review audit", flush=True)
 
 
-def run_local(workspace: Path, *, smoke: bool = False):
+def run_local(workspace: Path, *, smoke: bool = False, browser_smoke: bool = False,
+              evidence_dir: Path | None = None):
     workspace = workspace.resolve()
     if not workspace.exists():
         prepare_demo(workspace)
@@ -166,6 +167,12 @@ def run_local(workspace: Path, *, smoke: bool = False):
         if smoke:
             _smoke_browser_proxy(workspace, processes)
             return
+        if browser_smoke:
+            if evidence_dir is None:
+                raise RuntimeError("A private/synthetic evidence directory is required")
+            from ml.review.browser_acceptance import run_browser_acceptance
+            run_browser_acceptance(workspace, processes, evidence_dir=evidence_dir)
+            return
         while all(proc.poll() is None for proc in processes):
             time.sleep(0.5)
         raise RuntimeError("One of the local review services exited early")
@@ -192,8 +199,15 @@ def main():
     parser.add_argument("--workspace", type=Path, default=Path(".local/graphguard-review"))
     parser.add_argument("--smoke", action="store_true",
                         help="Start both servers, assert local HTTP score/SHAP/review, then tear down")
+    parser.add_argument("--browser-smoke", action="store_true",
+                        help="Run actual Chromium signed synthetic case workflow and exit")
+    parser.add_argument("--evidence-dir", type=Path,
+                        help="Output synthetic-only evidence JSON and safe screenshot")
     args = parser.parse_args()
-    run_local(args.workspace, smoke=args.smoke)
+    if args.smoke and args.browser_smoke:
+        parser.error("Choose one acceptance mode")
+    run_local(args.workspace, smoke=args.smoke,
+              browser_smoke=args.browser_smoke, evidence_dir=args.evidence_dir)
 
 
 if __name__ == "__main__":

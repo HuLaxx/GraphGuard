@@ -216,3 +216,49 @@ jobs:
           retention-days: 7
           if-no-files-found: error
 
+
+
+  local-review-real-chromium:
+    name: Real signed Chromium analyst case review
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install isolated synthetic review and Chromium
+        run: |
+          python -m pip install -r requirements-review-ci.txt
+          python -m pip install 'playwright==1.57.0'
+          python -m playwright install --with-deps chromium
+          npm --prefix frontend ci
+      - name: Drive real Chromium through signed source, SHAP and human audit
+        run: |
+          python -m ml.review.run_local_demo \
+            --workspace .local/graphguard-chromium-ci \
+            --browser-smoke \
+            --evidence-dir "$RUNNER_TEMP/graphguard-browser-evidence"
+          python - "$RUNNER_TEMP/graphguard-browser-evidence/synthetic-review-proof.json" <<'PY'
+          import json, sys
+          from pathlib import Path
+          result = json.loads(Path(sys.argv[1]).read_text())
+          assert result["steps_passed"] == 6
+          assert result["final_status"] == "CLOSED_REVIEW_COMPLETE"
+          assert result["final_version"] == 2
+          assert result["external_provider_calls"] == 0
+          print("PASS: local Chromium analyst/admin evidence complete")
+          PY
+      - name: Publish sanitized synthetic-only browser evidence and screenshot
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: graphguard-signed-chromium-synthetic-case
+          path: ${{ runner.temp }}/graphguard-browser-evidence/
+          if-no-files-found: error
+          retention-days: 14
