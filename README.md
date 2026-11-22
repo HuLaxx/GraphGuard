@@ -16,6 +16,16 @@ A graph-informed fraud investigation project exploring **event ingestion, relati
 
 ---
 
+## Current engineering evidence — 22 November 2026
+
+**Release readiness: [70/100 verified](docs/PROGRESS_SCORECARD.md), draft and synthetic-only; not a production fraud model.** This is an evidence-weighted engineering score, not a real-world classification score or percentage of a hosted deployment.
+
+- [PR #14](https://github.com/HuLaxx/GraphGuard/pull/14): **10/10 green full CI jobs** on [exact commit `868b7584`](https://github.com/HuLaxx/GraphGuard/actions/runs/44844565253), including real Kafka/Avro/Schema Registry/Neo4j, leakage-safe PIT features, a SHA-pinned tabular model, genuine native SHAP, signed local human case, **real Chromium analyst/admin review**, npm full-tree high/critical audit and security scan.
+- [PR #15](https://github.com/HuLaxx/GraphGuard/pull/15) adds **one new same-event Kafka→Chromium runner** and a real signed local p50/p95 benchmark. **Pending GitHub Actions verification**: do not claim passed or increase the readiness percentage until there are green exact-head CI results.
+- [Synthetic research model card](docs/MODEL_CARD.md): XGBoost test PR-AUC 0.7650, **test FPR 9.375%** despite a validation FPR target of 5%; no real-world fraud accuracy, fairness, or automated decision claims.
+- [Run the signed local analyst desk](docs/LOCAL_REVIEW_DASHBOARD.md) · [Source-to-case architecture](docs/VERIFIED_ARCHITECTURE.md) · [Live evidence register](docs/EVIDENCE_REGISTER.md). The publicly hosted GraphQL demo is **illustrative** and is **not** the signed Python case service.
+
+**Still required for genuine 100/100 release readiness:** independent licensed data with defensible cold-start labels, enterprise OIDC/MFA and audited retention, independently anchored case audit, tested production load/alerts/rollback, reviewed infrastructure cost and approved deployment/teardown, external security and model review, and explicit merge approvals. None are implied by local synthetic CI.
 ## Case opening / One event is not the whole story
 
 Consider a **fictional example**: a purchase looks routine on its own, but the device appears on several accounts, which in turn connect to related merchants. Those relationships deserve inspection—not an automatic verdict.
@@ -210,8 +220,8 @@ Fraud investigation requires disciplined uncertainty: clear model provenance, me
 - [x] Historical testing, API smoke logs and a source-level [audit](docs/FINAL_AUDIT.md).
 - [x] Explicit separation of mocked UI cases, local services and proposed deployment.
 - [ ] Replace/validate stubbed GAT scoring if that path is part of the intended application.
-- [ ] Verify the full graph-to-score-to-review path in a reproducible environment.
-- [ ] Re-run CI and publish traceable quality/coverage data; don't infer it from old logs.
+- [x] Verified the **local synthetic** registered Kafka→Neo4j→PIT→trained model/SHAP→signed reviewer case path, with repeatable CI [PR #13](https://github.com/HuLaxx/GraphGuard/pull/13). Same broker event in Chromium remains candidate in [PR #15](https://github.com/HuLaxx/GraphGuard/pull/15).
+- [x] Re-ran full CI with **10/10 jobs green** and real Chromium/ingestion artifacts [PR #14](https://github.com/HuLaxx/GraphGuard/pull/14) [CI 44844565253](https://github.com/HuLaxx/GraphGuard/actions/runs/44844565253). Does not imply production readiness.
 - [ ] Evaluate precision, recall, false-positive costs and bias on labeled data before citing performance.
 - [ ] Verify the hosted demo's actual integration boundaries and document them.
 - [ ] Review old example credentials and secrets before any external deployment.
