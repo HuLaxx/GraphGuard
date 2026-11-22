@@ -24,6 +24,29 @@ def _signed_local_get(path: str, token: str) -> dict:
         return json.load(response)
 
 
+
+def _submit_reviewer_token(page, token: str) -> None:
+    """Wait for Next.js hydration to attach the controlled input handler.
+
+    A server-rendered input is visible before its React onChange listener is
+    hydrated. The CI browser may otherwise fill the field while the submit
+    button still reads an empty React state. Fail explicitly if hydration never
+    makes the form interactive, rather than waiting 30 seconds on a disabled
+    click. The token is never printed or included in error details.
+    """
+    credential = page.get_by_label("Operator-issued reviewer token")
+    button = page.get_by_role("button", name="Verify signed session")
+    deadline = time.monotonic() + 25
+    while time.monotonic() < deadline:
+        credential.fill("")
+        credential.fill(token)
+        if button.is_enabled():
+            button.click()
+            return
+        page.wait_for_timeout(300)
+    raise AssertionError("Reviewer form did not become interactive after token input")
+
+
 def run_browser_acceptance(workspace: Path, processes, *, evidence_dir: Path,
                            expected_transaction_id: str = "synthetic-ui-review-001",
                            source_mode: str = "direct_seeded_ledger") -> dict:
@@ -74,20 +97,17 @@ def run_browser_acceptance(workspace: Path, processes, *, evidence_dir: Path,
         browser = playwright.chromium.launch(headless=True)
         context = browser.new_context(viewport={"width": 1365, "height": 900})
         page = context.new_page()
-        page.goto("http://127.0.0.1:3000/cases", wait_until="domcontentloaded", timeout=120000)
+        page.goto("http://127.0.0.1:3000/cases", wait_until="load", timeout=120000)
         expect(page.get_by_text("Synthetic data only", exact=True).first).to_be_visible(timeout=30000)
         expect(page.get_by_role("heading", name="Connect your local review session")).to_be_visible()
         steps.append("real_browser_synthetic_only_labels")
 
-        credential = page.get_by_label("Operator-issued reviewer token")
-        credential.fill("invalid-signed-token")
-        page.get_by_role("button", name="Verify signed session").click()
+        _submit_reviewer_token(page, "invalid-signed-token")
         expect(page.get_by_role("alert").filter(has_text="401").first).to_be_visible(timeout=20000)
         assert "Signed local session" not in page.locator("main").inner_text()
         steps.append("invalid_signed_token_denied")
 
-        credential.fill(analyst)
-        page.get_by_role("button", name="Verify signed session").click()
+        _submit_reviewer_token(page, analyst)
         expect(page.get_by_text("Signed local session · analyst.demo")).to_be_visible(timeout=30000)
         queue = page.get_by_role("region", name="Verified synthetic case queue")
         expect(queue.get_by_role("button")).to_have_count(1)
@@ -108,8 +128,7 @@ def run_browser_acceptance(workspace: Path, processes, *, evidence_dir: Path,
 
         page.get_by_role("button", name="Disconnect").click()
         expect(page.get_by_role("heading", name="Connect your local review session")).to_be_visible()
-        page.get_by_label("Operator-issued reviewer token").fill(admin)
-        page.get_by_role("button", name="Verify signed session").click()
+        _submit_reviewer_token(page, admin)
         expect(page.get_by_text("Signed local session · admin.demo")).to_be_visible(timeout=30000)
         page.get_by_role("region", name="Verified synthetic case queue").get_by_role("button").first.click()
         expect(page.get_by_role("region", name="Verified model attribution")).to_be_visible()
