@@ -165,7 +165,12 @@ def run_local(workspace: Path, *, smoke: bool = False, browser_smoke: bool = Fal
         print("Local synthetic analyst desk: http://127.0.0.1:3000/cases", flush=True)
         print("Private signed demo tokens: " + str(workspace / "reviewer_tokens.json"), flush=True)
         print("Sample accepted synthetic ID: synthetic-ui-review-002", flush=True)
-        print("Local fixture bypasses Kafka; real Kafka→case verified in CI. Ctrl-C to stop.", flush=True)
+        print(
+            "This case was broker-backed in this test runner."
+            if source_mode == "real_kafka_avro_neo4j"
+            else "Local fixture bypasses Kafka; real Kafka→case verified in CI.",
+            "Ctrl-C to stop.", flush=True,
+        )
         if smoke:
             _smoke_browser_proxy(workspace, processes)
             return
