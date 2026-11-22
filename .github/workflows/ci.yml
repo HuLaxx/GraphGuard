@@ -144,7 +144,7 @@ jobs:
       - name: Install CPU-only baseline dependencies
         run: python -m pip install -r requirements-review-ci.txt
       - name: Test ML, verified SHAP and signed human-review audit
-        run: python -m pytest tests/unit/test_pit_baselines.py tests/unit/test_verified_pit_scorer.py tests/unit/test_verified_shap.py tests/unit/test_synthetic_review.py -v
+        run: python -m pytest tests/unit/test_pit_baselines.py tests/unit/test_verified_pit_scorer.py tests/unit/test_verified_shap.py tests/unit/test_synthetic_review.py tests/unit/test_local_benchmark.py -v
       - name: Train both models and generate inspectable synthetic metrics
         run: python -m ml.training.pit_baselines --count 720 --seed 42 --output-dir .local/ml-baselines
       - name: Upload synthetic-only report and model artifacts
@@ -318,3 +318,51 @@ jobs:
       - name: Tear down disposable broker and graph
         if: always()
         run: docker compose -f docker-compose.ingestion.yml down --remove-orphans
+
+  signed-local-latency:
+    name: Reproducible signed local case and SHAP p50/p95
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install synthetic model and Next.js dependencies
+        run: |
+          python -m pip install -r requirements-review-ci.txt
+          npm --prefix frontend ci
+      - name: Measure real signed loopback case+SHAP requests with source hash checks
+        run: |
+          python -m ml.review.run_local_demo \
+            --workspace .local/graphguard-latency-ci \
+            --benchmark \
+            --evidence-dir "$RUNNER_TEMP/graphguard-latency-evidence"
+          python - "$RUNNER_TEMP/graphguard-latency-evidence/synthetic-latency.json" <<'PY'
+          import json, sys
+          from pathlib import Path
+          result = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+          assert result["scope"] == "LOCAL_SYNTHETIC_BENCHMARK_NOT_PRODUCTION"
+          assert result["planned_calls"] == 24
+          assert result["successful_calls"] == 24
+          assert result["failed_calls"] == 0
+          assert result["concurrency"] == 2
+          for label in ("case_read", "native_shap"):
+              row = result["routes"][label]
+              assert row["completed"] == 12 and row["failed"] == 0
+              assert 0 <= row["timing"]["p50_ms"] <= row["timing"]["p95_ms"]
+          print("PASS: signed case+SHAP p50/p95 captured on 24 checked local requests")
+          PY
+      - name: Upload sanitized synthetic latency measurements
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: graphguard-signed-local-p50-p95
+          path: ${{ runner.temp }}/graphguard-latency-evidence/synthetic-latency.json
+          retention-days: 14
+          if-no-files-found: error
