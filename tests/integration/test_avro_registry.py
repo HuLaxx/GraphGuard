@@ -478,3 +478,163 @@ def test_real_avro_transaction_scores_against_hash_pinned_training_artifact(
         ).fetchone()[0] == 3
     finally:
         ledger.close()
+
+
+
+class UnifiedBrokerBrowserProducer(TransactionProducer):
+    TOPIC = "transactions.avro.unified-browser"
+
+
+class UnifiedBrokerBrowserBuilder(GraphBuilder):
+    TOPIC = UnifiedBrokerBrowserProducer.TOPIC
+    DLQ_TOPIC = "transactions.avro.unified-browser.dlq"
+
+
+@pytest.mark.skipif(
+    os.getenv("GRAPHGUARD_BROKER_CHROMIUM") != "1",
+    reason="The real Chromium+Kafka+Neo4j single-runner job is opt-in",
+)
+def test_uninterrupted_registered_avro_to_real_chromium_case(tmp_path, monkeypatch):
+    """One *same* registered Kafka event must reach real Chromium and signed audit.
+
+    This differs from prior separate integration and local seed fixtures.
+    Real Kafka/Schema Registry, Neo4j, XGBoost, SHAP, FastAPI, Next and
+    headless Chromium all run in this SAME ephemeral GitHub Actions job.
+    Still a local synthetic case and NOT production cloud/enterprise IAM.
+    """
+    import hashlib
+    import secrets
+    import sqlite3
+
+    from ml.review.auth import issue_demo_token
+    from ml.review.case_store import SyntheticReviewStore
+    from ml.review.run_local_demo import run_local
+    from ml.review.seed_local_demo import _private_json
+    from ml.serving.verified_pit_scorer import VerifiedSyntheticScorer
+    from ml.training.pit_baselines import run_experiment
+    from transaction_ledger import TransactionLedger
+
+    txn_id = "synthetic-broker-to-real-chromium-001"
+    workspace = tmp_path / "real-broker-chromium"
+    workspace.mkdir(mode=0o700)
+    artifacts = workspace / "models"
+    manifest = run_experiment(artifacts, count=240, seed=42)
+    manifest_pin = hashlib.sha256((artifacts / "manifest.json").read_bytes()).hexdigest()
+
+    create_topics(UnifiedBrokerBrowserProducer.TOPIC, UnifiedBrokerBrowserBuilder.DLQ_TOPIC)
+    # No direct-seeded substitute: accept the exact event through Schema
+    # Registry and Kafka; the graph builder owns the source and PIT writes.
+    original = make_event(txn_id, amount=17.25)
+    publish(UnifiedBrokerBrowserProducer, [original])
+    ledger_path = workspace / "synthetic_ledger.sqlite3"
+    consumer_group = "graphguard-actual-browser-" + uuid.uuid4().hex
+    start_builder(
+        UnifiedBrokerBrowserBuilder, consumer_group, ledger_path, monkeypatch
+    ).run(max_messages=1)
+    assert_graph_record(txn_id, 17.25)
+
+    reviewer_secret = secrets.token_urlsafe(48)
+    audit_secret = secrets.token_urlsafe(48)
+    scorer = VerifiedSyntheticScorer(
+        artifacts, expected_manifest_sha256=manifest_pin,
+    )
+    ledger = TransactionLedger(str(ledger_path))
+    try:
+        accepted = ledger.connection.execute(
+            "SELECT payload_sha256, source_topic FROM transactions WHERE transaction_id=?",
+            (txn_id,),
+        ).fetchone()
+        assert accepted is not None
+        assert accepted[1] == UnifiedBrokerBrowserProducer.TOPIC
+        source_sha = accepted[0]
+        opening = SyntheticReviewStore(
+            ledger.connection, scorer=scorer,
+            reviewer_signing_key=reviewer_secret.encode(),
+            audit_signing_key=audit_secret.encode(),
+        ).open_case(
+            issue_demo_token(
+                reviewer_secret.encode(), subject="analyst.demo", role="analyst"
+            ),
+            txn_id, request_id="unified-kafka-chromium-open-001",
+        )
+        assert opening["status"] == "OPEN"
+        assert opening["evidence"]["source_payload_sha256"] == source_sha
+        assert opening["evidence"]["manifest_sha256"] == manifest_pin
+        assert len(opening["events"]) == 1
+    finally:
+        ledger.close()
+
+    _private_json(workspace / "private_config.json", {
+        "GRAPHGUARD_DEMO_REVIEW_KEY": reviewer_secret,
+        "GRAPHGUARD_DEMO_AUDIT_KEY": audit_secret,
+        "GRAPHGUARD_LEDGER_PATH": str(ledger_path),
+        "GRAPHGUARD_MODEL_DIR": str(artifacts),
+        "GRAPHGUARD_TRUSTED_MANIFEST_SHA256": manifest_pin,
+    })
+    # The runner generates its own short-lived private reviewer_tokens.json.
+    evidence_dir = Path(
+        os.environ.get(
+            "GRAPHGUARD_BROKER_CHROMIUM_EVIDENCE_DIR",
+            str(tmp_path / "verified-source-to-browser-evidence"),
+        )
+    )
+    run_local(
+        workspace, browser_smoke=True, evidence_dir=evidence_dir,
+        expected_transaction_id=txn_id,
+        source_mode="real_kafka_avro_neo4j",
+    )
+    report_path = evidence_dir / "synthetic-review-proof.json"
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    assert report["source_mode"] == "real_kafka_avro_neo4j"
+    assert report["transaction_id"] == txn_id
+    assert report["source_sha256"] == source_sha
+    assert report["model_sha256"] == opening["evidence"]["model_sha256"]
+    assert report["shap_sha256"] == opening["evidence"]["explanation_sha256"]
+    assert report["final_status"] == "CLOSED_REVIEW_COMPLETE"
+    assert report["final_version"] == 2
+    assert report["steps_passed"] == 6
+    assert report["external_provider_calls"] == 0
+    assert (evidence_dir / "synthetic-review-final.png").is_file()
+
+    # Read the SAME broker-produced source after real Chromium reviewer
+    # actions. The source, first PIT snapshot and case anchor remain stable.
+    with sqlite3.connect(f"file:{ledger_path}?mode=ro", uri=True) as conn:
+        assert conn.execute(
+            "SELECT COUNT(*) FROM transactions WHERE transaction_id=?", (txn_id,)
+        ).fetchone()[0] == 1
+        assert conn.execute(
+            "SELECT COUNT(*) FROM transaction_research_scores WHERE transaction_id=?",
+            (txn_id,),
+        ).fetchone()[0] == 1
+        assert conn.execute(
+            "SELECT COUNT(*) FROM transaction_research_explanations WHERE transaction_id=?",
+            (txn_id,),
+        ).fetchone()[0] == 1
+        assert conn.execute(
+            "SELECT COUNT(*) FROM synthetic_review_cases WHERE transaction_id=?",
+            (txn_id,),
+        ).fetchone()[0] == 1
+        assert conn.execute(
+            "SELECT COUNT(*) FROM synthetic_review_events WHERE case_id=?",
+            (opening["case_id"],),
+        ).fetchone()[0] == 3
+        snapshot = conn.execute(
+            "SELECT features_sha256 FROM transaction_feature_snapshots WHERE transaction_id=?",
+            (txn_id,),
+        ).fetchone()
+        assert snapshot is not None
+        assert snapshot[0] == opening["evidence"]["feature_snapshot_sha256"]
+    assert_graph_record(txn_id, 17.25)
+    # An explicit Kafka replay in the SAME job must keep all case records.
+    start_builder(
+        UnifiedBrokerBrowserBuilder,
+        "graphguard-actual-browser-replay-" + uuid.uuid4().hex,
+        ledger_path, monkeypatch,
+    ).run(max_messages=1)
+    with sqlite3.connect(f"file:{ledger_path}?mode=ro", uri=True) as conn:
+        assert conn.execute(
+            "SELECT COUNT(*) FROM synthetic_review_events WHERE case_id=?",
+            (opening["case_id"],),
+        ).fetchone()[0] == 3
+    assert_graph_record(txn_id, 17.25)
+    print("PASS: SAME registered Kafka event → Neo4j → PIT → ML/SHAP → signed real Chromium reviewer and replay")
