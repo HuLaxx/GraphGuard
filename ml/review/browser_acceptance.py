@@ -24,7 +24,8 @@ def _signed_local_get(path: str, token: str) -> dict:
         return json.load(response)
 
 
-def run_browser_acceptance(workspace: Path, processes, *, evidence_dir: Path) -> dict:
+def run_browser_acceptance(workspace: Path, processes, *, evidence_dir: Path,
+                           expected_transaction_id: str = "synthetic-ui-review-001") -> dict:
     from playwright.sync_api import expect, sync_playwright
 
     workspace = Path(workspace).resolve()
@@ -59,7 +60,7 @@ def run_browser_acceptance(workspace: Path, processes, *, evidence_dir: Path) ->
     assert len(before["cases"]) == 1
     original = before["cases"][0]
     assert original["status"] == "OPEN"
-    assert original["transaction_id"] == "synthetic-ui-review-001"
+    assert original["transaction_id"] == expected_transaction_id
     case_id = original["case_id"]
     model_hash = original["evidence"]["model_sha256"]
     source_hash = original["evidence"]["source_payload_sha256"]
@@ -91,7 +92,7 @@ def run_browser_acceptance(workspace: Path, processes, *, evidence_dir: Path) ->
         expect(page.get_by_role("region", name="Verified model attribution")).to_be_visible(timeout=30000)
         expect(page.get_by_role("region", name="Verified model attribution")).to_contain_text("all 12 features")
         expect(page.get_by_role("region", name="Verified case audit timeline")).to_be_visible()
-        expect(page.get_by_text("Transaction: synthetic-ui-review-001")).to_be_visible()
+        expect(page.get_by_text("Transaction: " + expected_transaction_id)).to_be_visible()
         steps.append("signed_analyst_real_shap_and_audit_rendered")
 
         page.get_by_role("button", name="Escalate for review").click()
@@ -146,6 +147,7 @@ def run_browser_acceptance(workspace: Path, processes, *, evidence_dir: Path) ->
         "steps_passed": len(steps),
         "case_id": case_id,
         "transaction_id": original["transaction_id"],
+        "source_mode": "real_broker_source" if expected_transaction_id != "synthetic-ui-review-001" else "direct_seeded_ledger", 
         "source_sha256": source_hash,
         "model_sha256": model_hash,
         "shap_sha256": explanation_hash,
@@ -156,8 +158,8 @@ def run_browser_acceptance(workspace: Path, processes, *, evidence_dir: Path) ->
         "frontend": "real_Chromium_Next16_local_dev",
         "external_provider_calls": 0,
         "limitations": [
-            "Browser fixture starts at synthetic accepted SQLite ledger, not real Kafka.",
-            "Real Kafka-Neo4j to signed case is tested in a separate CI job.",
+            "Browser source is real broker-backed only when invoked via the broker+Chromium integration job.",
+            "Source-to-Chromium must be judged by CI mode: local seed and broker-backed paths are separately labelled.",
             "Demo HMAC tokens and local single-tenant reviewer are not enterprise OIDC.",
             "Model SHAP attribution is non-causal and not proof of fraud.",
             "No cloud backend, licensed fraud data or production performance claim.",
