@@ -117,7 +117,8 @@ def _smoke_browser_proxy(workspace: Path, processes):
 
 
 def run_local(workspace: Path, *, smoke: bool = False, browser_smoke: bool = False,
-              evidence_dir: Path | None = None):
+              evidence_dir: Path | None = None,
+              expected_transaction_id: str = "synthetic-ui-review-001"): 
     workspace = workspace.resolve()
     if not workspace.exists():
         prepare_demo(workspace)
@@ -171,7 +172,8 @@ def run_local(workspace: Path, *, smoke: bool = False, browser_smoke: bool = Fal
             if evidence_dir is None:
                 raise RuntimeError("A private/synthetic evidence directory is required")
             from ml.review.browser_acceptance import run_browser_acceptance
-            run_browser_acceptance(workspace, processes, evidence_dir=evidence_dir)
+            run_browser_acceptance(workspace, processes, evidence_dir=evidence_dir,
+                                   expected_transaction_id=expected_transaction_id)
             return
         while all(proc.poll() is None for proc in processes):
             time.sleep(0.5)
