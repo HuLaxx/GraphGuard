@@ -25,9 +25,12 @@ def _signed_local_get(path: str, token: str) -> dict:
 
 
 def run_browser_acceptance(workspace: Path, processes, *, evidence_dir: Path,
-                           expected_transaction_id: str = "synthetic-ui-review-001") -> dict:
+                           expected_transaction_id: str = "synthetic-ui-review-001",
+                           source_mode: str = "direct_seeded_ledger") -> dict:
     from playwright.sync_api import expect, sync_playwright
 
+    if source_mode not in ("direct_seeded_ledger", "real_kafka_avro_neo4j"):
+        raise ValueError("Unsupported source provenance mode")
     workspace = Path(workspace).resolve()
     evidence_dir = Path(evidence_dir).resolve()
     if evidence_dir.is_symlink():
@@ -147,7 +150,7 @@ def run_browser_acceptance(workspace: Path, processes, *, evidence_dir: Path,
         "steps_passed": len(steps),
         "case_id": case_id,
         "transaction_id": original["transaction_id"],
-        "source_mode": "real_broker_source" if expected_transaction_id != "synthetic-ui-review-001" else "direct_seeded_ledger", 
+        "source_mode": source_mode,
         "source_sha256": source_hash,
         "model_sha256": model_hash,
         "shap_sha256": explanation_hash,
