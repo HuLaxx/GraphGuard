@@ -117,7 +117,7 @@ def _smoke_browser_proxy(workspace: Path, processes):
 
 
 def run_local(workspace: Path, *, smoke: bool = False, browser_smoke: bool = False,
-              evidence_dir: Path | None = None,
+              benchmark: bool = False, evidence_dir: Path | None = None,
               expected_transaction_id: str = "synthetic-ui-review-001",
               source_mode: str = "direct_seeded_ledger"):
     workspace = workspace.resolve()
@@ -182,6 +182,12 @@ def run_local(workspace: Path, *, smoke: bool = False, browser_smoke: bool = Fal
                                    expected_transaction_id=expected_transaction_id,
                                    source_mode=source_mode)
             return
+        if benchmark:
+            if evidence_dir is None:
+                raise RuntimeError("A synthetic benchmark evidence directory is required")
+            from ml.review.benchmark_local import run_benchmark
+            run_benchmark(workspace, processes, evidence_dir=evidence_dir)
+            return
         while all(proc.poll() is None for proc in processes):
             time.sleep(0.5)
         raise RuntimeError("One of the local review services exited early")
@@ -210,13 +216,16 @@ def main():
                         help="Start both servers, assert local HTTP score/SHAP/review, then tear down")
     parser.add_argument("--browser-smoke", action="store_true",
                         help="Run actual Chromium signed synthetic case workflow and exit")
+    parser.add_argument("--benchmark", action="store_true",
+                        help="Measure bounded signed local case and SHAP latency, then exit")
     parser.add_argument("--evidence-dir", type=Path,
                         help="Output synthetic-only evidence JSON and safe screenshot")
     args = parser.parse_args()
-    if args.smoke and args.browser_smoke:
-        parser.error("Choose one acceptance mode")
+    if sum(bool(value) for value in (args.smoke, args.browser_smoke, args.benchmark)) > 1:
+        parser.error("Choose only one acceptance mode")
     run_local(args.workspace, smoke=args.smoke,
-              browser_smoke=args.browser_smoke, evidence_dir=args.evidence_dir)
+              browser_smoke=args.browser_smoke, benchmark=args.benchmark,
+              evidence_dir=args.evidence_dir)
 
 
 if __name__ == "__main__":
