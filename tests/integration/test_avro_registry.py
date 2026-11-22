@@ -526,6 +526,14 @@ def test_uninterrupted_registered_avro_to_real_chromium_case(tmp_path, monkeypat
     # Registry and Kafka; the graph builder owns the source and PIT writes.
     original = make_event(txn_id, amount=17.25)
     publish(UnifiedBrokerBrowserProducer, [original])
+    wire = poll_one(UnifiedBrokerBrowserProducer.TOPIC).value()
+    assert wire[0] == 0  # Confluent Avro framing, never a JSON-only fixture.
+    assert int.from_bytes(wire[1:5], "big") > 0
+    with urlopen(
+        f"{REGISTRY_URL}/subjects/{UnifiedBrokerBrowserProducer.TOPIC}-value/versions",
+        timeout=10,
+    ) as response:
+        assert json.load(response), "Registered Avro schema subject must exist"
     ledger_path = workspace / "synthetic_ledger.sqlite3"
     consumer_group = "graphguard-actual-browser-" + uuid.uuid4().hex
     start_builder(
@@ -547,6 +555,17 @@ def test_uninterrupted_registered_avro_to_real_chromium_case(tmp_path, monkeypat
         assert accepted is not None
         assert accepted[1] == UnifiedBrokerBrowserProducer.TOPIC
         source_sha = accepted[0]
+        # Actual Neo4j source hash must equal the accepted SQLite source.
+        driver = GraphDatabase.driver(NEO4J_URL, auth=NEO4J_AUTH)
+        try:
+            with driver.session() as session:
+                rows = session.run(
+                    "MATCH (t:Transaction {id: $id}) RETURN t.payload_sha256 AS digest",
+                    id=txn_id,
+                ).data()
+            assert len(rows) == 1 and rows[0]["digest"] == source_sha
+        finally:
+            driver.close()
         opening = SyntheticReviewStore(
             ledger.connection, scorer=scorer,
             reviewer_signing_key=reviewer_secret.encode(),
