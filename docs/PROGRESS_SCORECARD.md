@@ -1,6 +1,6 @@
 # GraphGuard — evidence-weighted release progress
 
-**70 / 100 — 21 November 2026, estimated, DRAFT, not production-ready**
+**70 / 100 — last fully verified 21 November 2026; rechecked 22 November 2026, estimated, DRAFT, not production-ready**
 
 ```text
 GraphGuard  [███████░░░] 70%
@@ -33,3 +33,11 @@ This is a **manual scoring rubric** derived directly from the [10-category unive
 | **P4** | Minimal offline Terraform validated | Protected actual cloud plan/apply, monitoring, teardown, hosted API approval |
 
 **PR:** [#14](https://github.com/HuLaxx/GraphGuard/pull/14) (draft, stacked), **current verified code CI:** [44844098127](https://github.com/HuLaxx/GraphGuard/actions/runs/44844098127). **AWS resources actually provisioned:** none. **Next:** reproducible local p95/load/recovery test; do not interpret source+case synthetic test as proof of real financial wrongdoing.
+
+
+## 22 November 2026 — PR #15 implementation is *not yet earned progress*
+
+- [PR #15](https://github.com/HuLaxx/GraphGuard/pull/15) now implements a **candidate** single same-source Kafka/Registry→Neo4j→PIT→trained XGBoost/logistic→native SHAP→signed Next/FastAPI→real Chromium reviewer/admin case→Kafka replay test in one isolated CI runner. It verifies the registered Avro wire format and exact Neo4j/SQLite source hash, and asserts unchanged source/model/explanation hashes after the browser decisions.
+- A separate bounded **24-request / 2-concurrent-worker** signed Next/FastAPI case/SHAP microbenchmark records reproducible local nearest-rank p50/p95 and 0-error acceptance. It is *not* evidence of production throughput or a production latency SLO.
+- Both jobs and new tests are **pending CI**; no new score is assigned at this checkpoint. The first new green same-source browser acceptance could improve **Authentic end-to-end journey 9→10 (+1)**; verified local p95 evidence could improve **Performance/cost 5→6 (+1)**. Those are *conditional*, subject to reviewer judgment and exact-head CI artifacts. **Current earned readiness stays 70/100.**
+- See [P3 acceptance methods](P3_UNIFIED_BROKER_CHROMIUM.md). All earlier external dataset, hosted identity, immutable audit anchoring, production cloud, load/chaos and sign-off blockers remain unchanged. No paid infrastructure or main-branch merge.
