@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import Link from 'next/link';
-import { Play, ExternalLink, Cpu } from 'lucide-react';
+import { Play, ExternalLink } from 'lucide-react';
+import { PageIntro } from '@/components/casefile/page-intro';
 
 const getLogoUrl = (name: string) => {
     const slugMap: Record<string, string> = {
@@ -169,41 +169,14 @@ const categories = [
 ];
 
 export default function TechStackPage() {
-    const [mounted, setMounted] = useState(false);
-
-    useEffect(() => {
-        const frame = requestAnimationFrame(() => setMounted(true));
-        return () => cancelAnimationFrame(frame);
-    }, []);
-
     return (
         <div className="min-h-screen bg-transparent">
             <Header />
 
-            {/* Hero */}
-            <section className="relative pt-28 pb-16 overflow-hidden">
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-zinc-800/20 via-transparent to-transparent" />
-
-                <div className={`relative max-w-5xl mx-auto px-6 text-center
-                    transition-all duration-1000 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
-                >
-                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-zinc-900/80 border border-zinc-800 text-sm text-zinc-400 mb-6">
-                        <Cpu className="w-4 h-4 text-zinc-200" />
-                        Technology Stack
-                    </div>
-
-                    <h1 className="text-4xl md:text-6xl font-bold mb-6">
-                        <span className="bg-gradient-to-r from-zinc-100 to-zinc-300 bg-clip-text text-transparent">
-                            Tech Stack
-                        </span>
-                    </h1>
-
-                    <p className="text-lg text-zinc-400 max-w-2xl mx-auto">
-                        Evidence-first stack with local execution and planned free-tier targets.
-                        Click any tool to view its documentation.
-                    </p>
-                </div>
-            </section>
+            <PageIntro
+                title="The tools, and what each one does here"
+                lede="What each tool does in GraphGuard, which ones run locally today and which are planned for a hosted demo. Select a tool to open its documentation."
+            />
 
             {/* Stack Principles */}
             <section className="py-10">

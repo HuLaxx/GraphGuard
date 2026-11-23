@@ -15,7 +15,7 @@ export function VerifiedShapChart({ explanation }: VerifiedShapChartProps) {
         <section aria-label="Verified model attribution" className="rounded-3xl border border-white/10 bg-zinc-900/85 p-5 sm:p-7">
             <header className="mb-6 flex flex-wrap items-start justify-between gap-3">
                 <div>
-                    <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-violet-300">Model interpretability</p>
+                    <p className="mb-2 text-xs font-semibold text-violet-300">Model interpretability</p>
                     <h2 className="text-xl font-semibold tracking-tight text-white">Verified feature attributions</h2>
                     <p className="mt-2 max-w-lg text-sm leading-relaxed text-zinc-400">
                         Native SHAP values for this exact trained model and transaction. Contributions are

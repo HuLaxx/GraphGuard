@@ -6,7 +6,8 @@
 @theme inline {
     --color-background: var(--background);
     --color-foreground: var(--foreground);
-    --font-sans: var(--font-inter);
+    --font-sans: var(--font-archivo);
+    --font-serif: var(--font-source-serif);
     --font-script: var(--font-script);
     --color-ring: var(--ring);
     --color-input: var(--input);
@@ -31,19 +32,45 @@
     --radius-2xl: calc(var(--radius) + 8px);
 }
 
-/* Metallic Palette Mapping */
+
+/* GraphGuard ledger-ink palette. The inner pages were written against Tailwind's
+   zinc scale; remapping it here moves them onto the case-file system. */
+@theme {
+    /* Leftover violet accents become the highlighter, cyan becomes "cleared" green. */
+    --color-violet-100: #fdf6d0;
+    --color-violet-200: #fbeb9a;
+    --color-violet-300: #f5d547;
+    --color-violet-400: #e8c22e;
+    --color-violet-500: #c9a414;
+    --color-cyan-300: #9fe3c4;
+    --color-cyan-400: #6fd3a6;
+    --color-cyan-500: #4fbf8c;
+    --color-zinc-50: #f6f7fc;
+    --color-zinc-100: #eceff8;
+    --color-zinc-200: #d9deee;
+    --color-zinc-300: #bdc4dd;
+    --color-zinc-400: #97a0c2;
+    --color-zinc-500: #6c77a1;
+    --color-zinc-600: #46527f;
+    --color-zinc-700: #2c3763;
+    --color-zinc-800: #1c2547;
+    --color-zinc-900: #121933;
+    --color-zinc-950: #0b1020;
+}
+
+/* Theme tokens */
 :root {
-    --radius: 0.625rem;
+    --radius: 0.25rem;
 
     /* Base Colors */
-    --color-black: #000000;
-    --color-graphite: #18181b;
+    --color-black: #070b17;
+    --color-graphite: #121933;
     /* zinc-950 */
-    --color-silver: #a1a1aa;
+    --color-silver: #97a0c2;
     /* zinc-400 */
-    --color-platinum: #e4e4e7;
+    --color-platinum: #eceff8;
     /* zinc-200 */
-    --color-white: #ffffff;
+    --color-white: #f6f7fc;
 
     /* Theme Tokens */
     --background: var(--color-black);
@@ -61,18 +88,18 @@
     --secondary: var(--color-graphite);
     --secondary-foreground: var(--color-silver);
 
-    --muted: #27272a;
+    --muted: #1c2547;
     /* zinc-800 */
     --muted-foreground: var(--color-silver);
 
-    --accent: #27272a;
+    --accent: #1c2547;
     /* zinc-800 */
     --accent-foreground: var(--color-white);
 
     --destructive: oklch(0.704 0.191 22.216);
-    --border: #27272a;
+    --border: #232d55;
     /* zinc-800 */
-    --input: #27272a;
+    --input: #232d55;
     --ring: var(--color-silver);
 }
 
@@ -261,4 +288,21 @@ html {
 
 ::-webkit-scrollbar-thumb:hover {
     background: rgb(82, 82, 91);
+}
+
+
+/* Gradient headline text was the old template's signature. Render it as solid ink. */
+.bg-clip-text.text-transparent {
+    background-image: none !important;
+    -webkit-text-fill-color: currentColor;
+    color: var(--color-zinc-50);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
 }
