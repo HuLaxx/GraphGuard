@@ -195,7 +195,7 @@ export default function CasesPage() {
         <div className="min-h-screen bg-transparent text-zinc-100">
             <Header />
             <main className="mx-auto max-w-7xl space-y-7 px-4 pb-20 pt-28 sm:px-6">
-                <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-violet-300">
+                <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-violet-300">
                     <ShieldCheck className="h-4 w-4" />
                     Local evidence workspace
                     <span className="rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-1 text-[10px] text-amber-200">
@@ -205,7 +205,7 @@ export default function CasesPage() {
                 <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
                     <div className="space-y-3">
                         <h1 className="max-w-2xl text-4xl font-semibold tracking-tight text-white sm:text-5xl">
-                            From a model signal to a human decision.
+                            From a model signal to a <span className="text-violet-300">human decision.</span>
                         </h1>
                         <p className="max-w-2xl text-sm leading-relaxed text-zinc-400 sm:text-base">
                             Inspect real synthetic pipeline evidence, review native SHAP attributions
@@ -373,7 +373,7 @@ export default function CasesPage() {
                                 {focus && (
                                     <>
                                         <section className="rounded-3xl border border-white/10 bg-zinc-900/85 p-5 sm:p-7">
-                                            <p className="text-xs font-semibold text-violet-300">Verified case record</p>
+                                            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-violet-300">Verified case record</p>
                                             <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
                                                 <div>
                                                     <h2 className="break-all font-mono text-xl font-semibold text-white">{focus.case_id}</h2>

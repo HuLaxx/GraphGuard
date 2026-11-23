@@ -6,7 +6,6 @@ import { MetricsGrid, ShapChart } from "@/components/dashboard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn, formatPercent } from "@/lib/utils";
 import type { ShapFeature } from "@/types";
-import { PageIntro } from '@/components/casefile/page-intro';
 
 const mockMetrics = {
     totalTransactions: 125847,
@@ -44,12 +43,17 @@ export default function AnalyticsPage() {
     return (
         <div className="min-h-screen bg-transparent">
             <Header />
-            <PageIntro
-                title="Model behaviour and drift"
-                lede="Calibration, drift and explanation trends for the synthetic model, so a change in behaviour is visible before it reaches a case."
-            />
 
-            <main className="max-w-7xl mx-auto px-6 pb-16 pt-10 space-y-8">
+            <main className="max-w-7xl mx-auto px-6 pb-16 pt-28 space-y-8">
+                <section className="space-y-3">
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-zinc-900/80 border border-zinc-800 text-sm text-zinc-400">
+                        Model Analytics
+                    </div>
+                    <h1 className="text-4xl font-bold text-zinc-100">Performance and drift insights</h1>
+                    <p className="text-zinc-400 max-w-2xl">
+                        Track model behavior, drift signals, and explanation trends to keep fraud detection reliable.
+                    </p>
+                </section>
 
                 <MetricsGrid metrics={mockMetrics} />
 
