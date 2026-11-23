@@ -364,7 +364,7 @@ def export_artifacts(rows: list[dict], trained: dict, output_dir: Path, seed: in
         "limitations": [
             "Simulated labels and latent synthetic patterns are not external validation.",
             "Temporal entity overlap remains; results do not measure cold-start generalization.",
-            "No trained model is connected to API, SHAP, MLflow registry or analyst decisions.",
+            "No trained model is connected to the API or analyst decisions; ml/registry registers and gates a synthetic candidate in a local MLflow store only.",
             "Brier/ECE are diagnostics, not proof of calibrated probabilities or fairness.",
             "No independent external dataset license or real-world accuracy is claimed.",
         ],

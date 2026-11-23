@@ -1,0 +1,17 @@
+{
+  "registered_model_name": "graphguard-fraud-xgboost-synthetic",
+  "model": "xgboost",
+  "split": "test",
+  "scope": "SYNTHETIC ONLY: a regression gate for this repo's seeded generator, not a claim about real fraud performance.",
+  "baseline_source": "CI run 45093948824 on main (commit 3f14900): xgboost test PR-AUC 0.765, ROC-AUC 0.941, recall at validation-FPR threshold 0.8125, ECE 0.063, realised FPR 0.094 on 144 rows with 16 positives.",
+  "minimums": {
+    "average_precision_pr_auc": 0.70,
+    "roc_auc": 0.90,
+    "recall_at_validation_fpr_threshold": 0.75
+  },
+  "maximums": {
+    "ece_10_bins": 0.10,
+    "realized_fpr": 0.12
+  },
+  "tolerance_note": "Floors sit about one positive case below the recorded baseline (16 test positives, so one miss moves recall by 0.0625) to absorb library-version drift while still failing a broken model."
+}
