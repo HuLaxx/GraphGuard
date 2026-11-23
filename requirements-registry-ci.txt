@@ -2,3 +2,5 @@
 # No tracking server, no cloud credentials.
 -r requirements-ml-ci.txt
 mlflow>=2.17,<3
+# MLflow 2.x imports sqlalchemy.pool.FallbackAsyncAdaptedQueuePool, removed in SQLAlchemy 2.1.
+sqlalchemy>=2.0,<2.1
