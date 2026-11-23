@@ -8,7 +8,7 @@
 
 A graph-informed fraud investigation project exploring **event ingestion, relationship analysis, XGBoost scoring, explainability and case review**.
 
-[**Inspect the demo**](https://graph-guard-frontend.vercel.app) · [**Follow the evidence**](#follow-the-evidence) · [**Evidence register**](#evidence-register) · [**Run locally**](#open-the-case-locally)
+[**Inspect the demo**](https://graph-guard-frontend.vercel.app) · [**Follow the evidence**](#follow-the-evidence) · [**Evidence register**](#evidence-register) · [**Progress & release gates**](docs/PROGRESS_SCORECARD.md) · [**Run locally**](#open-the-case-locally)
 
 <sub>The animated hero uses fictional entities and relationships. It is not live transaction data, a measured risk score or an actual investigation.</sub>
 
@@ -16,6 +16,16 @@ A graph-informed fraud investigation project exploring **event ingestion, relati
 
 ---
 
+## Current engineering evidence — 22 November 2026
+
+**Release readiness: [70/100 verified](docs/PROGRESS_SCORECARD.md), draft and synthetic-only; not a production fraud model.** This is an evidence-weighted engineering score, not a real-world classification score or percentage of a hosted deployment.
+
+- [PR #14](https://github.com/HuLaxx/GraphGuard/pull/14): **10/10 green full CI jobs** on [exact commit `868b7584`](https://github.com/HuLaxx/GraphGuard/actions/runs/44844565253), including real Kafka/Avro/Schema Registry/Neo4j, leakage-safe PIT features, a SHA-pinned tabular model, genuine native SHAP, signed local human case, **real Chromium analyst/admin review**, npm full-tree high/critical audit and security scan.
+- [PR #15](https://github.com/HuLaxx/GraphGuard/pull/15) adds **one new same-event Kafka→Chromium runner** and a real signed local p50/p95 benchmark. **Pending GitHub Actions verification**: do not claim passed or increase the readiness percentage until there are green exact-head CI results.
+- [Synthetic research model card](docs/MODEL_CARD.md): XGBoost test PR-AUC 0.7650, **test FPR 9.375%** despite a validation FPR target of 5%; no real-world fraud accuracy, fairness, or automated decision claims.
+- [Run the signed local analyst desk](docs/LOCAL_REVIEW_DASHBOARD.md) · [Source-to-case architecture](docs/VERIFIED_ARCHITECTURE.md) · [Live evidence register](docs/EVIDENCE_REGISTER.md). The publicly hosted GraphQL demo is **illustrative** and is **not** the signed Python case service.
+
+**Still required for genuine 100/100 release readiness:** independent licensed data with defensible cold-start labels, enterprise OIDC/MFA and audited retention, independently anchored case audit, tested production load/alerts/rollback, reviewed infrastructure cost and approved deployment/teardown, external security and model review, and explicit merge approvals. None are implied by local synthetic CI.
 ## Case opening / One event is not the whole story
 
 Consider a **fictional example**: a purchase looks routine on its own, but the device appears on several accounts, which in turn connect to related merchants. Those relationships deserve inspection—not an automatic verdict.
@@ -58,9 +68,9 @@ The consumer and Neo4j tools reconstruct relationships that flat records can hid
 
 **03 / What is the estimated risk?**
 
-XGBoost training and FastAPI scoring form the model-oriented path. Evaluation and calibration still matter.
+A reproducible synthetic-only logistic/XGBoost baseline trains on past-only `pit-v1` features. The hash-pinned local scorer is tested; the legacy hosted API is a separate, unverified serving path.
 
-[Model training](ml/training/train_xgboost_rigorous.py) · [Score endpoint](ml/serving/api.py)
+[Reproducible baselines](ml/training/pit_baselines.py) · [Verified offline scoring](ml/serving/verified_pit_scorer.py)
 
 </td>
 <td width="50%" valign="top">
@@ -69,7 +79,7 @@ XGBoost training and FastAPI scoring form the model-oriented path. Evaluation an
 
 SHAP tooling and explanatory charts make model contributions inspectable; an explanation is not causal proof.
 
-[SHAP analysis](ml/explainability/shap_analysis.py) · [Explanation chart](frontend/src/components/dashboard/shap-chart.tsx)
+[Verified native TreeSHAP](ml/explainability/verified_shap.py) · [Signed review attribution chart](frontend/src/components/review/verified-shap-chart.tsx)
 
 </td>
 </tr>
@@ -78,20 +88,36 @@ SHAP tooling and explanatory charts make model contributions inspectable; an exp
 
 **05 / What should the analyst review?**
 
-The case queue, graph visualization and GraphQL models translate technical outputs into an investigation interface.
+The new signed **local** analyst case UI reads real synthetic case records, SHAP values and review history from the verified FastAPI review service. The separate GraphQL demo may still be illustrative.
 
-[Investigation desk](frontend/src/app/cases/page.tsx) · [GraphQL schema](backend/graphql/schema.py) · [Fraud queue](frontend/src/components/dashboard/fraud-queue.tsx)
+[Signed case desk](frontend/src/app/cases/page.tsx) · [Review API](ml/review/app.py) · [Local quickstart](docs/LOCAL_REVIEW_DASHBOARD.md)
 
 </td>
 </tr>
 </table>
+
+## Verified local synthetic case desk (stacked review branch)
+
+The updated [case desk](frontend/src/app/cases/page.tsx) does **not** ship with a mock fallback. It only renders the cases and signed native TreeSHAP values returned by the local review API, and reports when the API is unavailable or a token has expired. Analysts may escalate a synthetic case; only a signed demo admin may close one. Review history remains linked to source, feature, model and explanation hashes.
+
+After installing Python and Node dependencies:
+
+```bash
+python -m pip install -r requirements-review-ci.txt
+npm --prefix frontend ci
+python -m ml.review.run_local_demo
+```
+
+Open `http://127.0.0.1:3000/cases` and use the private local reviewer token generated in `.local/graphguard-review/reviewer_tokens.json`. **Never publish or commit this file.** The quickstart directly seeds the local ledger to make the UI easy to reproduce; the full registered Avro → Kafka/Schema Registry → Neo4j → real model → SHAP → signed case journey is independently exercised in Docker-backed GitHub Actions integration tests.
+
+This is a **synthetic-only review system**, not a deployed fraud classifier, a real customer case, enterprise SSO or a compliance-grade audit record. [Full reproducibility and security limitations](docs/LOCAL_REVIEW_DASHBOARD.md).
 
 ## Inside the investigation desk
 
 <div align="center">
 <img src="docs/assets/graphguard-demo.gif" width="86%" alt="Existing GraphGuard demo animation; an interface preview, not evidence of a connected live backend" />
 
-<sub>Existing repository demo capture. The frontend contains sample cases and mock graph relationships, so a visible case is not necessarily a processed real transaction.</sub>
+<sub>Legacy illustrative demo capture, **not** a screenshot of the newer signed local analyst case desk. The separate GraphQL demo can show illustrative/fallback data.</sub>
 </div>
 
 Beyond a generic analytics dashboard, the project includes a [demo view](frontend/src/app/demo/page.tsx), [case investigation page](frontend/src/app/cases/page.tsx), [network graph](frontend/src/components/dashboard/network-graph.tsx), [SHAP component](frontend/src/components/dashboard/shap-chart.tsx) and [local-first RAG assistant](frontend/src/components/assistant/rag-assistant.tsx).
@@ -101,6 +127,7 @@ Beyond a generic analytics dashboard, the project includes a [demo view](fronten
 | Where | What's represented |
 | :--- | :--- |
 | **Hosted project website** | Lightweight frontend experience; mocked/fallback data is possible. Current live integration was **not** independently checked for this README refresh. |
+| **Signed local analyst desk (`/cases`)** | Uses locally generated synthetic transactions, a real trained model, native SHAP values and short-lived signed demo reviewer identities. Runs **only in local development**; no publicly hosted case API. |
 | **Local Docker services** | Compose files for PostgreSQL, Neo4j, Kafka, Flink and monitoring. Services require local resources and configuration. |
 | **Python API and frontend** | Started separately; scoring, graph, model and RAG capabilities depend on credentials, services and available artifacts. |
 | **Proposed hosted architecture** | Terraform and managed-service targets are plans/templates, not proof of completed production deployment. |
@@ -193,8 +220,8 @@ Fraud investigation requires disciplined uncertainty: clear model provenance, me
 - [x] Historical testing, API smoke logs and a source-level [audit](docs/FINAL_AUDIT.md).
 - [x] Explicit separation of mocked UI cases, local services and proposed deployment.
 - [ ] Replace/validate stubbed GAT scoring if that path is part of the intended application.
-- [ ] Verify the full graph-to-score-to-review path in a reproducible environment.
-- [ ] Re-run CI and publish traceable quality/coverage data; don't infer it from old logs.
+- [x] Verified the **local synthetic** registered Kafka→Neo4j→PIT→trained model/SHAP→signed reviewer case path, with repeatable CI [PR #13](https://github.com/HuLaxx/GraphGuard/pull/13). Same broker event in Chromium remains candidate in [PR #15](https://github.com/HuLaxx/GraphGuard/pull/15).
+- [x] Re-ran full CI with **10/10 jobs green** and real Chromium/ingestion artifacts [PR #14](https://github.com/HuLaxx/GraphGuard/pull/14) [CI 44844565253](https://github.com/HuLaxx/GraphGuard/actions/runs/44844565253). Does not imply production readiness.
 - [ ] Evaluate precision, recall, false-positive costs and bias on labeled data before citing performance.
 - [ ] Verify the hosted demo's actual integration boundaries and document them.
 - [ ] Review old example credentials and secrets before any external deployment.

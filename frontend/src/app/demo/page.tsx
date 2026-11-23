@@ -13,6 +13,12 @@ import { AlertTriangle, ArrowRight, CheckCircle, Github, RefreshCw, XCircle } fr
 import type { FraudCase, GraphNode, GraphLink } from "@/types";
 import { GET_DASHBOARD_DATA, GET_SUSPICIOUS_SUBGRAPH, GET_SHAP_EXPLANATION, LABEL_CASE_MUTATION } from "@/lib/queries";
 
+type ApiCase = Pick<FraudCase, "id" | "transactionId" | "userId" | "fraudScore" | "priority" | "status" | "createdAt" | "merchantName"> & {
+    amountVal: number;
+    currencyCode: string;
+};
+type ApiGraphNode = Pick<GraphNode, "id" | "type" | "label" | "riskScore"> & { isFlagged: boolean };
+
 function DemoNotice({ isLive }: { isLive: boolean }) {
     return (
         <div
@@ -37,10 +43,10 @@ function DemoNotice({ isLive }: { isLive: boolean }) {
                     </div>
                     <div>
                         <h3 className={`${isLive ? "text-emerald-200" : "text-amber-200"} font-bold`}>
-                            {isLive ? "Live Data" : "Demo Mode"}
+                            {isLive ? "API endpoint reachable" : "Offline demo"}
                         </h3>
                         <p className={`${isLive ? "text-emerald-300/70" : "text-amber-300/70"} text-xs`}>
-                            {isLive ? "Connected to API - Real-time updates" : "Using fallback data"}
+                            {isLive ? "Health check passed; data provenance not certified" : "No verified live backend connection"}
                         </p>
                     </div>
                 </div>
@@ -49,13 +55,13 @@ function DemoNotice({ isLive }: { isLive: boolean }) {
                     <p className={`${isLive ? "text-emerald-100/80" : "text-amber-100/80"} text-sm`}>
                         {isLive ? (
                             <>
-                                GraphQL connected to{" "}
-                                <span className="text-emerald-300 font-semibold">Neo4j + Redis</span>
+                                Health endpoint responded. GraphQL and{" "}
+                                <span className="text-emerald-300 font-semibold">data source status remain independently unverified</span>
                             </>
                         ) : (
                             <>
-                                Free hosted demo. For{" "}
-                                <span className="text-amber-300 font-semibold">full pipeline</span> - run locally.
+                                No verified live cases. For{" "}
+                                <span className="text-amber-300 font-semibold">the tested synthetic pipeline</span> - run locally.
                             </>
                         )}
                     </p>
@@ -118,7 +124,7 @@ export default function DemoPage() {
     });
 
     // Transform API data to UI types
-    const cases: FraudCase[] = (dashData?.fraudQueue?.items || []).map((item: any) => ({
+    const cases: FraudCase[] = (dashData?.fraudQueue?.items || []).map((item: ApiCase) => ({
         id: item.id,
         transactionId: item.transactionId,
         userId: item.userId,
@@ -200,7 +206,7 @@ export default function DemoPage() {
             modelAccuracy: 0,
         };
 
-    const nodes: GraphNode[] = (graphData?.suspiciousSubgraph?.nodes || []).map((n: any) => ({
+    const nodes: GraphNode[] = (graphData?.suspiciousSubgraph?.nodes || []).map((n: ApiGraphNode) => ({
         id: n.id,
         type: n.type,
         label: n.label,
@@ -209,7 +215,7 @@ export default function DemoPage() {
         pagerank: n.riskScore * 0.1,
     }));
 
-    const links: GraphLink[] = (graphData?.suspiciousSubgraph?.edges || []).map((e: any) => ({
+    const links: GraphLink[] = (graphData?.suspiciousSubgraph?.edges || []).map((e: GraphLink) => ({
         source: e.source,
         target: e.target,
         amount: e.amount || 0,
@@ -273,7 +279,7 @@ export default function DemoPage() {
                                     }`}
                                 ></span>
                             </span>
-                            {isLive ? "Live Data" : "Demo Mode"}
+                            {isLive ? "API endpoint reachable" : "Offline demo"}
                         </div>
                         <h1 className="text-4xl font-bold text-zinc-100">Fraud Operations Dashboard</h1>
                         <p className="text-zinc-400 max-w-2xl">

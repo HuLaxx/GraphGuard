@@ -1,7 +1,7 @@
 ﻿export type RagSource = {
     id: string;
     score: number;
-    metadata: Record<string, any>;
+    metadata: Record<string, unknown>;
     preview: string;
 };
 

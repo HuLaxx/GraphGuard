@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { LucideIcon, Activity, AlertTriangle, CheckCircle2, XCircle, Clock, Zap } from "lucide-react";
@@ -46,6 +45,8 @@ export function MetricCard({ title, value, icon: Icon, color, trend }: MetricCar
 }
 
 interface MetricsGridProps {
+    /** A previous server or parent-supplied snapshot; never infer a historical change. */
+    previousMetrics?: MetricsGridProps["metrics"];
     metrics: {
         totalTransactions: number;
         fraudRate: number;
@@ -67,7 +68,7 @@ function formatPercent(value: number): string {
     return `${(value * 100).toFixed(1)}%`;
 }
 
-export function MetricsGrid({ metrics }: MetricsGridProps) {
+export function MetricsGrid({ metrics, previousMetrics }: MetricsGridProps) {
     const safeMetrics = {
         totalTransactions: metrics.totalTransactions ?? 0,
         fraudRate: metrics.fraudRate ?? 0,
@@ -78,18 +79,21 @@ export function MetricsGrid({ metrics }: MetricsGridProps) {
         modelAccuracy: metrics.modelAccuracy ?? 0,
     };
 
-    const prevMetricsRef = useRef<typeof safeMetrics | null>(null);
-    const prevMetrics = prevMetricsRef.current;
+    const prevMetrics = previousMetrics ?? null;
     const autoDecisions = safeMetrics.autoApproved + safeMetrics.autoDeclined;
-    const prevAutoDecisions = prevMetrics ? prevMetrics.autoApproved + prevMetrics.autoDeclined : 0;
+    const prevAutoDecisions = prevMetrics
+        ? prevMetrics.autoApproved + prevMetrics.autoDeclined
+        : 0;
 
-    const transactionDelta = prevMetrics ? safeMetrics.totalTransactions - prevMetrics.totalTransactions : null;
-    const fraudRateDelta = prevMetrics ? safeMetrics.fraudRate - prevMetrics.fraudRate : null;
-    const autoDecisionDelta = prevMetrics ? autoDecisions - prevAutoDecisions : null;
-
-    useEffect(() => {
-        prevMetricsRef.current = safeMetrics;
-    }, [safeMetrics]);
+    const transactionDelta = prevMetrics
+        ? safeMetrics.totalTransactions - prevMetrics.totalTransactions
+        : null;
+    const fraudRateDelta = prevMetrics
+        ? safeMetrics.fraudRate - prevMetrics.fraudRate
+        : null;
+    const autoDecisionDelta = prevMetrics
+        ? autoDecisions - prevAutoDecisions
+        : null;
 
     const cards = [
         {

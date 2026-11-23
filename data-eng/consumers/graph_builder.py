@@ -13,6 +13,7 @@ Gotchas (from spec):
 
 import os
 import json
+from math import isfinite
 from typing import Optional, List
 from datetime import datetime
 
@@ -22,6 +23,9 @@ from confluent_kafka.schema_registry.avro import AvroDeserializer
 from confluent_kafka.serialization import SerializationContext, MessageField
 from neo4j import GraphDatabase
 import structlog
+
+from transaction_ledger import TransactionLedger
+from point_in_time_features import PointInTimeFeatureStore
 
 # Configure structured logging
 logger = structlog.get_logger(__name__)
@@ -40,7 +44,7 @@ def get_consumer_config() -> dict:
         'bootstrap.servers': os.getenv('KAFKA_BOOTSTRAP_SERVERS', 'localhost:9092'),
         'group.id': os.getenv('KAFKA_GROUP_ID', 'graph-builder'),
         'auto.offset.reset': 'earliest',
-        'enable.auto.commit': False,  # Manual commit for exactly-once
+        'enable.auto.commit': False,  # Commit only after durable graph write; at-least-once
         'session.timeout.ms': 60000,  # Gotcha: Prevent rebalancing during slow processing
         'heartbeat.interval.ms': 3000,
         'max.poll.interval.ms': 300000,  # 5 minutes
@@ -60,7 +64,7 @@ def get_neo4j_config() -> dict:
 def get_schema_registry_config() -> dict:
     """Schema Registry configuration."""
     return {
-        'url': os.getenv('SCHEMA_REGISTRY_URL', 'http://localhost:8081')
+        'url': os.getenv('SCHEMA_REGISTRY_URL', 'http://localhost:8082')
     }
 
 
@@ -68,58 +72,31 @@ def get_schema_registry_config() -> dict:
 # Cypher Queries (Spec Lines 865-888)
 # ============================================
 
-CREATE_TRANSACTION_EDGE = """
-MERGE (u:User {id: $user_id})
-ON CREATE SET u.created_at = timestamp()
-
-MERGE (m:Merchant {id: $merchant_id})
-ON CREATE SET m.created_at = timestamp()
-
-MERGE (d:Device {id: $device_id})
-ON CREATE SET d.first_seen = $timestamp
-SET d.last_seen = $timestamp
-
-MERGE (t:Transaction {id: $transaction_id})
-ON CREATE SET t.amount = $amount,
-              t.timestamp = $timestamp,
-              t.currency = $currency,
-              t.fraud_score = 0.0,
-              t.status = 'PENDING'
-ON MATCH SET t.amount = $amount,
-             t.timestamp = $timestamp,
-             t.currency = $currency
-
-MERGE (u)-[:PERFORMED]->(t)
-MERGE (t)-[:PAID_TO]->(m)
-MERGE (t)-[:USED_DEVICE]->(d)
-"""
-
-# Batch version for performance
 CREATE_TRANSACTION_EDGE_BATCH = """
+// Only the original canonical content is allowed to create graph relationships.
+// Existing nodes from older, unverified pipelines must be reconciled first.
 UNWIND $transactions AS txn
-MERGE (u:User {id: txn.user_id})
-ON CREATE SET u.created_at = timestamp()
-
-MERGE (m:Merchant {id: txn.merchant_id})
-ON CREATE SET m.created_at = timestamp()
-
-MERGE (d:Device {id: txn.device_id})
-ON CREATE SET d.first_seen = txn.timestamp
-SET d.last_seen = txn.timestamp
-
 MERGE (t:Transaction {id: txn.transaction_id})
-ON CREATE SET t.amount = txn.amount,
+ON CREATE SET t.payload_sha256 = txn.payload_sha256,
+              t.amount = txn.amount,
               t.timestamp = txn.timestamp,
               t.currency = txn.currency,
               t.fraud_score = 0.0,
               t.status = 'PENDING'
-ON MATCH SET t.amount = txn.amount,
-             t.timestamp = txn.timestamp,
-             t.currency = txn.currency
-
+WITH txn, t
+WHERE t.payload_sha256 = txn.payload_sha256
+MERGE (u:User {id: txn.user_id})
+ON CREATE SET u.created_at = timestamp()
+MERGE (m:Merchant {id: txn.merchant_id})
+ON CREATE SET m.created_at = timestamp()
+MERGE (d:Device {id: txn.device_id})
+ON CREATE SET d.first_seen = txn.timestamp
+SET d.last_seen = CASE WHEN d.last_seen IS NULL OR d.last_seen < txn.timestamp
+                       THEN txn.timestamp ELSE d.last_seen END
 MERGE (u)-[:PERFORMED]->(t)
 MERGE (t)-[:PAID_TO]->(m)
 MERGE (t)-[:USED_DEVICE]->(d)
+RETURN count(t) AS applied
 """
 
 
@@ -157,6 +134,11 @@ class GraphBuilder:
         # Initialize Schema Registry client + Avro deserializer
         self.schema_registry = SchemaRegistryClient(get_schema_registry_config())
         self.avro_deserializer = None
+        # JSON payloads are reserved for explicitly opted-in synthetic fixtures.
+        # Silently treating a registry outage as bad JSON can lose valid Avro events.
+        self.allow_json_fallback = (
+            os.getenv("GRAPHGUARD_JSON_FIXTURE_MODE", "false").lower() == "true"
+        )
         schema_path = os.path.join(
             os.path.dirname(__file__),
             '..', 'schemas', 'transaction_event.avsc'
@@ -180,6 +162,15 @@ class GraphBuilder:
         # Verify Neo4j connection
         self.neo4j_driver.verify_connectivity()
         
+        # A durable, local source ledger is written before any derived graph write.
+        # This development implementation is NOT distributed exactly-once.
+        ledger_path = os.getenv(
+            "GRAPHGUARD_LEDGER_PATH",
+            os.path.join(os.path.dirname(__file__), "..", "..", ".local", "transaction-ledger.sqlite3"),
+        )
+        self.ledger = TransactionLedger(ledger_path)
+        self.feature_store = PointInTimeFeatureStore(self.ledger.connection)
+
         # Transaction buffer for batching
         self.buffer: List[dict] = []
         self.pending_messages = []
@@ -192,146 +183,191 @@ class GraphBuilder:
         )
     
     def _create_indexes(self) -> None:
-        """Create Neo4j indexes for performance."""
+        """Enforce graph identity before accepting source events."""
         with self.neo4j_driver.session() as session:
-            # User index
-            session.run("CREATE INDEX user_id_index IF NOT EXISTS FOR (u:User) ON (u.id)")
-            # Merchant index
-            session.run("CREATE INDEX merchant_id_index IF NOT EXISTS FOR (m:Merchant) ON (m.id)")
-            # Device index
-            session.run("CREATE INDEX device_id_index IF NOT EXISTS FOR (d:Device) ON (d.id)")
-            # Transaction index
-            session.run("CREATE INDEX txn_id_index IF NOT EXISTS FOR (t:Transaction) ON (t.id)")
-            session.run("CREATE INDEX txn_timestamp_index IF NOT EXISTS FOR (t:Transaction) ON (t.timestamp)")
-        
-        logger.info("Neo4j indexes created/verified")
-    
-    def _create_transaction_edge(self, txn: dict) -> None:
-        """
-        Create a single transaction edge in Neo4j.
-        Reference: Specification.md Lines 863-888
-        """
-        with self.neo4j_driver.session() as session:
+            for label, name in (
+                ("User", "graphguard_user_id_unique"),
+                ("Merchant", "graphguard_merchant_id_unique"),
+                ("Device", "graphguard_device_id_unique"),
+                ("Transaction", "graphguard_transaction_id_unique"),
+            ):
+                session.run(
+                    f"CREATE CONSTRAINT {name} IF NOT EXISTS FOR (n:{label}) REQUIRE n.id IS UNIQUE"
+                ).consume()
             session.run(
-                CREATE_TRANSACTION_EDGE,
-                user_id=txn['user_id'],
-                merchant_id=txn['merchant_id'],
-                device_id=txn['device_id'],
-                amount=txn['amount'],
-                timestamp=txn['timestamp'],
-                transaction_id=txn['transaction_id'],
-                currency=txn.get('currency', 'USD')
-            )
-    
+                "CREATE INDEX txn_timestamp_index IF NOT EXISTS FOR (t:Transaction) ON (t.timestamp)"
+            ).consume()
+
+        logger.info("Neo4j identity constraints created/verified")
+
+    def _create_transaction_edge(self, txn: dict) -> None:
+        """Single-event projection follows the same identity safety as a batch."""
+        self._create_transaction_edges_batch([txn])
+
+    @staticmethod
+    def _write_batch(tx, transactions: List[dict]) -> None:
+        result = tx.run(CREATE_TRANSACTION_EDGE_BATCH, transactions=transactions)
+        record = result.single()
+        if record is None or record["applied"] != len(transactions):
+            # Raising within execute_write rolls back the entire graph transaction.
+            # An existing graph without payload_sha256 requires migration, not overwrite.
+            raise RuntimeError("Neo4j transaction identity mismatch; refusing graph projection")
+
     def _create_transaction_edges_batch(self, transactions: List[dict]) -> None:
-        """
-        Create multiple transaction edges in one query (batched).
-        Gotcha: Batch 10-20 transactions for performance.
-        """
+        """Atomic graph projection; count and identity checked before commit."""
         with self.neo4j_driver.session() as session:
-            session.run(CREATE_TRANSACTION_EDGE_BATCH, transactions=transactions)
-        
-        logger.info(
-            "Batch written to Neo4j",
-            batch_size=len(transactions)
-        )
-    
+            session.execute_write(self._write_batch, transactions)
+
+        logger.info("Batch written to Neo4j", batch_size=len(transactions))
+
     def _send_to_dlq(self, message_value: bytes, error: str) -> None:
-        """Send failed message to Dead Letter Queue."""
+        """Publish a permanently invalid message to DLQ and require an ACK.
+
+        On a failed DLQ delivery, callers must retain the original Kafka offset
+        for replay. Infrastructure/Neo4j outages are *not* poison messages.
+        """
+        delivery_errors = []
+        acknowledged = []
+
+        def on_delivery(delivery_error, _message):
+            if delivery_error is not None:
+                delivery_errors.append(str(delivery_error))
+            else:
+                acknowledged.append(True)
+
         self.dlq_producer.produce(
             topic=self.DLQ_TOPIC,
             value=message_value,
-            headers={'error': error.encode('utf-8')}
+            headers={'error': error[:200].encode('utf-8')},
+            on_delivery=on_delivery,
         )
-        self.dlq_producer.flush()
-        
-        logger.warning(
-            "Message sent to DLQ",
-            error=error
-        )
-    
+        remaining = self.dlq_producer.flush(timeout=10)
+        if remaining or delivery_errors or not acknowledged:
+            raise RuntimeError("DLQ delivery not acknowledged; Kafka offset was not committed")
+
+        logger.warning("Permanently invalid event routed to DLQ", error=error[:200])
+
     def _flush_buffer(self) -> None:
-        """Flush the transaction buffer to Neo4j."""
+        """Graph write before synchronous offset commit: replay on transient failures.
+
+        Graph upserts must remain idempotent: a crash after graph commit but
+        before Kafka offset commit will legitimately replay some messages.
+        """
         if not self.buffer:
             return
-        
+
         try:
             self._create_transaction_edges_batch(self.buffer)
-            
-            # Commit offsets for processed messages
+            # Materialize a stable, label-free feature snapshot only after
+            # the graph write succeeds and before acknowledging Kafka offsets.
+            # A crash here is repaired by replaying the same source ID.
+            for txn in self.buffer:
+                self.feature_store.snapshot_for(txn["transaction_id"])
             for msg in self.pending_messages:
-                self.consumer.commit(message=msg)
-            
-            logger.info(
-                "Buffer flushed and offsets committed",
-                transactions=len(self.buffer)
-            )
-            
-        except Exception as e:
+                committed = self.consumer.commit(message=msg, asynchronous=False)
+                if committed and any(getattr(part, "error", None) for part in committed):
+                    raise RuntimeError("Kafka returned an offset-commit error")
+        except Exception as exc:
             logger.error(
-                "Failed to flush buffer",
-                error=str(e),
-                transactions=len(self.buffer)
+                "Graph write or offset commit failed; retaining uncommitted batch",
+                error=str(exc),
+                transactions=len(self.buffer),
             )
-            # Send all to DLQ
-            for msg in self.pending_messages:
-                self._send_to_dlq(msg.value(), str(e))
-                self.consumer.commit(message=msg)
-        
-        # Clear buffer
+            # Do not classify a Neo4j outage as bad input, DLQ valid records, or
+            # discard the buffer. The caller may retry or restart from Kafka.
+            raise
+
+        logger.info("Graph batch persisted and offsets committed", transactions=len(self.buffer))
         self.buffer = []
         self.pending_messages = []
-    
+
     def process_message(self, msg) -> None:
-        """Process a single Kafka message."""
+        """Decode/validate events; route only malformed input to DLQ.
+
+        Database failures happen outside the validation handler so they
+        propagate without advancing Kafka offsets.
+        """
+        value = msg.value()
         try:
-            # Deserialize message
-            value = msg.value()
-            txn = None
-            if isinstance(value, bytes) and self.avro_deserializer is not None:
+            # Confluent wire framing: 0x00 + schema ID + Avro payload.
+            # A registry outage or undecodable Avro is an infrastructure/contract
+            # fault, not permission to parse bytes as JSON and advance offsets.
+            if isinstance(value, bytes) and value.startswith(b"\x00"):
+                if self.avro_deserializer is None:
+                    raise RuntimeError(
+                        "Avro decoder unavailable; retain offset for replay"
+                    )
                 try:
                     txn = self.avro_deserializer(
-                        value,
-                        SerializationContext(self.TOPIC, MessageField.VALUE)
+                        value, SerializationContext(self.TOPIC, MessageField.VALUE)
                     )
-                except Exception as e:
-                    logger.warning("Avro deserialization failed", error=str(e))
-                    txn = None
-
-            if txn is None:
-                if isinstance(value, bytes):
-                    txn = json.loads(value.decode('utf-8'))
-                else:
-                    txn = value
+                except Exception as exc:
+                    raise RuntimeError(
+                        "Avro/Schema Registry decode failed; retain offset for replay"
+                    ) from exc
+            elif self.allow_json_fallback:
+                # Only explicitly opted-in synthetic test fixtures accept JSON.
+                txn = json.loads(value.decode("utf-8")) if isinstance(value, bytes) else value
+            else:
+                raise RuntimeError(
+                    "Unexpected non-Avro transaction; retain offset for investigation"
+                )
 
             if not isinstance(txn, dict):
-                raise ValueError("Invalid transaction payload")
-            
-            if isinstance(txn.get('timestamp'), datetime):
-                txn['timestamp'] = int(txn['timestamp'].timestamp() * 1000)
-            
-            # Add to buffer
-            self.buffer.append(txn)
-            self.pending_messages.append(msg)
-            
-            logger.debug(
-                "Message buffered",
-                transaction_id=txn.get('transaction_id'),
-                buffer_size=len(self.buffer)
-            )
-            
-            # Flush if buffer is full
-            if len(self.buffer) >= self.BATCH_SIZE:
+                raise ValueError("Transaction must be a JSON object")
+            required_ids = ("transaction_id", "user_id", "merchant_id", "device_id")
+            if any(not isinstance(txn.get(k), str) or not txn[k].strip() for k in required_ids):
+                raise ValueError("Transaction contains missing or invalid entity identifiers")
+            amount = txn.get("amount")
+            if isinstance(amount, bool) or not isinstance(amount, (int, float)) or not isfinite(amount) or amount <= 0:
+                raise ValueError("Transaction amount must be positive and finite")
+            currency = txn.get("currency")
+            if not isinstance(currency, str) or len(currency) != 3 or not currency.isalpha() or currency.upper() != currency:
+                raise ValueError("Transaction currency must be a three-letter uppercase code")
+            event_time = txn.get("timestamp")
+            if isinstance(event_time, datetime):
+                if event_time.tzinfo is None or event_time.utcoffset() is None:
+                    raise ValueError("Transaction timestamps must include timezone")
+                txn["timestamp"] = int(event_time.timestamp() * 1000)
+            elif isinstance(event_time, bool) or not isinstance(event_time, int) or event_time <= 0:
+                raise ValueError("Transaction timestamp must be a positive epoch-millis integer")
+            version = txn.get("schema_version", 1)
+            if type(version) is not int or version != 1:
+                raise ValueError("Unsupported transaction schema_version")
+            event_key = txn.get("idempotency_key")
+            if not isinstance(event_key, str) or len(event_key) != 64 or any(c not in "0123456789abcdef" for c in event_key):
+                raise ValueError("Transaction idempotency key must be a SHA-256 hex digest")
+        except (ValueError, TypeError, UnicodeError, json.JSONDecodeError) as exc:
+            logger.warning("Invalid transaction input", error=str(exc))
+            # Commit the earlier valid events before any later poison offset.
+            if self.buffer:
                 self._flush_buffer()
-                
-        except Exception as e:
-            logger.error(
-                "Failed to process message",
-                error=str(e)
-            )
-            self._send_to_dlq(msg.value(), f"ProcessingError: {e}")
-            self.consumer.commit(message=msg)
-    
+            self._send_to_dlq(value, f"InvalidTransaction: {type(exc).__name__}")
+            self.consumer.commit(message=msg, asynchronous=False)
+            return
+
+        # Durable source write is deliberately outside the validation handler.
+        # Storage failures retain Kafka offsets and are never classified as poison.
+        receipt = self.ledger.record(
+            txn, topic=msg.topic(), partition=msg.partition(), offset=msg.offset()
+        )
+        if receipt.status == "conflict":
+            if self.buffer:
+                self._flush_buffer()
+            # Keep the original immutable source and graph untouched.
+            self._send_to_dlq(value, "TransactionIdConflict")
+            self.consumer.commit(message=msg, asynchronous=False)
+            logger.warning("Transaction identity conflict quarantined", transaction_id=txn["transaction_id"])
+            return
+        txn["payload_sha256"] = receipt.payload_hash
+        self.buffer.append(txn)
+        self.pending_messages.append(msg)
+        logger.debug("Transaction buffered", transaction_id=txn["transaction_id"], buffer_size=len(self.buffer))
+        if len(self.buffer) >= self.BATCH_SIZE:
+            # This is deliberately outside the validation try/except. Neo4j
+            # outage must not turn legitimate transactions into a DLQ loss.
+            self._flush_buffer()
+
     def run(self, max_messages: Optional[int] = None) -> None:
         """
         Main consumer loop.
@@ -374,14 +410,17 @@ class GraphBuilder:
         except KeyboardInterrupt:
             logger.info("Interrupted by user")
         finally:
-            # Flush any remaining messages
-            self._flush_buffer()
-            self.close()
+            # Always close connections, even if flushing raises due to a DB outage.
+            try:
+                self._flush_buffer()
+            finally:
+                self.close()
     
     def close(self) -> None:
         """Clean up resources."""
         self.consumer.close()
         self.neo4j_driver.close()
+        self.ledger.close()
         self.dlq_producer.flush()
         
         logger.info("GraphBuilder closed")

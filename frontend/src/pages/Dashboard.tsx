@@ -6,7 +6,7 @@
  * Main investigation dashboard with fraud queue, metrics, and visualization.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { FraudQueue, FraudCase } from '../components/FraudQueue';
 import { NetworkGraph, GraphNode, GraphLink } from '../components/NetworkGraph';
 import { ShapChart, ShapFeature } from '../components/ShapChart';
@@ -119,10 +119,10 @@ const mockShapFeatures: ShapFeature[] = [
 // ============================================
 
 export const Dashboard: React.FC = () => {
-    const [cases, setCases] = useState<FraudCase[]>(mockCases);
+    const [cases] = useState<FraudCase[]>(mockCases);
     const [selectedCase, setSelectedCase] = useState<FraudCase | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoading] = useState(false);
 
     const handleCaseClick = (caseId: string) => {
         const found = cases.find(c => c.id === caseId);

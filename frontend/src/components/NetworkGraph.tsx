@@ -34,6 +34,12 @@ export interface GraphLink {
     type: string;
 }
 
+type SimulationNode = GraphNode & d3.SimulationNodeDatum;
+type SimulationLink = d3.SimulationLinkDatum<SimulationNode> & Omit<GraphLink, 'source' | 'target'>;
+
+const position = (value: SimulationLink['source'], dimension: 'x' | 'y') =>
+    typeof value === 'object' ? value[dimension] ?? 0 : 0;
+
 export interface NetworkGraphProps {
     nodes: GraphNode[];
     links: GraphLink[];
@@ -78,7 +84,7 @@ const NetworkGraphComponent: React.FC<NetworkGraphProps> = ({
         const svg = d3.select(svgRef.current)
             .attr('width', width)
             .attr('height', height)
-            .attr('viewBox', [0, 0, width, height] as any);
+            .attr('viewBox', `0 0 ${width} ${height}`);
 
         // Add zoom behavior
         const zoom = d3.zoom<SVGSVGElement, unknown>()
@@ -104,9 +110,11 @@ const NetworkGraphComponent: React.FC<NetworkGraphProps> = ({
             .attr('d', 'M0,-5L10,0L0,5')
             .attr('fill', COLORS.link);
 
-        // Force simulation
-        const simulation = d3.forceSimulation(nodes as any)
-            .force('link', d3.forceLink(links).id((d: any) => d.id).distance(100))
+        // D3 mutates node coordinates and link endpoints; keep React props unchanged.
+        const simulationNodes: SimulationNode[] = nodes.map(node => ({ ...node }));
+        const simulationLinks: SimulationLink[] = links.map(link => ({ ...link }));
+        const simulation = d3.forceSimulation<SimulationNode>(simulationNodes)
+            .force('link', d3.forceLink<SimulationNode, SimulationLink>(simulationLinks).id(d => d.id).distance(100))
             .force('charge', d3.forceManyBody().strength(-300))
             .force('center', d3.forceCenter(width / 2, height / 2))
             .force('collision', d3.forceCollide().radius(30));
@@ -114,22 +122,22 @@ const NetworkGraphComponent: React.FC<NetworkGraphProps> = ({
         // Links
         const link = container.append('g')
             .attr('class', 'links')
-            .selectAll('line')
-            .data(links)
+            .selectAll<SVGLineElement, SimulationLink>('line')
+            .data(simulationLinks)
             .join('line')
             .attr('stroke', COLORS.link)
             .attr('stroke-opacity', 0.6)
-            .attr('stroke-width', (d: any) => Math.max(1, Math.sqrt(d.amount / 100)))
+            .attr('stroke-width', d => Math.max(1, Math.sqrt(d.amount / 100)))
             .attr('marker-end', 'url(#arrowhead)');
 
         // Nodes
         const node = container.append('g')
             .attr('class', 'nodes')
-            .selectAll('circle')
-            .data(nodes)
+            .selectAll<SVGCircleElement, SimulationNode>('circle')
+            .data(simulationNodes)
             .join('circle')
-            .attr('r', (d: any) => 8 + (d.pagerank || 0) * 50)
-            .attr('fill', (d: any) => {
+            .attr('r', d => 8 + (d.pagerank || 0) * 50)
+            .attr('fill', d => {
                 if (d.fraud) return COLORS.fraud;
                 switch (d.type) {
                     case 'USER': return COLORS.user;
@@ -141,7 +149,7 @@ const NetworkGraphComponent: React.FC<NetworkGraphProps> = ({
             .attr('stroke', '#fff')
             .attr('stroke-width', 2)
             .style('cursor', 'pointer')
-            .on('click', (event, d: any) => {
+            .on('click', (_event, d) => {
                 if (onNodeClick) onNodeClick(d);
             })
             .on('mouseover', function () {
@@ -154,15 +162,15 @@ const NetworkGraphComponent: React.FC<NetworkGraphProps> = ({
                     .attr('stroke', '#fff')
                     .attr('stroke-width', 2);
             })
-            .call(drag(simulation) as any);
+            .call(drag(simulation));
 
         // Labels
         const label = container.append('g')
             .attr('class', 'labels')
-            .selectAll('text')
-            .data(nodes)
+            .selectAll<SVGTextElement, SimulationNode>('text')
+            .data(simulationNodes)
             .join('text')
-            .text((d: any) => d.label || d.id.slice(0, 8))
+            .text(d => d.label || d.id.slice(0, 8))
             .attr('font-size', 10)
             .attr('font-family', 'Arial, sans-serif')
             .attr('dx', 12)
@@ -171,47 +179,47 @@ const NetworkGraphComponent: React.FC<NetworkGraphProps> = ({
 
         // Tooltip
         node.append('title')
-            .text((d: any) =>
+            .text(d =>
                 `${d.id}\nType: ${d.type}\nPageRank: ${(d.pagerank || 0).toFixed(3)}\nRisk: ${(d.riskScore || 0).toFixed(2)}\nFraud: ${d.fraud ? 'Yes' : 'No'}`
             );
 
         // Update positions on tick
         simulation.on('tick', () => {
             link
-                .attr('x1', (d: any) => d.source.x)
-                .attr('y1', (d: any) => d.source.y)
-                .attr('x2', (d: any) => d.target.x)
-                .attr('y2', (d: any) => d.target.y);
+                .attr('x1', d => position(d.source, 'x'))
+                .attr('y1', d => position(d.source, 'y'))
+                .attr('x2', d => position(d.target, 'x'))
+                .attr('y2', d => position(d.target, 'y'));
 
             node
-                .attr('cx', (d: any) => d.x)
-                .attr('cy', (d: any) => d.y);
+                .attr('cx', d => d.x ?? 0)
+                .attr('cy', d => d.y ?? 0);
 
             label
-                .attr('x', (d: any) => d.x)
-                .attr('y', (d: any) => d.y);
+                .attr('x', d => d.x ?? 0)
+                .attr('y', d => d.y ?? 0);
         });
 
         // Drag behavior
-        function drag(simulation: any) {
-            function dragstarted(event: any) {
+        function drag(simulation: d3.Simulation<SimulationNode, undefined>) {
+            function dragstarted(event: d3.D3DragEvent<SVGCircleElement, SimulationNode, SimulationNode>) {
                 if (!event.active) simulation.alphaTarget(0.3).restart();
                 event.subject.fx = event.subject.x;
                 event.subject.fy = event.subject.y;
             }
 
-            function dragged(event: any) {
+            function dragged(event: d3.D3DragEvent<SVGCircleElement, SimulationNode, SimulationNode>) {
                 event.subject.fx = event.x;
                 event.subject.fy = event.y;
             }
 
-            function dragended(event: any) {
+            function dragended(event: d3.D3DragEvent<SVGCircleElement, SimulationNode, SimulationNode>) {
                 if (!event.active) simulation.alphaTarget(0);
                 event.subject.fx = null;
                 event.subject.fy = null;
             }
 
-            return d3.drag()
+            return d3.drag<SVGCircleElement, SimulationNode>()
                 .on('start', dragstarted)
                 .on('drag', dragged)
                 .on('end', dragended);

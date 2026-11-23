@@ -1,0 +1,40 @@
+name: GraphGuard P4 Terraform Offline Validation
+
+on:
+  push:
+    branches: ['feature/**']
+    paths:
+      - 'infrastructure/terraform/research/**'
+      - '.github/workflows/p4-research-terraform.yml'
+  pull_request:
+    branches: [main, 'feature/**']
+    paths:
+      - 'infrastructure/terraform/research/**'
+      - '.github/workflows/p4-research-terraform.yml'
+
+concurrency:
+  group: p3-terraform-${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  validate-only:
+    name: Terraform fmt, init without backend, validate (NO AWS apply)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: '1.10.5'
+      - name: Check format
+        run: terraform fmt -diff -check -recursive infrastructure/terraform/research
+      - name: Install provider schemas WITHOUT remote state or credentials
+        run: terraform -chdir=infrastructure/terraform/research init -backend=false -input=false
+      - name: Validate module without contacting an AWS account
+        run: terraform -chdir=infrastructure/terraform/research validate -no-color
+      - name: Enforce no apply or destroy commands in workflow
+        run: |
+          ! grep -E 'terraform[[:space:]]+(apply|destroy)' .github/workflows/p4-research-terraform.yml

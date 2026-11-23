@@ -14,14 +14,14 @@ Gotchas (from spec):
 import hashlib
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, Callable
 
 from confluent_kafka import Producer, KafkaError
 from confluent_kafka.schema_registry import SchemaRegistryClient
 from confluent_kafka.schema_registry.avro import AvroSerializer
 from confluent_kafka.serialization import SerializationContext, MessageField
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 import structlog
 
 # Configure structured logging
@@ -40,13 +40,20 @@ class TransactionEvent(BaseModel):
     transaction_id: str = Field(..., description="Unique transaction ID from payment gateway")
     user_id: str = Field(..., description="User initiating the transaction")
     merchant_id: str = Field(..., description="Merchant receiving the payment")
-    amount: float = Field(..., gt=0, description="Transaction amount")
+    amount: float = Field(..., gt=0, allow_inf_nan=False, description="Transaction amount")
     currency: str = Field(..., pattern="^[A-Z]{3}$", description="ISO 4217 currency code")
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     device_id: str = Field(..., description="Device fingerprint")
     ip_address: str = Field(..., description="Client IP address")
     card_last4: str = Field(..., pattern="^[0-9]{4}$", description="Last 4 digits of card")
     
+    @field_validator("timestamp")
+    @classmethod
+    def require_timezone(cls, value: datetime) -> datetime:
+        if value.tzinfo is None or value.utcoffset() is None:
+            raise ValueError("Transaction timestamp must be timezone-aware")
+        return value.astimezone(timezone.utc)
+
     @property
     def idempotency_key(self) -> str:
         """
@@ -69,7 +76,8 @@ class TransactionEvent(BaseModel):
             "device_id": self.device_id,
             "ip_address": self.ip_address,
             "card_last4": self.card_last4,
-            "idempotency_key": self.idempotency_key
+            "idempotency_key": self.idempotency_key,
+            "schema_version": 1
         }
 
 
@@ -79,13 +87,13 @@ class TransactionEvent(BaseModel):
 
 def get_producer_config() -> dict:
     """
-    Kafka producer configuration with exactly-once semantics.
+    Kafka producer configuration with idempotent writes (NOT end-to-end exactly-once).
     Reference: Specification.md Lines 750-757
     """
     return {
         'bootstrap.servers': os.getenv('KAFKA_BOOTSTRAP_SERVERS', 'localhost:9092'),
         'acks': 'all',  # Wait for all replicas
-        'enable.idempotence': True,  # Exactly-once semantics
+        'enable.idempotence': True,  # Producer retry deduplication only
         'max.in.flight.requests.per.connection': 5,
         'retries': 10,
         'compression.type': 'snappy',  # Gotcha: 60% size reduction
@@ -98,7 +106,7 @@ def get_producer_config() -> dict:
 def get_schema_registry_config() -> dict:
     """Schema Registry configuration."""
     return {
-        'url': os.getenv('SCHEMA_REGISTRY_URL', 'http://localhost:8081')
+        'url': os.getenv('SCHEMA_REGISTRY_URL', 'http://localhost:8082')
     }
 
 
@@ -193,7 +201,7 @@ class TransactionProducer:
             )
             
             logger.info(
-                "Transaction published",
+                "Transaction queued for delivery",
                 transaction_id=transaction.transaction_id,
                 user_id=transaction.user_id,
                 amount=transaction.amount,
@@ -258,7 +266,7 @@ def parse_stripe_webhook(payload: dict) -> TransactionEvent:
         merchant_id=charge.get('destination', 'default_merchant'),
         amount=charge.get('amount', 0) / 100,  # Stripe uses cents
         currency=charge.get('currency', 'USD').upper(),
-        timestamp=datetime.fromtimestamp(charge.get('created', datetime.utcnow().timestamp())),
+        timestamp=datetime.fromtimestamp(charge.get('created', datetime.now(timezone.utc).timestamp()), tz=timezone.utc),
         device_id=charge.get('metadata', {}).get('device_id', 'unknown'),
         ip_address=charge.get('metadata', {}).get('ip_address', '0.0.0.0'),
         card_last4=charge.get('payment_method_details', {}).get('card', {}).get('last4', '0000')
@@ -279,7 +287,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate and publish test transactions")
     parser.add_argument("--count", type=int, default=10, help="Number of transactions to generate")
     parser.add_argument("--kafka", default="localhost:9092", help="Kafka bootstrap servers")
-    parser.add_argument("--registry", default="http://localhost:8081", help="Schema Registry URL")
+    parser.add_argument("--registry", default="http://localhost:8082", help="Schema Registry URL")
     args = parser.parse_args()
     
     # Override config for CLI

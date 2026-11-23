@@ -226,10 +226,10 @@ export const CaseDetail: React.FC = () => {
                 <div>
                     {/* Tab Navigation */}
                     <div style={{ display: 'flex', borderBottom: '1px solid #e0e0e0', marginBottom: '16px' }}>
-                        {['evidence', 'network', 'history'].map(tab => (
+                        {(['evidence', 'network', 'history'] as const).map(tab => (
                             <button
                                 key={tab}
-                                onClick={() => setActiveTab(tab as any)}
+                                onClick={() => setActiveTab(tab)}
                                 style={{
                                     padding: '12px 24px',
                                     border: 'none',

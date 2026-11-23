@@ -15,9 +15,9 @@ Steps:
 3) `python -m uvicorn ml.serving.api:app --reload --port 8000`
 4) `cd frontend && npm install && npm run dev`
 
-## Terraform (template only)
+## Terraform (template only; safe isolated review module now available)
 
-- `infrastructure/terraform/main.tf` exists as a template and has **not** been applied or validated in this repo.
+- `infrastructure/terraform/main.tf` remains an **unvalidated, high-cost historical template** with EKS/NAT/MSK/RDS and must **not** be run by default.\n- `infrastructure/terraform/research/` defines a separate cost-aware private S3/Glue/Athena/OIDC **review-only** root, offline validation via P4 workflow; no AWS apply or plan is done.
 - Treat it as a starting point, not a production-ready configuration.
 
 ## Production plan (not implemented in this repo)

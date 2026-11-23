@@ -1,0 +1,6 @@
+# Local-only synthetic analyst review API test dependencies.
+# Includes the deterministic CPU-only model/scoring dependencies.
+-r requirements-ml-ci.txt
+fastapi>=0.115,<1.0
+httpx>=0.27,<1.0
+uvicorn>=0.30,<1.0

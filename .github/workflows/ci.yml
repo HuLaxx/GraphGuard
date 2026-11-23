@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, develop, 'feature/**']
   pull_request:
-    branches: [main]
+    branches: [main, 'audit/**', 'feature/**']
 
 jobs:
   lint:
@@ -16,18 +16,19 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 8
+          node-version: '22'
           
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-        
+        run: npm --prefix frontend ci
+
       - name: Lint frontend
-        run: pnpm --filter graphguard-dashboard lint
+        run: npm --prefix frontend run lint
+
+      - name: Type-check frontend
+        run: npm --prefix frontend run type-check
+
+      - name: Build real Next.js frontend
+        run: npm --prefix frontend run build
 
   test-frontend:
     name: Test Frontend
@@ -38,18 +39,13 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 8
+          node-version: '22'
           
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-        
+        run: npm --prefix frontend ci
+
       - name: Run tests
-        run: pnpm --filter graphguard-dashboard test
+        run: npm --prefix frontend run test
 
   test-backend:
     name: Test Python
@@ -68,10 +64,23 @@ jobs:
           
       - name: Run pytest
         run: |
-          pytest tests/unit/test_rag.py -v
+          pytest tests/unit/test_rag.py tests/unit/test_graph_builder_delivery.py tests/unit/test_transaction_ledger.py tests/unit/test_point_in_time_features.py -v
+
+  security:
+    name: High / Critical Dependency Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scan source and dependency manifests
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          scan-ref: .
+          severity: CRITICAL,HIGH
+          exit-code: '1'
 
   build-docker:
-    name: Build Docker Images
+    name: Build Existing MLflow Image
     runs-on: ubuntu-latest
     needs: [lint, test-frontend, test-backend]
     steps:
@@ -80,11 +89,280 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         
-      - name: Build API image
+      - name: Build MLflow image
         uses: docker/build-push-action@v5
         with:
-          context: ./backend/api
+          context: ./infrastructure/mlflow
           push: false
-          tags: graphguard/api:${{ github.sha }}
+          tags: graphguard/mlflow:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  ingestion-integration:
+    name: Real Kafka / Neo4j ingestion integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install integration test dependencies
+        run: |
+          pip install -r requirements-ci.txt -r requirements-ingestion-ci.txt -r requirements-review-ci.txt
+      - name: Start disposable broker and graph database
+        run: docker compose -f docker-compose.ingestion.yml up -d --wait
+      - name: Test JSON and Avro with real services, PIT features and verified model scoring
+        env:
+          GRAPHGUARD_INGESTION_INTEGRATION: "1"
+          GRAPHGUARD_BROKER_CASE_EVIDENCE_PATH: ${{ runner.temp }}/broker-to-review-case.json
+        run: pytest tests/integration/test_ingest_kafka_neo4j.py tests/integration/test_avro_registry.py -v
+      - name: Publish broker-source → case model and signed audit evidence
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: graphguard-same-event-broker-to-case
+          path: ${{ runner.temp }}/broker-to-review-case.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Show service logs on failure
+        if: failure()
+        run: docker compose -f docker-compose.ingestion.yml logs --no-color --tail=150
+      - name: Tear down disposable services
+        if: always()
+        run: docker compose -f docker-compose.ingestion.yml down --remove-orphans
+
+  ml-baselines:
+    name: Synthetic point-in-time ML baselines
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install CPU-only baseline dependencies
+        run: python -m pip install -r requirements-review-ci.txt
+      - name: Test ML, verified SHAP and signed human-review audit
+        run: python -m pytest tests/unit/test_pit_baselines.py tests/unit/test_verified_pit_scorer.py tests/unit/test_verified_shap.py tests/unit/test_synthetic_review.py tests/unit/test_local_benchmark.py -v
+      - name: Train both models and generate inspectable synthetic metrics
+        run: python -m ml.training.pit_baselines --count 720 --seed 42 --output-dir .local/ml-baselines
+      - name: Upload synthetic-only report and model artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: graphguard-pit-ml-synthetic-baselines
+          path: |
+            .local/ml-baselines/manifest.json
+            .local/ml-baselines/synthetic_records.jsonl
+            .local/ml-baselines/logistic_baseline.json
+            .local/ml-baselines/xgboost_baseline.json
+          if-no-files-found: error
+          retention-days: 14
+
+  local-review-http-smoke:
+    name: Signed local case dashboard HTTP smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install local-review backend dependencies
+        run: python -m pip install -r requirements-review-ci.txt
+      - name: Install Next.js frontend dependencies
+        run: npm --prefix frontend ci
+      - name: Start real loopback Next + Python API and verify synthetic case/SHAP/review
+        run: python -m ml.review.run_local_demo --workspace .local/graphguard-http-smoke --smoke
+      - name: Show sanitized local service failure logs
+        if: failure()
+        run: |
+          echo "Review smoke failed. The runner never logs tokens or signing keys."
+          echo "Inspect the failing process output above. Avoid publishing .local artifacts."
+
+  npm-audit-inventory:
+    name: npm full / production advisory inventory
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Capture explicit full and production npm advisory reports
+        run: |
+          mkdir -p .local/security
+          npm --prefix frontend audit --json > .local/security/npm-full.json || true
+          npm --prefix frontend audit --omit=dev --json > .local/security/npm-production.json || true
+      - name: Print traceable advisory package, installed ranges and safe fix hints
+        run: |
+          node scripts/print-npm-audit.mjs .local/security/npm-full.json full
+          node scripts/print-npm-audit.mjs .local/security/npm-production.json production
+      - name: Block production high and critical npm advisories
+        run: npm --prefix frontend audit --omit=dev --audit-level=high
+      - name: Block full-tree high and critical npm advisories
+        run: npm --prefix frontend audit --audit-level=high
+      - name: Upload inspectable npm audit JSON reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: graphguard-npm-audit-2026-11-17
+          path: |
+            .local/security/npm-full.json
+            .local/security/npm-production.json
+          retention-days: 7
+          if-no-files-found: error
+
+
+
+  local-review-real-chromium:
+    name: Real signed Chromium analyst case review
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install isolated synthetic review and Chromium
+        run: |
+          python -m pip install -r requirements-review-ci.txt
+          python -m pip install 'playwright==1.57.0'
+          python -m playwright install --with-deps chromium
+          npm --prefix frontend ci
+      - name: Drive real Chromium through signed source, SHAP and human audit
+        run: |
+          python -m ml.review.run_local_demo \
+            --workspace .local/graphguard-chromium-ci \
+            --browser-smoke \
+            --evidence-dir "$RUNNER_TEMP/graphguard-browser-evidence"
+          python - "$RUNNER_TEMP/graphguard-browser-evidence/synthetic-review-proof.json" <<'PY'
+          import json, sys
+          from pathlib import Path
+          result = json.loads(Path(sys.argv[1]).read_text())
+          assert result["steps_passed"] == 6
+          assert result["final_status"] == "CLOSED_REVIEW_COMPLETE"
+          assert result["final_version"] == 2
+          assert result["external_provider_calls"] == 0
+          print("PASS: local Chromium analyst/admin evidence complete")
+          PY
+      - name: Publish sanitized synthetic-only browser evidence and screenshot
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: graphguard-signed-chromium-synthetic-case
+          path: ${{ runner.temp }}/graphguard-browser-evidence/
+          if-no-files-found: error
+          retention-days: 14
+
+  unified-broker-chromium:
+    name: Same Kafka event through signed real Chromium
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install synthetic model, broker and browser prerequisites
+        run: |
+          python -m pip install -r requirements-ci.txt -r requirements-ingestion-ci.txt -r requirements-review-ci.txt
+          python -m pip install 'playwright==1.57.0'
+          python -m playwright install --with-deps chromium
+          npm --prefix frontend ci
+      - name: Start disposable Kafka, Schema Registry and Neo4j
+        run: docker compose -f docker-compose.ingestion.yml up -d --wait
+      - name: One real Avro transaction -> graph -> model/SHAP -> signed Chromium review
+        env:
+          GRAPHGUARD_INGESTION_INTEGRATION: "1"
+          GRAPHGUARD_BROKER_CHROMIUM: "1"
+          GRAPHGUARD_BROKER_CHROMIUM_EVIDENCE_DIR: ${{ runner.temp }}/graphguard-broker-chromium-evidence
+        run: |
+          python -m pytest tests/integration/test_avro_registry.py::test_uninterrupted_registered_avro_to_real_chromium_case -v
+          python - "$GRAPHGUARD_BROKER_CHROMIUM_EVIDENCE_DIR/synthetic-review-proof.json" <<'PY'
+          import json, sys
+          from pathlib import Path
+          report = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+          assert report["source_mode"] == "real_kafka_avro_neo4j"
+          assert report["steps_passed"] == 6
+          assert report["final_status"] == "CLOSED_REVIEW_COMPLETE"
+          assert report["final_version"] == 2
+          assert report["external_provider_calls"] == 0
+          assert report["transaction_id"] == "synthetic-broker-to-real-chromium-001"
+          print("PASS: same broker transaction verified in real Chromium with signed analyst/admin")
+          PY
+      - name: Upload sanitized same-source broker and browser screenshot/proof
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: graphguard-same-kafka-event-real-chromium
+          path: ${{ runner.temp }}/graphguard-broker-chromium-evidence/
+          if-no-files-found: error
+          retention-days: 14
+      - name: Show broker/graph logs on failure
+        if: failure()
+        run: docker compose -f docker-compose.ingestion.yml logs --no-color --tail=80
+      - name: Tear down disposable broker and graph
+        if: always()
+        run: docker compose -f docker-compose.ingestion.yml down --remove-orphans
+
+  signed-local-latency:
+    name: Reproducible signed local case and SHAP p50/p95
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install synthetic model and Next.js dependencies
+        run: |
+          python -m pip install -r requirements-review-ci.txt
+          npm --prefix frontend ci
+      - name: Measure real signed loopback case+SHAP requests with source hash checks
+        run: |
+          python -m ml.review.run_local_demo \
+            --workspace .local/graphguard-latency-ci \
+            --benchmark \
+            --evidence-dir "$RUNNER_TEMP/graphguard-latency-evidence"
+          python - "$RUNNER_TEMP/graphguard-latency-evidence/synthetic-latency.json" <<'PY'
+          import json, sys
+          from pathlib import Path
+          result = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+          assert result["scope"] == "LOCAL_SYNTHETIC_BENCHMARK_NOT_PRODUCTION"
+          assert result["planned_calls"] == 24
+          assert result["successful_calls"] == 24
+          assert result["failed_calls"] == 0
+          assert result["concurrency"] == 2
+          for label in ("case_read", "native_shap"):
+              row = result["routes"][label]
+              assert row["completed"] == 12 and row["failed"] == 0
+              assert 0 <= row["timing"]["p50_ms"] <= row["timing"]["p95_ms"]
+          print("PASS: signed case+SHAP p50/p95 captured on 24 checked local requests")
+          PY
+      - name: Upload sanitized synthetic latency measurements
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: graphguard-signed-local-p50-p95
+          path: ${{ runner.temp }}/graphguard-latency-evidence/synthetic-latency.json
+          retention-days: 14
+          if-no-files-found: error

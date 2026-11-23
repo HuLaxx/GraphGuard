@@ -1,0 +1,206 @@
+## P0 security and full CI verification — 12 November 2026
+
+- **Current reviewed commit:** `3d686625013a59c2a6b7b07743cbd7c11a9e71d4`.
+- **PASS** [GitHub Actions 43263873047](https://github.com/HuLaxx/GraphGuard/actions/runs/43263873047): frontend ESLint/TypeScript/Next production build, Python focused tests, frontend tests, existing MLflow Docker image build, and blocking high/critical Trivy dependency security scan.
+- Dependency lockfile upgraded Next.js to **16.4.6**, lodash to **4.18.1** and source-map-js to **1.2.2**; the scan passed after these changes.
+- This does not prove a GraphGuard API image, graph-to-model scoring golden path, production fraud accuracy or AWS deployment. Do not merge based on green narrow checks alone.
+
+# GraphGuard — Engineering Evidence Register
+
+Updated: 2026-11-12. Status labels refer to **observed evidence**, not intended architecture.
+
+## Verification rules
+- **Verified**: reproducible execution artifact with commands, commit, date and expected assertions.
+- **Implemented, unverified**: source/config exists, but no current end-to-end test confirms behaviour.
+- **Mock / stub**: explicitly simulated, hard-coded, placeholder or example behaviour.
+- **Planned**: design, template or proposal only.
+
+| Capability | Current status | Evidence | Next acceptance gate |
+|---|---|---|---|
+| Transaction event producer and Avro contract | Implemented, unverified | [Producer](../data-eng/producers/transaction_ingester.py), [schema](../data-eng/schemas/transaction_event.avsc) | Seed an event; validate schema, duplicate and replay cases |
+| Kafka consumer to Neo4j | Implemented, unverified | [Graph builder](../data-eng/consumers/graph_builder.py) | Prove idempotent graph upsert with integration test |
+| Feature engineering and data quality | Implemented, unverified | [Spark folder](../data-eng/spark/), [quality checks](../data-eng/great_expectations/) | Reproducible event-time windows and failure fixtures |
+| XGBoost scoring and explainability | Implemented, unverified | [Training](../ml/training/train_xgboost_rigorous.py), [API](../ml/serving/api.py), [SHAP](../ml/explainability/shap_analysis.py) | Reproduce dataset provenance, time split and baseline metrics |
+| GAT scoring | Stub / experimental | [Source audit](FINAL_AUDIT.md), [model](../ml/training/gat_model.py) | Replace stub and benchmark fairly, or exclude from supported claims |
+| Hosted investigation UI | Mock / integration unverified | [Case page](../frontend/src/app/cases/page.tsx), [README](../README.md) | Seed event visible through real API, graph and case audit trail |
+| Terraform / AWS | Planned; not deployed | [Terraform](../infrastructure/terraform/main.tf), [README](../README.md) | Security review, cost estimate, explicit approval, deployed proof |
+| Python / frontend / lint CI | **Failed** on inspected main run | [GitHub Actions, 2026-11-06](https://github.com/HuLaxx/GraphGuard/actions/runs/42284437023) | Make all jobs pass on current head and record exact run |
+| Historical Python tests | Dated result, not current CI | [Saved evidence](evidence/) | Re-run on current commit; publish commands and output |
+
+## New PR verification (2026-11-12)
+
+- [PR #1 check run 43199703064](https://github.com/HuLaxx/GraphGuard/actions/runs/43199703064): **3/3 focused Python RAG tests passed** and **4/4 frontend tests passed**.
+- The same run's global frontend lint job **failed**. The first inspected lint log reports **69 errors and 14 warnings** across legacy frontend files. This is not a green PR or a full backend integration test.
+- Root cause of the earlier Python test collection failure was eager import of the serving API from `ml/serving/__init__.py`, which imported `structlog` absent from the lightweight CI environment. The import is now lazy; `httpx` is explicitly declared for the RAG modules.
+
+## P0 workflow finding
+The inspected workflow invoked `pnpm install --frozen-lockfile` and `pnpm --filter ...`, but the repository declares npm and carries `frontend/package-lock.json`, with **no root pnpm lockfile**. That is a reproducible configuration mismatch, independent of the unknown cause of the Python test failure. The frontend also used `next lint` with Next.js 16. The linked failed run establishes the job outcomes; historical job logs could not be retrieved during this audit, so no further root cause is asserted.
+
+## Required golden-path proof
+1. Produce a deterministic, versioned transaction, including a duplicate and an invalid event.
+2. Persist validated source data, route invalid records to quarantine/DLQ and upsert the graph idempotently.
+3. Compute past-only features; score with a reproducible trained baseline and verified model artifact.
+4. Display a correctly labelled explanation and create a human-reviewable case with a durable audit event.
+5. Test disconnected infrastructure, retries, data leakage and UI mock boundaries.
+
+## Current P0 release gate (2026-11-12)
+
+- **PASS**: [Workflow 43253878251](https://github.com/HuLaxx/GraphGuard/actions/runs/43253878251), commit `5898540332e0d1d4abccd7b386960b85a211bfd8`, matches current draft PR head at time of verification.
+- Frontend ESLint and TypeScript checks passed; focused Python RAG tests passed; frontend tests passed; the **existing MLflow image** built successfully.
+- **Not claimed:** an API Docker image, a seeded Kafka->Neo4j->trained-model->case end-to-end test, GAT readiness, AWS infrastructure, or a hosted production fraud API. The image built was MLflow, not the missing API Dockerfile.
+
+## Verification log
+- 2026-11-12: examined repository tree, README, selected source paths and GitHub Actions statuses through the connected GitHub API.
+- 2026-11-12: **No fresh test execution or AWS deployment was performed** in this audit environment. This document is not a green CI badge.
+- Attach future PR runs, dataset hashes, command outputs and measurement artifacts below before upgrading a status to Verified.
+
+## P1 at-least-once transaction recovery — 13 November 2026
+
+- [Draft PR #2](https://github.com/HuLaxx/GraphGuard/pull/2), stacked on existing P0 PR #1. All changes are review-branch only; no production operations.
+- [GitHub Actions 43427933012](https://github.com/HuLaxx/GraphGuard/actions/runs/43427933012), source SHA `d838dadb3841c7cfd21604ba3a32776b0b23de11`, verified the **14 focused Python tests passed**, including eleven new mock-client recovery cases; the frontend lint/test and high/critical security-scan jobs also passed. The MLflow image build was pending at this evidence-register update; check its final result before marking all jobs green.
+- Graph builder now waits for Neo4j query result consumption before synchronously committing Kafka offsets. Failed graph writes or offset commits propagate and leave messages replayable instead of sending valid transactions to DLQ and committing them.
+- The DLQ path requires a delivery callback acknowledgment before committing the original invalid message; a DLQ outage must not advance the source offset. Numeric and contract metadata are checked before buffering.
+- Avro/schema registry failure now preserves the original offset instead of treating undecodable bytes as poisoned JSON. Synthetic JSON fixture mode is opt-in with `GRAPHGUARD_JSON_FIXTURE_MODE=true`.
+- **Boundary:** tests run the real GraphBuilder policy methods but stub Kafka, Neo4j, schema registry and structured logging clients. They are **not** broker-backed integration or verified recovery under process restarts, rebalances and partial graph commits. One Neo4j `MERGE` batch is idempotent by node/edge identity but ON MATCH fields can be overwritten by conflicting duplicate IDs; transaction conflict control remains to be built.
+- **Not verified:** full graph scoring/ML/SHAP, auditable investigator case, dataset licensing and leakage checks, complete auth hardening, a production Docker API image or AWS deployment. Provisioned cloud resources: none.
+
+## P1 local durable ingestion candidate — 14 November 2026 (unverified pending CI)
+
+- Review branch: `feature/graphguard-durable-ingestion-2026-11-14`, stacked on [PR #2](https://github.com/HuLaxx/GraphGuard/pull/2); NOT merged or deployed.
+- Added `data-eng/consumers/transaction_ledger.py`: SQLite/WAL with full sync, transaction-ID uniqueness, canonical content SHA-256, immutable first accepted normalized source payload, partition/offset provenance and an append-only conflicting-ID inbox. Identical retries project again to repair a crash after source write; conflicting versions never replace the first ledger record.
+- The source ledger deliberately does not persist raw IP addresses or card fragments. **Only use explicitly synthetic fixtures:** this local file is not an access-controlled production system or a substitute for governed data retention.
+- GraphBuilder writes normalized source before graph projection. The graph uses unique ID constraints and a hash gate; count assertions execute inside a Neo4j write transaction before Kafka offset commit. Existing graph nodes without hashes require reconciliation instead of silent overwrite.
+- Added `tests/unit/test_transaction_ledger.py` and expanded `tests/unit/test_graph_builder_delivery.py` for restart, duplicate/conflict, disk failure, ordering and graph hash mismatch. Results are not yet independently observed on this new branch.
+- Added `docker-compose.ingestion.yml` and `tests/integration/test_ingest_kafka_neo4j.py` (opt-in), with disposable local Kafka and Neo4j; tests publish JSON fixtures on a real broker then query actual graph state, including a restart replay. This is **not** Avro+Schema Registry or a complete source-to-case journey.
+- CI now includes the new unit tests and a separate Docker-backed integration job. Verify actual green run and link it before marking this milestone done.
+- No AWS infrastructure, paid services, deployment, ML accuracy or analyst workflow is claimed.
+
+### Reproduction for reviewers (synthetic fixtures only)
+
+```bash
+python -m pip install -r requirements-ci.txt -r requirements-ingestion-ci.txt
+docker compose -f docker-compose.ingestion.yml up -d --wait
+GRAPHGUARD_INGESTION_INTEGRATION=1 pytest tests/integration/test_ingest_kafka_neo4j.py -v
+docker compose -f docker-compose.ingestion.yml down --remove-orphans
+```
+
+Known limitations: SQLite is a single-node local ledger; no transaction spanning SQLite, Kafka and Neo4j exists. Recovery relies on at-least-once Kafka replay and idempotent projection, not exactly-once delivery. Broker outages, partial commits, same-ID conflict behavior on existing legacy graph data, partition rebalancing, schema-registry outages and deployed auth require further verification.
+
+## P1 verified acceptance snapshot — 13 November 2026 19:30 UTC
+
+- [GitHub Actions CI 43492440036](https://github.com/HuLaxx/GraphGuard/actions/runs/43492440036), commit `dc892a0d8716775dba781663b93ece6485cb1306`.
+- **PASS** Python focused suite: **23 tests** (3 RAG, existing and new recovery tests, local ledger tests) against this commit. [Python job](https://github.com/HuLaxx/GraphGuard/actions/runs/43492440036).
+- **PASS** Docker-backed integration: **1 test** using a real Kafka broker plus Neo4j, with synthetic JSON fixtures, actual database assertions, a conflicting transaction-ID DLQ, first-record retention, duplicate projection and replay under a new consumer group.
+- **PASS** frontend tests; **PASS** lint/typecheck/Next.js build; **PASS** high/critical dependency scan on that commit. Existing MLflow image build was queued when this snapshot was written.
+- Subsequent branch changes normalize schema defaults and add additional privacy/identity unit tests. They are **not** counted as verified by the older run; check latest-head CI before merging.
+- No Schema Registry/Avro wire-format integration, production cases, fraud accuracy claim, managed cloud resources or full golden path is demonstrated by this result.
+
+## P1 — real Avro + Schema Registry acceptance (14 November 2026)
+
+- **PASS, code SHA `c6ed9f400a71d3b7ffdd6fca80a2baf233576ccd`:** [CI run 43504349301](https://github.com/HuLaxx/GraphGuard/actions/runs/43504349301) completed with all six jobs successful. This evidence was observed from GitHub Actions jobs and logs.
+- **27 focused Python unit tests passed.** The suite includes prior recovery policy, durable ledger, synthetic data privacy checks, and new fail-closed Avro framing tests. These unit methods use stubbed service clients.
+- **4 real-service integration tests passed** on disposable Kafka, Neo4j and Confluent Schema Registry. Existing JSON-fixture ingestion remains separate from actual `TransactionProducer` Avro wire records. The Avro test verifies a registry subject/schema ID, persistent ledger, duplicate replay, immutable graph identity and conflicting same-ID DLQ.
+- **Recovery:** a real consumer with an unreachable registry endpoint fails to decode without committing its source offset; a fresh consumer on the **same group** decodes and persists the record after the URL is restored. This simulates a network outage; it does not shut down the registry container.
+- **PASS** frontend tests, frontend ESLint/typecheck/production build, high/critical Trivy manifest scan, and existing MLflow image build. A built MLflow image is not an API image.
+- **Changed code:** `data-eng/producers/transaction_ingester.py`, `data-eng/consumers/graph_builder.py`, `tests/integration/test_avro_registry.py`, `tests/unit/test_graph_builder_delivery.py`, `requirements-ingestion-ci.txt`, `docker-compose.ingestion.yml`, `.github/workflows/ci.yml`; reproduction: [AVRO_INGESTION.md](AVRO_INGESTION.md).
+- **Boundary:** schema evolution (backward/forward compatibility), arbitrary damaged wire data, rebalance and multi-partition offset behaviour, legacy graph migration, model scoring, analyst review, IAM/production auth and AWS remain unverified.
+- These are PR-branch observations. The main branch has not been merged or certified. No cloud resources or paid services were provisioned.
+
+## P1 — Immutable point-in-time features (14 November 2026)
+
+- [Draft PR #5](https://github.com/HuLaxx/GraphGuard/pull/5), branch `feature/graphguard-point-in-time-features-2026-11-14`, stacked on PR #4. **No merge to main or production deployment.**
+- `point_in_time_features.py` calculates `pit-v1` relationship features from accepted synthetic ledger data: user/merchant transactions, shared-device users, unique devices, and same-currency amount aggregates with 24h, 7d and 30d windows.
+- **Temporal leakage control:** earlier event time (`h.event_time_ms < t.event_time_ms`) AND first-observed receipt ordering (`h.ledger_rowid < t.ledger_rowid` and receipt time `<=` target receipt). An event that arrives after a target is not retrospectively added, even when its event timestamp is older. Same-timestamp historical events are excluded.
+- Versioned, immutable feature snapshots are saved in local SQLite with source payload hash, feature JSON hash, cutoff event/receipt times and feature version before Kafka offsets are acknowledged. Failed snapshot construction retains replayability. This is not a distributed exactly-once guarantee.
+- [CI 43584978727](https://github.com/HuLaxx/GraphGuard/actions/runs/43584978727), source code SHA `bc1476026d1c7ddc0f123ccc5e7bc3da016f02b2`: **34 focused Python tests passed** (inspected job logs). Frontend, lint/typecheck/build, dependency scan and existing MLflow image build also passed; real-service integration was running at evidence-write time.
+- [CI 43584904390](https://github.com/HuLaxx/GraphGuard/actions/runs/43584904390), source SHA `19e7750f03cdd039e0f5780c6ff95d872805b30c`: **5 integration tests passed with live Docker Kafka, Neo4j and Schema Registry**, including one new real Avro source → ledger → point-in-time feature snapshot acceptance and unchanged target snapshot after a late-arriving event. All 6 CI jobs passed on this source commit (the dedicated temporal Python test suite was added to CI on a subsequent commit).
+- Tests also cover future-event ingestion order, equal event times, inclusive window boundaries, currency separation, restarts/replays, conflicting source identity, invalid ledger payloads and feature-write failures without Kafka offset commits.
+- **Limitations:** no trained model uses these features yet; no Neo4j GDS computation, production data, distributed feature store, runtime benchmarks, genuine multi-consumer rebalance or historical entity-resolution governance. See [POINT_IN_TIME_FEATURES.md](POINT_IN_TIME_FEATURES.md).
+
+## P1/P2 — Measured synthetic logistic/XGBoost baselines (14 November 2026)
+
+- [Draft PR #6](https://github.com/HuLaxx/GraphGuard/pull/6), stacked on #5. Source commit `462e7c682bedd2595f672ef09f21d8333f06a114`, [**CI 43611311872**](https://github.com/HuLaxx/GraphGuard/actions/runs/43611311872): **all 7 jobs passed** (frontend lint/build, frontend tests, focused Python, high/critical security scan, real Kafka/Neo4j/Schema Registry integration, existing MLflow image build and new synthetic ML baseline job).
+- The new ML job reports **6/6 targeted leakage/reproducibility tests passed** and actually trains both logistic-regression and XGBoost models using deterministic seed-42, **720 synthetic events** from the `pit-v1` ledger feature store. The earlier focused Python suite and five real-service Kafka/Neo4j tests remain separate; this is not a deployed scorer.
+- Dataset SHA-256: `100b3ef3ae97ef7ea0d040de0bdbe31a6109cfe39f958d66eb3aeec57f0d3306`; model JSON SHA-256s: logistic `35acf88762b6f54701f1d2453876b74b3fb9fca39b4dfa3d09d097d11235aece`, XGBoost `87e40983a9294b60b3441c41f7c3c79ea1d0f7461d032cb6f429f1129a43a20e`. The workflow uploaded `manifest.json`, synthetic dataset and both native/JSON model artifacts under `graphguard-pit-ml-synthetic-baselines` (14-day retention).
+- Strict chronological split: 65% train, 15% validation (**108 events, 13 synthetic positives**), 20% test (**144 events, 16 synthetic positives**). Repeated entity identities are audited and excluded from input columns; this is not entity-disjoint validation. Labels are simulated and never stored in the transaction source/feature store.
+- **Validation PR-AUC:** logistic `0.8328`, XGBoost `0.8786`; **selected XGBoost using validation ONLY**. **Held-out synthetic test PR-AUC:** logistic `0.6887`, XGBoost `0.7650`; **test ROC-AUC:** `0.9072` and `0.9409`. **Test precision@25:** `0.52` for both; **recall at validation-selected threshold:** `0.75` and `0.8125`; **Brier:** `0.0824` and `0.0695`.
+- **Critical operational limitation:** threshold chosen to cap *validation* false-positive rate at 5% did **not** achieve 5% on the held-out test. Measured test FPR was **6.25%** (logistic) and **9.375%** (XGBoost). Do not advertise or automate decisions using a 5% guaranteed operating point.
+- Frozen feature contract: `pit-v1+current-amount-v1` (11 past-only graph-context features plus known current amount). Fixed hyperparameters; train-only scaler/weights; test labels do not affect training or model selection. Manifest records installed dependency versions and split entity-overlap counts. Script uses safe JSON model records and verifies native XGBoost reload rather than trusting a pickle.
+- **No external fraud dataset/licence, real customer outcomes, calibrated/fairness guarantee, model registry/MLflow experiment, SHAP on a scored instance, deployed API, authenticated analyst case, or AWS provisioning is verified.** Results are valid **only for this synthetic generator**. See [SYNTHETIC_BASELINES.md](SYNTHETIC_BASELINES.md).
+
+## P1 — Trust-pinned model research scoring (15 November 2026)
+
+- [Draft PR #7](https://github.com/HuLaxx/GraphGuard/pull/7), stacked on #6. **Initial implementation verified** on code SHA `67fe4c246383f6862d01d6263cf1189c7dc95bfc`: [CI run 43686911488](https://github.com/HuLaxx/GraphGuard/actions/runs/43686911488), all **7 CI jobs passed**. The ML suite passed **13 targeted tests** and the real Kafka/Avro/Schema Registry/Neo4j suite passed **6 integration tests**, including an actual synthetic transaction → immutable point-in-time snapshot → trained model probability → replay stability.
+- `ml/serving/verified_pit_scorer.py` requires a separately trusted manifest SHA-256, verifies the chosen native model hash and `pit-v1+current-amount-v1` feature order, accepted SQLite transaction hash, event/receipt-time cutoffs and snapshot hash; fails closed on missing or changed data. `ml/serving/score_pit_cli.py` offers non-deployed reproducible local scoring.
+- **Subsequent hardening** requires the pinned scorer to recompute a proposed research score before local storage and tests forged first-write rejection and loading both approved model formats. An intermediate CI run failed because the test incorrectly presumed a SQLite score table was created after a rejected first write. The assertion was fixed on code SHA `5371878c04d9cf7fa253880e90b5baf54120a03e`; **latest hardening CI was queued** at this evidence capture, so do not count its new tests as passed yet.
+- Score status is `RESEARCH_SCORE_ONLY_NO_AUTOMATED_DECISION`; no auto-decline, actual fraud accusation or production decision. The stored research record is a local SQLite demonstration, **not a tamper-proof authenticated analyst audit**. Legacy `ml/serving/api.py` is not certified by this work.
+- Only synthetic GBP fixtures and artificial training labels have been tested. XGBoost's prior synthetic holdout FPR was 9.375% despite the 5% validation target. No external performance, calibrated probability, SHAP, human case, AWS or real bank outcome is claimed.
+- Reproducible path: [VERIFIED_SYNTHETIC_SCORING.md](VERIFIED_SYNTHETIC_SCORING.md). Next: actual SHAP attribution on a pinned scored instance and authenticated human-review audit.
+
+## P1 — Verified hash-pinned real TreeSHAP and linear Shapley (15 November 2026)
+
+- **PR #7 predecessor head now fully green:** [CI 43687400391](https://github.com/HuLaxx/GraphGuard/actions/runs/43687400391) on SHA `cae803a90e116a3a24dc8ff7adcc9bb7e58fe20c`: all **7 jobs green**, **16/16 ML/scorer unit tests** including forged-first-score rejection and both model paths, plus 6 real-service tests. Supersedes the previous register's provisional note that its later hardening was queued.
+- [**Draft PR #8 — exact research SHAP**](https://github.com/HuLaxx/GraphGuard/pull/8), stacked on #7. **Code SHA `bad49230fa0b9b38b74ae877c520d2d38f079f22`**, [CI 43711547865](https://github.com/HuLaxx/GraphGuard/actions/runs/43711547865): **all seven CI jobs passed**; **30/30 ML + scorer + SHAP unit tests** and **6/6 Docker-backed Kafka/Schema Registry/Neo4j integration tests**.
+- The sixth real integration verifies **actual registered synthetic Avro → Kafka → Neo4j edges → immutable `pit-v1` SQLite features → trusted SHA-pinned trained model → signed numerical SHAP explanation → repeatable score+explanation after Kafka replay**, with local research-only score and explanation records. It does not invoke a production API or authenticated analyst UI.
+- XGBoost attributions call native exact, non-approximate **TreeSHAP** (`Booster.predict(..., pred_contribs=True, approx_contribs=False)`); tests assert all per-feature contributions equal the original booster output and baseline+contributions in log odds reconstruct the **independently verified probability**. Logistic regression uses the exact additive linear Shapley decomposition relative to the training feature means. Both include a conspicuous **noncausal** warning; SHAP does not make a fraud claim.
+- Explanation contains all **12 ordered input features**, signed log-odds contributions, sorted top 5, algorithm/background labels, reconstruction error, `pit-v1` and explanation versions, separately approved model-manifest SHA and source/feature/model hashes. Rejected: input/manifest mismatch, forged explanation, unverified score, invalid top-K, changed immutable feature snapshot, conflicting persisted explanation, among unit coverage.
+- Optional local SQLite research explanation persistence **recomputes** the whole explanation from the pinned scorer before accepting a first write and requires a matching previously saved verified research score. Replay returns identical SHA-256 output; this is **not** a tamper-proof authenticated human decision/audit service.
+- [Docs](VERIFIED_SHAP.md) and [ML scope statement](../ml/README.md) distinguish synthetic research SHAP from heuristic legacy `ml/serving/api.py`, unbenchmarked GAT and production fraud evaluation.
+- **Explicit boundary:** no external licensed fraud ground truth, verified calibration, fairness guarantee, deployed case UI, analyst identity/roles, human decision, operational fraud claims or cloud resources. Prior synthetic XGBoost test FPR 9.375% exceeded the validation 5% budget; SHAP cannot fix that.
+- After the passing code commit, the docs-only head `182ea9e9a2a492f82109d6caec9df564e07ff841` was pushed. This evidence-registration commit will require its own CI green; do not conflate old-code runs with final latest-head status. Next priority: **authenticated synthetic case and immutable review history**.
+
+## P1 — Signed local synthetic human-review case and HMAC audit (16 November 2026)
+
+- [Draft PR #9](https://github.com/HuLaxx/GraphGuard/pull/9), stacked on #8. **Code SHA `aac707625f59894f8c53a355f1b343843e6fbb0d`**: [GitHub Actions 43922849789](https://github.com/HuLaxx/GraphGuard/actions/runs/43922849789) **all seven CI jobs green** including **37/37 focused ML/inference/SHAP/auth/case-review unit tests** and **6/6 real Docker Kafka/Confluent Schema Registry/Neo4j integration tests**.
+- The sixth integration test was extended to perform a **real registered synthetic Avro event → Neo4j+SQLite → `pit-v1` feature snapshot → hash-verified trained model score → native signed log-odds SHAP → analyst-opened review case → analyst escalation → admin closure → Kafka replay**. Replayed source and case remained consistent with no additional decision records. This is a synthetic local demonstration, not real customer/bank fraud management.
+- `ml/review/auth.py`: independently provisioned local demo HMAC-SHA256 signed tokens with scoped issuer/audience, maximum one-hour TTL, issued-at/expiration validation, actor/role and random token ID. Analyst/admin identity is verified, **not read from user-supplied role/body fields**. Issuance is an **offline operator CLI**, not a service endpoint; this is not production OIDC, SSO, MFA or employee identity proof.
+- `ml/review/case_store.py`: case anchor ties immutable source/model/snapshot/explanation hashes; source and model are reverified on case access and decision. Explicit human states (`OPEN`, `NEEDS_INFORMATION`, `ESCALATED`, terminal closures), admin-only closure, optimistic expected-version checks and idempotent request IDs. Decisions are **human reviewer state changes**, not automated payment or adverse-action decisions.
+- Local SQLite case/decision records use **insert-only events** with ordered SHA-256 links, separate HMAC event signatures, signing-key-authenticated case anchor and UPDATE/DELETE blocking triggers. Unit tests reject missing/expired/forged reviewer credentials, spoofed role fields, forged history, repeated/conflicting requests, stale transitions and changed source evidence. This is **not** a privileged-writer-proof regulatory audit store; key rotation, independent external anchoring and disaster recovery remain open.
+- `ml/review/app.py` and `serve_local.py`: local FastAPI case endpoints started on **127.0.0.1** with two separately injected ≥32-byte secrets, trusted model manifest SHA and existing ledger; no public port, cloud setup, external tokens or production customer information. [Runbook](SYNTHETIC_REVIEW_CASES.md) documents exact client operations and scope.
+- **Nonclaims:** previously measured synthetic XGBoost test FPR 9.375% exceeded a 5% validation FPR target; no production deployment, external fraud labels, fairness/calibration guarantee, hosted/authenticated frontend, enterprise OIDC/IAM, compliant immutable audit or paid AWS resource. Legacy frontend case page and prior API are **not wired** to the new local signed-review API.
+- Current documentation head `56d748267d0d03f05d13137fd6ba6adb94e3eb4a` was queued/in progress when this note was authored; the fully green evidence above is the preceding implementation SHA. PR review requires latest-head CI, no merge into main before explicit approval.
+
+## P1/P4 — Connected signed local analyst dashboard and reproducible demo (17 November 2026)
+
+- [Draft PR #10](https://github.com/HuLaxx/GraphGuard/pull/10) stacked on #9; **first complete UI code SHA `f4b62384d8af2fb39ef0cefeb597649ada3c3c37`** [CI 44106138995](https://github.com/HuLaxx/GraphGuard/actions/runs/44106138995): **all 7 CI jobs successful**, including **42/42 focused Python training, integrity, signed review and seeded-fixture tests**, **9/9 frontend Vitest tests**, **6/6 real-service registered Avro/Kafka/Schema Registry/Neo4j→model→SHAP→signed case integration tests**, Next.js lint/typecheck/build, Trivy high/critical scan and existing MLflow image **build only**.
+- `frontend/src/app/cases/page.tsx` no longer ships the prior hard-coded mock cases, decorative SHAP and automatic fraud/legitimate decision buttons. It connects to signed local FastAPI endpoints for verified synthetic cases, native SHAP signed log-odds chart, case-specific source/model/feature/explanation hashes, HMAC review event timeline and permitted human-only analyst/admin transitions. No unverified fraud conclusions and no fallback case/score when the service is unavailable.
+- `ml/review/case_store.py` and `ml/review/app.py` add **server-authorized** case queue, scoped demo session and live recomputation/verification of persisted model-derived SHAP, checked against the case anchor. CI includes missing-token/forged-token and mutated explanation tests; the browser checks hash/probability equality again before rendering.
+- The Next.js path `/review-local/...` is a strict, **local-development-only** proxy with a fixed loopback destination, endpoint allowlist, bounded bodies, disabled caching and no server-side reviewer credentials. Tokens remain in memory in the case page, not in localStorage, cookies or query strings. Production builds return 404 for the signed local proxy; no hosted case review is claimed.
+- `ml/review/seed_local_demo.py` generates deterministic synthetic baseline artifacts, a first-observed SQLite ledger, initial SHAP-backed review case and two private mode-0600 signing/token files in Git-ignored `.local/`; `ml/review/run_local_demo.py` starts loopback-only Python API and Next.js and safely terminates child services. Unit tests exercise seed/keys/tokens and actual signed endpoints. **The quick local fixture seeds SQLite directly**, bypassing Kafka/Neo4j; the broker-backed case path is demonstrated separately by the real-service CI job.
+- **NEW verified real HTTP smoke:** [GitHub Actions 44107711164](https://github.com/HuLaxx/GraphGuard/actions/runs/44107711164) on code SHA `f002f8ed1a62bc09d57d18fb9fa5680c194ff753`: **all 8 CI jobs green**. The new `Signed local case dashboard HTTP smoke` job installed actual Next.js and Python dependencies, launched both loopback processes, requested `/cases` HTML, verified the signed reviewer session and saved case via the same-origin Next proxy, retrieved the actual model-derived SHAP, posted a signed analyst escalation, read the persisted audit hash and cleanly tore down both services. CI logged `PASS: actual local Next case page → signed API → SHAP → human review audit`. This is **real HTTP** but **not a Playwright pixel/browser or Kafka→browser test**; separate Docker integration remains 6/6 green.
+- [Local runbook](LOCAL_REVIEW_DASHBOARD.md), [verified architecture with separate source-to-case vs local seed diagrams](VERIFIED_ARCHITECTURE.md), [draft portfolio case study](PORTFOLIO_CASE_STUDY.md), updated README and frontend documentation distinguish verified synthetic mode from legacy GraphQL demo/fallback data. These PR docs are not published as a live production deployment or LinkedIn claims.
+- **P0 security blocker:** CI `npm --prefix frontend ci` printed **25 npm audit advisories (14 moderate, 9 high, 2 critical)** on the inspected run, even though its separate Trivy high/critical job passed. These advisories need **dependency-level triage and remediation**; green Trivy alone is not enough to claim a secure release. No vulnerability exploitability or remediation is inferred without inspecting the full audit report.
+- **P2/P3/P4 open:** simulated GBP-only labels and synthetic test FPR 9.375% vs validation 5% target; no licensed independent dataset, confidence intervals/calibration/cold-start, production OIDC/MFA, external audit anchoring, full security audit, browser Playwright e2e, load benchmarks, model registry/rollback, or deployed/approved AWS service. Existing legacy `ml/serving/api.py` and hosted GraphQL views are not certified as this local signed review path. **No PR merged and no cloud resources provisioned.**
+
+## P0 — npm direct/runtime vs developer advisory triage (17 November 2026)
+
+- [Draft PR #11](https://github.com/HuLaxx/GraphGuard/pull/11) stacked on verified [PR #10](https://github.com/HuLaxx/GraphGuard/pull/10). [CI 44146418606](https://github.com/HuLaxx/GraphGuard/actions/runs/44146418606), code SHA `8ed01eefd91066c48103f49bf2a866161431ac45`, **success** on the exact baseline manifests: separate `npm audit --json` and `npm audit --omit=dev --json` inventories are emitted in logs and as 7-day JSON artifacts.
+- **Observed baseline:** full dependency tree **29 affected packages (2 critical, 13 high, 14 moderate)**; production-only **1 high (`zod` v3.25.76; GHSA-mrhx-c7xc-m3w5), 0 critical**. Counts are npm vulnerability packages, *not* independent confirmed exploitability. Initial CI install output had 25 vulnerabilities at a different time; the more recent 29-count is the current measured audit baseline.
+- The critical `vitest` v2.1.9 and `tinypool` entries are in the **developer/test** dependency tree, not production-only; they must still be addressed because CI executes them. High transitive findings include Vite, picomatch, minimatch, Rollup, browserslist, flatted and js-yaml; avoid unsafe blind `npm audit fix --force` or a breaking downgrade from Next 16's ESLint plugin to a Next 14 config.
+- A **narrow, unverified branch fix** removes the unused direct runtime `zod` declaration from both `frontend/package.json` and the lockfile root while retaining the `node_modules/zod` entry marked `dev:true` for `eslint-plugin-react-hooks`. CI now includes a **blocking production high/critical audit gate**, but its green result against the changed lockfile was **queued** at the time of this entry: do not mark the runtime exposure eliminated based only on the static edit.
+- A **nonmutating**, read-only GitHub Actions candidate tests Vitest+V8 coverage v5.1.0 on **Node 22**, checks source Zod imports, applies only semver-compatible transitive fixes, tests lint/typecheck/Vitest/build, and emits a reviewable lock diff. No candidate patch committed; CI status was queued at this evidence capture.
+- [Security drill-down](NPM_SECURITY_AUDIT.md). Open: updated production and full audits after changes, npm lock consistency and Node version compatibility, reviewed security patch, API Docker build, full supply-chain/secrets and container audits. **No merge, AWS deployment or production security sign-off.**
+
+
+## 21 November 2026 — GraphGuard P3 actual real Chromium human review, exact-head evidence
+
+- **[Draft PR #14](https://github.com/HuLaxx/GraphGuard/pull/14)** stacked on the source-to-analyst [PR #13](https://github.com/HuLaxx/GraphGuard/pull/13), full [CI run 44844098127](https://github.com/HuLaxx/GraphGuard/actions/runs/44844098127) at code SHA `43b7c5153d4ad4782a14a1680ca38747441456e4`: **10/10 CI jobs PASS** (frontend lint/type/build/tests, Python unit, research model, real Kafka+Neo4j, signed local HTTP, true Chromium, full npm audit, high/critical scan, MLflow image).
+- **Actual Playwright Chromium browser**: [CI artifact 14681797542](https://github.com/HuLaxx/GraphGuard/actions/runs/44844098127/artifacts/14681797542), both original private signer keys and short-lived analyst/admin bearer tokens excluded from uploads. Browser asserts visible synthetic-only labels; invalid signed token yields 401; analyst signs in to the real local Next.js UI, sees the original synthetic transaction and native twelve-feature SHAP, and writes a persisted escalation; distinct admin signs in, completes review, and signed FastAPI reads prove v2 append-only audit plus unchanged model/source/SHAP hashes. The artifact includes a redacted synthetic screenshot and six-step JSON report. Case closure is not proof of fraud.
+- **Original real broker-to-case path still passes** in the same full run: **6 integration tests PASS**, disposable real Kafka/Neo4j, original synthetic transaction to durable point-in-time ledger, pinned ML score, native SHAP, signed analyst/admin case, replay/conflict/DLQ; [artifact 14682935288](https://github.com/HuLaxx/GraphGuard/actions/runs/44844098127/artifacts/14682935288). **These are two paths, NOT a single broker-to-Chromium CI run.** The browser uses the direct accepted ledger fixture, not production graph model inference.
+- P2 [synthetic calibration/drift run 44839497340](https://github.com/HuLaxx/GraphGuard/actions/runs/44839497340) and P4 [offline S3/Glue/Athena OIDC Terraform validation 44839497561](https://github.com/HuLaxx/GraphGuard/actions/runs/44839497561) remain the verified acceptance results for unchanged sources.
+- **No main merge, live bank customer, paid cloud provisioning, production identity, externally anchored audit, real fraud detection assurance, hosted-review backend or data licence is claimed.** 100/100 release gate remains open. [Scorecard](PROGRESS_SCORECARD.md) is an explicitly subjective engineering estimate backed by these tests, not a guaranteed hiring/recruiter mark.
+
+
+## 22 November 2026 — candidate continuous Kafka→real Chromium and local p95 (NOT YET VERIFIED)
+
+- [Draft PR #15](https://github.com/HuLaxx/GraphGuard/pull/15) is stacked on [fully green draft PR #14](https://github.com/HuLaxx/GraphGuard/pull/14), exact previous code head `868b7584` [10/10 CI](https://github.com/HuLaxx/GraphGuard/actions/runs/44844565253).
+- **New code requires independent validation:** one real registered synthetic Avro source is accepted into Kafka, projected into Neo4j and a source-hash-identical SQLite PIT snapshot, scored by hash-pinned trained model and native SHAP, then reviewed by real headless Chromium through signed Next/FastAPI analyst and admin sessions **for that same transaction**, with exact original hash checks and one true broker replay. New job `unified-broker-chromium`; screenshots/report only on success.
+- **New descriptive local performance test:** two concurrent workers issue 24 total signed source/evidence-validated case and SHAP queries through real Next→FastAPI, excluding warmup. Job `signed-local-latency` uploads separate p50/p95 JSON only on success. No claim about 100-user load, operational SLAs, cloud throughput or real fraud.
+- The code and [runbook](P3_UNIFIED_BROKER_CHROMIUM.md) are staged but latest-head GitHub Actions results were **queued** at this evidence entry. **No extra readiness point or verified result** is granted until green. No cloud apply, data licensing claims or merges.
+
+
+## 22 November 2026 — model card and honest public documentation (authored, unreviewed)
+
+- [Draft PR #15](https://github.com/HuLaxx/GraphGuard/pull/15) now contains [docs/MODEL_CARD.md](MODEL_CARD.md) describing synthetic-only intended use, original seed-42/720-row provenance, exact dataset and model artifact digests, 144-row (16 simulated positive) holdout, native SHAP limitations and the concrete XGBoost held-out 9.375% FPR against a 5% validation budget. Data/metric numbers are sourced from [previous passing baseline CI 43611311872](https://github.com/HuLaxx/GraphGuard/actions/runs/43611311872), **not new external validation**.
+- The README now puts the **last verified 70/100 release status** and [PR #14 green 10-job CI](https://github.com/HuLaxx/GraphGuard/actions/runs/44844565253) near the top and clearly calls PR #15 same-source browser/latency tests *pending*. It links the new model card and distinguishes the signed local synthetic UI from the illustrative hosted GraphQL demo.
+- Documentation existence is verified by the repository branch files; **independent review, exact-head new CI and new benchmark results are still outstanding**. No 100/100 readiness or real fraud model deployment claim.
