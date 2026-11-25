@@ -52,6 +52,9 @@
     ".next/dev/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "project-guide",
+    "e2e",
+    "playwright.project-guide.config.ts"
   ]
 }

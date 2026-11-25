@@ -1,0 +1,441 @@
+{
+  "commits": {
+    "fleetflow": "71bccc618ef6",
+    "graphguard": "caea4242b4c4",
+    "sentinance": "dceefc0bddaf"
+  },
+  "entries": [
+    {
+      "file": "curated/fleetflow-at-a-glance.md",
+      "project": "fleetflow",
+      "source": "curated",
+      "url": "https://github.com/HuLaxx/FleetFlow"
+    },
+    {
+      "file": "curated/graphguard-at-a-glance.md",
+      "project": "graphguard",
+      "source": "curated",
+      "url": "https://github.com/HuLaxx/GraphGuard"
+    },
+    {
+      "file": "curated/sentinance-at-a-glance.md",
+      "project": "sentinance",
+      "source": "curated",
+      "url": "https://github.com/HuLaxx/Sentinance"
+    },
+    {
+      "file": "fleetflow/backend__README.md",
+      "project": "fleetflow",
+      "source": "HuLaxx/FleetFlow:backend/README.md",
+      "url": "https://github.com/HuLaxx/FleetFlow/blob/main/backend/README.md"
+    },
+    {
+      "file": "fleetflow/data-engineering__lakehouse__README.md",
+      "project": "fleetflow",
+      "source": "HuLaxx/FleetFlow:data-engineering/lakehouse/README.md",
+      "url": "https://github.com/HuLaxx/FleetFlow/blob/main/data-engineering/lakehouse/README.md"
+    },
+    {
+      "file": "fleetflow/data-engineering__observability__README.md",
+      "project": "fleetflow",
+      "source": "HuLaxx/FleetFlow:data-engineering/observability/README.md",
+      "url": "https://github.com/HuLaxx/FleetFlow/blob/main/data-engineering/observability/README.md"
+    },
+    {
+      "file": "fleetflow/docs__AZURE_EXECUTION_GATE.md",
+      "project": "fleetflow",
+      "source": "HuLaxx/FleetFlow:docs/AZURE_EXECUTION_GATE.md",
+      "url": "https://github.com/HuLaxx/FleetFlow/blob/main/docs/AZURE_EXECUTION_GATE.md"
+    },
+    {
+      "file": "fleetflow/docs__EVIDENCE_REGISTER.md",
+      "project": "fleetflow",
+      "source": "HuLaxx/FleetFlow:docs/EVIDENCE_REGISTER.md",
+      "url": "https://github.com/HuLaxx/FleetFlow/blob/main/docs/EVIDENCE_REGISTER.md"
+    },
+    {
+      "file": "fleetflow/docs__FLEETFLOW_ENGINEERING_CASE_STUDY_2026.md",
+      "project": "fleetflow",
+      "source": "HuLaxx/FleetFlow:docs/FLEETFLOW_ENGINEERING_CASE_STUDY_2026.md",
+      "url": "https://github.com/HuLaxx/FleetFlow/blob/main/docs/FLEETFLOW_ENGINEERING_CASE_STUDY_2026.md"
+    },
+    {
+      "file": "fleetflow/docs__local-readiness.md",
+      "project": "fleetflow",
+      "source": "HuLaxx/FleetFlow:docs/local-readiness.md",
+      "url": "https://github.com/HuLaxx/FleetFlow/blob/main/docs/local-readiness.md"
+    },
+    {
+      "file": "fleetflow/docs__local-stack.md",
+      "project": "fleetflow",
+      "source": "HuLaxx/FleetFlow:docs/local-stack.md",
+      "url": "https://github.com/HuLaxx/FleetFlow/blob/main/docs/local-stack.md"
+    },
+    {
+      "file": "fleetflow/docs__P1_AUTHENTICATED_GPS_END_TO_END.md",
+      "project": "fleetflow",
+      "source": "HuLaxx/FleetFlow:docs/P1_AUTHENTICATED_GPS_END_TO_END.md",
+      "url": "https://github.com/HuLaxx/FleetFlow/blob/main/docs/P1_AUTHENTICATED_GPS_END_TO_END.md"
+    },
+    {
+      "file": "fleetflow/docs__P1_DISPATCH_EVENT_RELIABILITY.md",
+      "project": "fleetflow",
+      "source": "HuLaxx/FleetFlow:docs/P1_DISPATCH_EVENT_RELIABILITY.md",
+      "url": "https://github.com/HuLaxx/FleetFlow/blob/main/docs/P1_DISPATCH_EVENT_RELIABILITY.md"
+    },
+    {
+      "file": "fleetflow/docs__P1_LIVE_GPS_TRACKING.md",
+      "project": "fleetflow",
+      "source": "HuLaxx/FleetFlow:docs/P1_LIVE_GPS_TRACKING.md",
+      "url": "https://github.com/HuLaxx/FleetFlow/blob/main/docs/P1_LIVE_GPS_TRACKING.md"
+    },
+    {
+      "file": "fleetflow/docs__P1_OPTIMIZER_PLANNED_ROUTES.md",
+      "project": "fleetflow",
+      "source": "HuLaxx/FleetFlow:docs/P1_OPTIMIZER_PLANNED_ROUTES.md",
+      "url": "https://github.com/HuLaxx/FleetFlow/blob/main/docs/P1_OPTIMIZER_PLANNED_ROUTES.md"
+    },
+    {
+      "file": "fleetflow/docs__P2_DATABRICKS_SPARK_DBT_AZURE.md",
+      "project": "fleetflow",
+      "source": "HuLaxx/FleetFlow:docs/P2_DATABRICKS_SPARK_DBT_AZURE.md",
+      "url": "https://github.com/HuLaxx/FleetFlow/blob/main/docs/P2_DATABRICKS_SPARK_DBT_AZURE.md"
+    },
+    {
+      "file": "fleetflow/docs__P2_FORECAST_AND_SAFE_AIRFLOW.md",
+      "project": "fleetflow",
+      "source": "HuLaxx/FleetFlow:docs/P2_FORECAST_AND_SAFE_AIRFLOW.md",
+      "url": "https://github.com/HuLaxx/FleetFlow/blob/main/docs/P2_FORECAST_AND_SAFE_AIRFLOW.md"
+    },
+    {
+      "file": "fleetflow/docs__P2_RECONCILED_ANALYTICS.md",
+      "project": "fleetflow",
+      "source": "HuLaxx/FleetFlow:docs/P2_RECONCILED_ANALYTICS.md",
+      "url": "https://github.com/HuLaxx/FleetFlow/blob/main/docs/P2_RECONCILED_ANALYTICS.md"
+    },
+    {
+      "file": "fleetflow/docs__P2_ROUTING_BASELINES.md",
+      "project": "fleetflow",
+      "source": "HuLaxx/FleetFlow:docs/P2_ROUTING_BASELINES.md",
+      "url": "https://github.com/HuLaxx/FleetFlow/blob/main/docs/P2_ROUTING_BASELINES.md"
+    },
+    {
+      "file": "fleetflow/docs__P2_ROUTING_BENCHMARK.md",
+      "project": "fleetflow",
+      "source": "HuLaxx/FleetFlow:docs/P2_ROUTING_BENCHMARK.md",
+      "url": "https://github.com/HuLaxx/FleetFlow/blob/main/docs/P2_ROUTING_BENCHMARK.md"
+    },
+    {
+      "file": "fleetflow/docs__P3_AWS_TERRAFORM_REVIEW.md",
+      "project": "fleetflow",
+      "source": "HuLaxx/FleetFlow:docs/P3_AWS_TERRAFORM_REVIEW.md",
+      "url": "https://github.com/HuLaxx/FleetFlow/blob/main/docs/P3_AWS_TERRAFORM_REVIEW.md"
+    },
+    {
+      "file": "fleetflow/docs__TELEMETRY_LAKEHOUSE_REPLAY.md",
+      "project": "fleetflow",
+      "source": "HuLaxx/FleetFlow:docs/TELEMETRY_LAKEHOUSE_REPLAY.md",
+      "url": "https://github.com/HuLaxx/FleetFlow/blob/main/docs/TELEMETRY_LAKEHOUSE_REPLAY.md"
+    },
+    {
+      "file": "fleetflow/frontend__README.md",
+      "project": "fleetflow",
+      "source": "HuLaxx/FleetFlow:frontend/README.md",
+      "url": "https://github.com/HuLaxx/FleetFlow/blob/main/frontend/README.md"
+    },
+    {
+      "file": "fleetflow/ml__EVALUATION_V2.md",
+      "project": "fleetflow",
+      "source": "HuLaxx/FleetFlow:ml/EVALUATION_V2.md",
+      "url": "https://github.com/HuLaxx/FleetFlow/blob/main/ml/EVALUATION_V2.md"
+    },
+    {
+      "file": "fleetflow/README.md",
+      "project": "fleetflow",
+      "source": "HuLaxx/FleetFlow:README.md",
+      "url": "https://github.com/HuLaxx/FleetFlow/blob/main/README.md"
+    },
+    {
+      "file": "graphguard/docs__AVRO_INGESTION.md",
+      "project": "graphguard",
+      "source": "HuLaxx/GraphGuard:docs/AVRO_INGESTION.md",
+      "url": "https://github.com/HuLaxx/GraphGuard/blob/main/docs/AVRO_INGESTION.md"
+    },
+    {
+      "file": "graphguard/docs__EVIDENCE_REGISTER.md",
+      "project": "graphguard",
+      "source": "HuLaxx/GraphGuard:docs/EVIDENCE_REGISTER.md",
+      "url": "https://github.com/HuLaxx/GraphGuard/blob/main/docs/EVIDENCE_REGISTER.md"
+    },
+    {
+      "file": "graphguard/docs__LOCAL_REVIEW_DASHBOARD.md",
+      "project": "graphguard",
+      "source": "HuLaxx/GraphGuard:docs/LOCAL_REVIEW_DASHBOARD.md",
+      "url": "https://github.com/HuLaxx/GraphGuard/blob/main/docs/LOCAL_REVIEW_DASHBOARD.md"
+    },
+    {
+      "file": "graphguard/docs__MODEL_CARD.md",
+      "project": "graphguard",
+      "source": "HuLaxx/GraphGuard:docs/MODEL_CARD.md",
+      "url": "https://github.com/HuLaxx/GraphGuard/blob/main/docs/MODEL_CARD.md"
+    },
+    {
+      "file": "graphguard/docs__P2_CALIBRATION_DRIFT.md",
+      "project": "graphguard",
+      "source": "HuLaxx/GraphGuard:docs/P2_CALIBRATION_DRIFT.md",
+      "url": "https://github.com/HuLaxx/GraphGuard/blob/main/docs/P2_CALIBRATION_DRIFT.md"
+    },
+    {
+      "file": "graphguard/docs__P3_UNIFIED_BROKER_CHROMIUM.md",
+      "project": "graphguard",
+      "source": "HuLaxx/GraphGuard:docs/P3_UNIFIED_BROKER_CHROMIUM.md",
+      "url": "https://github.com/HuLaxx/GraphGuard/blob/main/docs/P3_UNIFIED_BROKER_CHROMIUM.md"
+    },
+    {
+      "file": "graphguard/docs__POINT_IN_TIME_FEATURES.md",
+      "project": "graphguard",
+      "source": "HuLaxx/GraphGuard:docs/POINT_IN_TIME_FEATURES.md",
+      "url": "https://github.com/HuLaxx/GraphGuard/blob/main/docs/POINT_IN_TIME_FEATURES.md"
+    },
+    {
+      "file": "graphguard/docs__PORTFOLIO_CASE_STUDY.md",
+      "project": "graphguard",
+      "source": "HuLaxx/GraphGuard:docs/PORTFOLIO_CASE_STUDY.md",
+      "url": "https://github.com/HuLaxx/GraphGuard/blob/main/docs/PORTFOLIO_CASE_STUDY.md"
+    },
+    {
+      "file": "graphguard/docs__PRODUCTION_DEPLOYMENT.md",
+      "project": "graphguard",
+      "source": "HuLaxx/GraphGuard:docs/PRODUCTION_DEPLOYMENT.md",
+      "url": "https://github.com/HuLaxx/GraphGuard/blob/main/docs/PRODUCTION_DEPLOYMENT.md"
+    },
+    {
+      "file": "graphguard/docs__PROGRESS_SCORECARD.md",
+      "project": "graphguard",
+      "source": "HuLaxx/GraphGuard:docs/PROGRESS_SCORECARD.md",
+      "url": "https://github.com/HuLaxx/GraphGuard/blob/main/docs/PROGRESS_SCORECARD.md"
+    },
+    {
+      "file": "graphguard/docs__RAG.md",
+      "project": "graphguard",
+      "source": "HuLaxx/GraphGuard:docs/RAG.md",
+      "url": "https://github.com/HuLaxx/GraphGuard/blob/main/docs/RAG.md"
+    },
+    {
+      "file": "graphguard/docs__SYNTHETIC_BASELINES.md",
+      "project": "graphguard",
+      "source": "HuLaxx/GraphGuard:docs/SYNTHETIC_BASELINES.md",
+      "url": "https://github.com/HuLaxx/GraphGuard/blob/main/docs/SYNTHETIC_BASELINES.md"
+    },
+    {
+      "file": "graphguard/docs__VERIFIED_ARCHITECTURE.md",
+      "project": "graphguard",
+      "source": "HuLaxx/GraphGuard:docs/VERIFIED_ARCHITECTURE.md",
+      "url": "https://github.com/HuLaxx/GraphGuard/blob/main/docs/VERIFIED_ARCHITECTURE.md"
+    },
+    {
+      "file": "graphguard/docs__VERIFIED_SHAP.md",
+      "project": "graphguard",
+      "source": "HuLaxx/GraphGuard:docs/VERIFIED_SHAP.md",
+      "url": "https://github.com/HuLaxx/GraphGuard/blob/main/docs/VERIFIED_SHAP.md"
+    },
+    {
+      "file": "graphguard/docs__VERIFIED_SYNTHETIC_SCORING.md",
+      "project": "graphguard",
+      "source": "HuLaxx/GraphGuard:docs/VERIFIED_SYNTHETIC_SCORING.md",
+      "url": "https://github.com/HuLaxx/GraphGuard/blob/main/docs/VERIFIED_SYNTHETIC_SCORING.md"
+    },
+    {
+      "file": "graphguard/frontend__README.md",
+      "project": "graphguard",
+      "source": "HuLaxx/GraphGuard:frontend/README.md",
+      "url": "https://github.com/HuLaxx/GraphGuard/blob/main/frontend/README.md"
+    },
+    {
+      "file": "graphguard/infrastructure__terraform__research__README.md",
+      "project": "graphguard",
+      "source": "HuLaxx/GraphGuard:infrastructure/terraform/research/README.md",
+      "url": "https://github.com/HuLaxx/GraphGuard/blob/main/infrastructure/terraform/research/README.md"
+    },
+    {
+      "file": "graphguard/ml__README.md",
+      "project": "graphguard",
+      "source": "HuLaxx/GraphGuard:ml/README.md",
+      "url": "https://github.com/HuLaxx/GraphGuard/blob/main/ml/README.md"
+    },
+    {
+      "file": "graphguard/README.md",
+      "project": "graphguard",
+      "source": "HuLaxx/GraphGuard:README.md",
+      "url": "https://github.com/HuLaxx/GraphGuard/blob/main/README.md"
+    },
+    {
+      "file": "profile/rahul-khanke.md",
+      "project": "profile",
+      "source": "curated",
+      "url": "https://portfolio.hulax.uk"
+    },
+    {
+      "file": "sentinance/apps__ml__README.md",
+      "project": "sentinance",
+      "source": "HuLaxx/Sentinance:apps/ml/README.md",
+      "url": "https://github.com/HuLaxx/Sentinance/blob/main/apps/ml/README.md"
+    },
+    {
+      "file": "sentinance/docs__adr__001-timescaledb-for-price-history.md",
+      "project": "sentinance",
+      "source": "HuLaxx/Sentinance:docs/adr/001-timescaledb-for-price-history.md",
+      "url": "https://github.com/HuLaxx/Sentinance/blob/main/docs/adr/001-timescaledb-for-price-history.md"
+    },
+    {
+      "file": "sentinance/docs__adr__002-langgraph-for-ai-agent.md",
+      "project": "sentinance",
+      "source": "HuLaxx/Sentinance:docs/adr/002-langgraph-for-ai-agent.md",
+      "url": "https://github.com/HuLaxx/Sentinance/blob/main/docs/adr/002-langgraph-for-ai-agent.md"
+    },
+    {
+      "file": "sentinance/docs__adr__003-technical-indicators-implementation.md",
+      "project": "sentinance",
+      "source": "HuLaxx/Sentinance:docs/adr/003-technical-indicators-implementation.md",
+      "url": "https://github.com/HuLaxx/Sentinance/blob/main/docs/adr/003-technical-indicators-implementation.md"
+    },
+    {
+      "file": "sentinance/docs__adr__004-kafka-for-event-streaming.md",
+      "project": "sentinance",
+      "source": "HuLaxx/Sentinance:docs/adr/004-kafka-for-event-streaming.md",
+      "url": "https://github.com/HuLaxx/Sentinance/blob/main/docs/adr/004-kafka-for-event-streaming.md"
+    },
+    {
+      "file": "sentinance/docs__adr__005-graceful-degradation.md",
+      "project": "sentinance",
+      "source": "HuLaxx/Sentinance:docs/adr/005-graceful-degradation.md",
+      "url": "https://github.com/HuLaxx/Sentinance/blob/main/docs/adr/005-graceful-degradation.md"
+    },
+    {
+      "file": "sentinance/docs__adr__006-websocket-redis-pubsub.md",
+      "project": "sentinance",
+      "source": "HuLaxx/Sentinance:docs/adr/006-websocket-redis-pubsub.md",
+      "url": "https://github.com/HuLaxx/Sentinance/blob/main/docs/adr/006-websocket-redis-pubsub.md"
+    },
+    {
+      "file": "sentinance/docs__adr__007-jwt-authentication.md",
+      "project": "sentinance",
+      "source": "HuLaxx/Sentinance:docs/adr/007-jwt-authentication.md",
+      "url": "https://github.com/HuLaxx/Sentinance/blob/main/docs/adr/007-jwt-authentication.md"
+    },
+    {
+      "file": "sentinance/docs__adr__008-prometheus-metrics.md",
+      "project": "sentinance",
+      "source": "HuLaxx/Sentinance:docs/adr/008-prometheus-metrics.md",
+      "url": "https://github.com/HuLaxx/Sentinance/blob/main/docs/adr/008-prometheus-metrics.md"
+    },
+    {
+      "file": "sentinance/docs__adr__009-lstm-price-prediction.md",
+      "project": "sentinance",
+      "source": "HuLaxx/Sentinance:docs/adr/009-lstm-price-prediction.md",
+      "url": "https://github.com/HuLaxx/Sentinance/blob/main/docs/adr/009-lstm-price-prediction.md"
+    },
+    {
+      "file": "sentinance/docs__adr__010-fastapi-framework.md",
+      "project": "sentinance",
+      "source": "HuLaxx/Sentinance:docs/adr/010-fastapi-framework.md",
+      "url": "https://github.com/HuLaxx/Sentinance/blob/main/docs/adr/010-fastapi-framework.md"
+    },
+    {
+      "file": "sentinance/docs__API.md",
+      "project": "sentinance",
+      "source": "HuLaxx/Sentinance:docs/API.md",
+      "url": "https://github.com/HuLaxx/Sentinance/blob/main/docs/API.md"
+    },
+    {
+      "file": "sentinance/docs__data_lineage.md",
+      "project": "sentinance",
+      "source": "HuLaxx/Sentinance:docs/data_lineage.md",
+      "url": "https://github.com/HuLaxx/Sentinance/blob/main/docs/data_lineage.md"
+    },
+    {
+      "file": "sentinance/docs__DEPLOYMENT.md",
+      "project": "sentinance",
+      "source": "HuLaxx/Sentinance:docs/DEPLOYMENT.md",
+      "url": "https://github.com/HuLaxx/Sentinance/blob/main/docs/DEPLOYMENT.md"
+    },
+    {
+      "file": "sentinance/docs__EVIDENCE_REGISTER.md",
+      "project": "sentinance",
+      "source": "HuLaxx/Sentinance:docs/EVIDENCE_REGISTER.md",
+      "url": "https://github.com/HuLaxx/Sentinance/blob/main/docs/EVIDENCE_REGISTER.md"
+    },
+    {
+      "file": "sentinance/docs__P1_BINANCE_AGGTRADES_SOURCE.md",
+      "project": "sentinance",
+      "source": "HuLaxx/Sentinance:docs/P1_BINANCE_AGGTRADES_SOURCE.md",
+      "url": "https://github.com/HuLaxx/Sentinance/blob/main/docs/P1_BINANCE_AGGTRADES_SOURCE.md"
+    },
+    {
+      "file": "sentinance/docs__P1_DURABLE_PRICE_LEDGER.md",
+      "project": "sentinance",
+      "source": "HuLaxx/Sentinance:docs/P1_DURABLE_PRICE_LEDGER.md",
+      "url": "https://github.com/HuLaxx/Sentinance/blob/main/docs/P1_DURABLE_PRICE_LEDGER.md"
+    },
+    {
+      "file": "sentinance/docs__P1_MARKET_EVIDENCE_GOLDEN_PATH.md",
+      "project": "sentinance",
+      "source": "HuLaxx/Sentinance:docs/P1_MARKET_EVIDENCE_GOLDEN_PATH.md",
+      "url": "https://github.com/HuLaxx/Sentinance/blob/main/docs/P1_MARKET_EVIDENCE_GOLDEN_PATH.md"
+    },
+    {
+      "file": "sentinance/docs__P1_PARQUET_LAKE.md",
+      "project": "sentinance",
+      "source": "HuLaxx/Sentinance:docs/P1_PARQUET_LAKE.md",
+      "url": "https://github.com/HuLaxx/Sentinance/blob/main/docs/P1_PARQUET_LAKE.md"
+    },
+    {
+      "file": "sentinance/docs__P2_CHRONOLOGICAL_MODEL.md",
+      "project": "sentinance",
+      "source": "HuLaxx/Sentinance:docs/P2_CHRONOLOGICAL_MODEL.md",
+      "url": "https://github.com/HuLaxx/Sentinance/blob/main/docs/P2_CHRONOLOGICAL_MODEL.md"
+    },
+    {
+      "file": "sentinance/docs__P2_FORECAST_QUALITY.md",
+      "project": "sentinance",
+      "source": "HuLaxx/Sentinance:docs/P2_FORECAST_QUALITY.md",
+      "url": "https://github.com/HuLaxx/Sentinance/blob/main/docs/P2_FORECAST_QUALITY.md"
+    },
+    {
+      "file": "sentinance/docs__PORTFOLIO_CLAIMS.md",
+      "project": "sentinance",
+      "source": "HuLaxx/Sentinance:docs/PORTFOLIO_CLAIMS.md",
+      "url": "https://github.com/HuLaxx/Sentinance/blob/main/docs/PORTFOLIO_CLAIMS.md"
+    },
+    {
+      "file": "sentinance/docs__RAG_RETRIEVAL_EVAL.md",
+      "project": "sentinance",
+      "source": "HuLaxx/Sentinance:docs/RAG_RETRIEVAL_EVAL.md",
+      "url": "https://github.com/HuLaxx/Sentinance/blob/main/docs/RAG_RETRIEVAL_EVAL.md"
+    },
+    {
+      "file": "sentinance/docs__RELEASE_CANDIDATE_2026_11_20.md",
+      "project": "sentinance",
+      "source": "HuLaxx/Sentinance:docs/RELEASE_CANDIDATE_2026_11_20.md",
+      "url": "https://github.com/HuLaxx/Sentinance/blob/main/docs/RELEASE_CANDIDATE_2026_11_20.md"
+    },
+    {
+      "file": "sentinance/docs__SECURITY_PROXY_DEPLOYMENT.md",
+      "project": "sentinance",
+      "source": "HuLaxx/Sentinance:docs/SECURITY_PROXY_DEPLOYMENT.md",
+      "url": "https://github.com/HuLaxx/Sentinance/blob/main/docs/SECURITY_PROXY_DEPLOYMENT.md"
+    },
+    {
+      "file": "sentinance/infra__terraform__analytics__README.md",
+      "project": "sentinance",
+      "source": "HuLaxx/Sentinance:infra/terraform/analytics/README.md",
+      "url": "https://github.com/HuLaxx/Sentinance/blob/main/infra/terraform/analytics/README.md"
+    },
+    {
+      "file": "sentinance/README.md",
+      "project": "sentinance",
+      "source": "HuLaxx/Sentinance:README.md",
+      "url": "https://github.com/HuLaxx/Sentinance/blob/main/README.md"
+    }
+  ]
+}

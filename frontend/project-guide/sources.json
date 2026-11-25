@@ -1,0 +1,91 @@
+{
+  "$comment": "Documents copied into project-guide/corpus by scripts/sync-corpus.ts. Pick evidence-backed docs; leave out aspirational specs and plans so the assistant does not present plans as shipped work. Sentinance docs/TECH_STACK.md is excluded on purpose: PORTFOLIO_CLAIMS.md flags the older inventory as overclaiming.",
+  "projects": {
+    "fleetflow": {
+      "repo": "HuLaxx/FleetFlow",
+      "branch": "main",
+      "files": [
+        "README.md",
+        "docs/FLEETFLOW_ENGINEERING_CASE_STUDY_2026.md",
+        "docs/EVIDENCE_REGISTER.md",
+        "docs/local-stack.md",
+        "docs/local-readiness.md",
+        "docs/P1_LIVE_GPS_TRACKING.md",
+        "docs/P1_AUTHENTICATED_GPS_END_TO_END.md",
+        "docs/P1_DISPATCH_EVENT_RELIABILITY.md",
+        "docs/P1_OPTIMIZER_PLANNED_ROUTES.md",
+        "docs/P2_DATABRICKS_SPARK_DBT_AZURE.md",
+        "docs/P2_ROUTING_BENCHMARK.md",
+        "docs/P2_ROUTING_BASELINES.md",
+        "docs/P2_RECONCILED_ANALYTICS.md",
+        "docs/P2_FORECAST_AND_SAFE_AIRFLOW.md",
+        "docs/TELEMETRY_LAKEHOUSE_REPLAY.md",
+        "docs/AZURE_EXECUTION_GATE.md",
+        "docs/P3_AWS_TERRAFORM_REVIEW.md",
+        "data-engineering/lakehouse/README.md",
+        "data-engineering/observability/README.md",
+        "ml/EVALUATION_V2.md",
+        "backend/README.md",
+        "frontend/README.md"
+      ]
+    },
+    "graphguard": {
+      "repo": "HuLaxx/GraphGuard",
+      "branch": "main",
+      "files": [
+        "README.md",
+        "docs/PORTFOLIO_CASE_STUDY.md",
+        "docs/VERIFIED_ARCHITECTURE.md",
+        "docs/PROGRESS_SCORECARD.md",
+        "docs/EVIDENCE_REGISTER.md",
+        "docs/MODEL_CARD.md",
+        "docs/VERIFIED_SHAP.md",
+        "docs/VERIFIED_SYNTHETIC_SCORING.md",
+        "docs/SYNTHETIC_BASELINES.md",
+        "docs/POINT_IN_TIME_FEATURES.md",
+        "docs/AVRO_INGESTION.md",
+        "docs/LOCAL_REVIEW_DASHBOARD.md",
+        "docs/P2_CALIBRATION_DRIFT.md",
+        "docs/P3_UNIFIED_BROKER_CHROMIUM.md",
+        "docs/RAG.md",
+        "docs/PRODUCTION_DEPLOYMENT.md",
+        "ml/README.md",
+        "infrastructure/terraform/research/README.md",
+        "frontend/README.md"
+      ]
+    },
+    "sentinance": {
+      "repo": "HuLaxx/Sentinance",
+      "branch": "main",
+      "files": [
+        "README.md",
+        "docs/PORTFOLIO_CLAIMS.md",
+        "docs/RELEASE_CANDIDATE_2026_11_20.md",
+        "docs/EVIDENCE_REGISTER.md",
+        "docs/API.md",
+        "docs/data_lineage.md",
+        "docs/P1_DURABLE_PRICE_LEDGER.md",
+        "docs/P1_PARQUET_LAKE.md",
+        "docs/P1_BINANCE_AGGTRADES_SOURCE.md",
+        "docs/P1_MARKET_EVIDENCE_GOLDEN_PATH.md",
+        "docs/P2_FORECAST_QUALITY.md",
+        "docs/P2_CHRONOLOGICAL_MODEL.md",
+        "docs/RAG_RETRIEVAL_EVAL.md",
+        "docs/SECURITY_PROXY_DEPLOYMENT.md",
+        "docs/DEPLOYMENT.md",
+        "docs/adr/001-timescaledb-for-price-history.md",
+        "docs/adr/002-langgraph-for-ai-agent.md",
+        "docs/adr/003-technical-indicators-implementation.md",
+        "docs/adr/004-kafka-for-event-streaming.md",
+        "docs/adr/005-graceful-degradation.md",
+        "docs/adr/006-websocket-redis-pubsub.md",
+        "docs/adr/007-jwt-authentication.md",
+        "docs/adr/008-prometheus-metrics.md",
+        "docs/adr/009-lstm-price-prediction.md",
+        "docs/adr/010-fastapi-framework.md",
+        "apps/ml/README.md",
+        "infra/terraform/analytics/README.md"
+      ]
+    }
+  }
+}

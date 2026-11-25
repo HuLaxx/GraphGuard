@@ -1,0 +1,19 @@
+{
+  "$comment": "Type-checks the assistant core, scripts and tests as Node ESM. Pass --typeRoots pointing at an @types/node install (see .github/workflows/project-guide.yml).",
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "erasableSyntaxOnly": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "types": ["node"]
+  },
+  "include": ["../src/lib/project-guide/core.ts", "../src/lib/project-guide/config.ts", "scripts/*.ts", "tests/*.ts"]
+}

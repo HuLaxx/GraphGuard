@@ -1,0 +1,615 @@
+{
+  "$comment": "Retrieval golden set. 'cases' is the development set used while tuning; 'holdout' was written afterwards and is not tuned against. A case passes hit@k when any chunk from an expected document is in the top k. 'none' cases must be refused. Curated at-a-glance docs count wherever the project README does.",
+  "cases": [
+    {
+      "q": "What is FleetFlow?",
+      "expect": [
+        "fleetflow/README.md",
+        "fleetflow/docs__FLEETFLOW_ENGINEERING_CASE_STUDY_2026.md",
+        "profile/rahul-khanke.md",
+        "curated/fleetflow-at-a-glance.md"
+      ]
+    },
+    {
+      "q": "How does FleetFlow optimise delivery routes?",
+      "expect": [
+        "fleetflow/README.md",
+        "fleetflow/docs__P2_ROUTING_BENCHMARK.md",
+        "fleetflow/docs__P1_OPTIMIZER_PLANNED_ROUTES.md",
+        "fleetflow/docs__P2_ROUTING_BASELINES.md",
+        "fleetflow/docs__FLEETFLOW_ENGINEERING_CASE_STUDY_2026.md",
+        "curated/fleetflow-at-a-glance.md"
+      ]
+    },
+    {
+      "q": "OR-Tools benchmark results against the greedy baseline",
+      "expect": [
+        "fleetflow/docs__P2_ROUTING_BENCHMARK.md",
+        "fleetflow/docs__P2_ROUTING_BASELINES.md",
+        "fleetflow/docs__EVIDENCE_REGISTER.md"
+      ]
+    },
+    {
+      "q": "How does GPS tracking get from the driver to the map in fleetflow?",
+      "expect": [
+        "fleetflow/docs__P1_LIVE_GPS_TRACKING.md",
+        "fleetflow/docs__P1_AUTHENTICATED_GPS_END_TO_END.md",
+        "fleetflow/README.md",
+        "fleetflow/docs__FLEETFLOW_ENGINEERING_CASE_STUDY_2026.md",
+        "curated/fleetflow-at-a-glance.md"
+      ]
+    },
+    {
+      "q": "fleetflow kafka redpanda postgis websocket pipeline",
+      "expect": [
+        "fleetflow/docs__P1_AUTHENTICATED_GPS_END_TO_END.md",
+        "fleetflow/docs__P1_LIVE_GPS_TRACKING.md",
+        "fleetflow/README.md",
+        "fleetflow/docs__FLEETFLOW_ENGINEERING_CASE_STUDY_2026.md",
+        "fleetflow/docs__P1_DISPATCH_EVENT_RELIABILITY.md",
+        "curated/fleetflow-at-a-glance.md"
+      ]
+    },
+    {
+      "q": "Does FleetFlow use Spark and Databricks?",
+      "expect": [
+        "fleetflow/docs__P2_DATABRICKS_SPARK_DBT_AZURE.md",
+        "fleetflow/data-engineering__lakehouse__README.md"
+      ]
+    },
+    {
+      "q": "dbt star schema fact and dimension tables in fleetflow",
+      "expect": [
+        "fleetflow/data-engineering__lakehouse__README.md",
+        "fleetflow/docs__P2_DATABRICKS_SPARK_DBT_AZURE.md",
+        "fleetflow/docs__P2_RECONCILED_ANALYTICS.md"
+      ]
+    },
+    {
+      "q": "Is FleetFlow deployed on Azure with Terraform?",
+      "expect": [
+        "fleetflow/docs__AZURE_EXECUTION_GATE.md",
+        "fleetflow/docs__P2_DATABRICKS_SPARK_DBT_AZURE.md",
+        "fleetflow/data-engineering__lakehouse__README.md"
+      ]
+    },
+    {
+      "q": "AWS terraform for fleetflow",
+      "expect": [
+        "fleetflow/docs__P3_AWS_TERRAFORM_REVIEW.md",
+        "fleetflow/README.md",
+        "curated/fleetflow-at-a-glance.md"
+      ]
+    },
+    {
+      "q": "How is Airflow used in FleetFlow?",
+      "expect": [
+        "fleetflow/docs__P2_FORECAST_AND_SAFE_AIRFLOW.md",
+        "fleetflow/data-engineering__lakehouse__README.md",
+        "fleetflow/README.md",
+        "curated/fleetflow-at-a-glance.md"
+      ]
+    },
+    {
+      "q": "transactional outbox and approval audit",
+      "expect": [
+        "fleetflow/docs__P1_DISPATCH_EVENT_RELIABILITY.md"
+      ]
+    },
+    {
+      "q": "How do I run FleetFlow locally?",
+      "expect": [
+        "fleetflow/docs__local-stack.md",
+        "fleetflow/README.md",
+        "fleetflow/backend__README.md",
+        "fleetflow/frontend__README.md",
+        "fleetflow/docs__local-readiness.md",
+        "curated/fleetflow-at-a-glance.md"
+      ]
+    },
+    {
+      "q": "fleetflow demand forecasting evaluation",
+      "expect": [
+        "fleetflow/docs__P2_FORECAST_AND_SAFE_AIRFLOW.md",
+        "fleetflow/ml__EVALUATION_V2.md"
+      ]
+    },
+    {
+      "q": "pipeline observability freshness prometheus fleetflow",
+      "expect": [
+        "fleetflow/data-engineering__observability__README.md"
+      ]
+    },
+    {
+      "q": "What is GraphGuard?",
+      "expect": [
+        "graphguard/README.md",
+        "graphguard/docs__PORTFOLIO_CASE_STUDY.md",
+        "graphguard/docs__VERIFIED_ARCHITECTURE.md",
+        "profile/rahul-khanke.md",
+        "curated/graphguard-at-a-glance.md"
+      ]
+    },
+    {
+      "q": "what techh stack does grapgh gua use",
+      "expect": [
+        "graphguard/README.md",
+        "graphguard/docs__PORTFOLIO_CASE_STUDY.md",
+        "graphguard/docs__VERIFIED_ARCHITECTURE.md",
+        "graphguard/frontend__README.md",
+        "graphguard/ml__README.md",
+        "profile/rahul-khanke.md",
+        "curated/graphguard-at-a-glance.md"
+      ]
+    },
+    {
+      "q": "GraphGuard model precision recall PR-AUC false positive rate",
+      "expect": [
+        "graphguard/docs__MODEL_CARD.md",
+        "graphguard/docs__SYNTHETIC_BASELINES.md",
+        "graphguard/README.md",
+        "curated/graphguard-at-a-glance.md"
+      ]
+    },
+    {
+      "q": "How are fraud predictions explained with SHAP?",
+      "expect": [
+        "graphguard/docs__VERIFIED_SHAP.md",
+        "graphguard/README.md",
+        "graphguard/docs__MODEL_CARD.md",
+        "curated/graphguard-at-a-glance.md"
+      ]
+    },
+    {
+      "q": "How does graphguard use Neo4j?",
+      "expect": [
+        "graphguard/README.md",
+        "graphguard/docs__VERIFIED_ARCHITECTURE.md",
+        "graphguard/docs__POINT_IN_TIME_FEATURES.md",
+        "graphguard/docs__AVRO_INGESTION.md",
+        "curated/graphguard-at-a-glance.md"
+      ]
+    },
+    {
+      "q": "Avro schema registry kafka ingestion",
+      "expect": [
+        "graphguard/docs__AVRO_INGESTION.md",
+        "graphguard/docs__EVIDENCE_REGISTER.md"
+      ]
+    },
+    {
+      "q": "point in time features leakage",
+      "expect": [
+        "graphguard/docs__POINT_IN_TIME_FEATURES.md",
+        "graphguard/docs__MODEL_CARD.md"
+      ]
+    },
+    {
+      "q": "graphguard analyst review dashboard signed case",
+      "expect": [
+        "graphguard/docs__LOCAL_REVIEW_DASHBOARD.md",
+        "graphguard/README.md",
+        "graphguard/frontend__README.md",
+        "curated/graphguard-at-a-glance.md"
+      ]
+    },
+    {
+      "q": "graphguard release readiness score",
+      "expect": [
+        "graphguard/docs__PROGRESS_SCORECARD.md",
+        "graphguard/README.md",
+        "curated/graphguard-at-a-glance.md"
+      ]
+    },
+    {
+      "q": "calibration drift monitoring",
+      "expect": [
+        "graphguard/docs__P2_CALIBRATION_DRIFT.md"
+      ]
+    },
+    {
+      "q": "Is GraphGuard production ready?",
+      "expect": [
+        "graphguard/README.md",
+        "graphguard/docs__PROGRESS_SCORECARD.md",
+        "graphguard/docs__MODEL_CARD.md",
+        "graphguard/docs__PRODUCTION_DEPLOYMENT.md",
+        "graphguard/docs__VERIFIED_ARCHITECTURE.md",
+        "curated/graphguard-at-a-glance.md"
+      ]
+    },
+    {
+      "q": "What is Sentinance?",
+      "expect": [
+        "sentinance/README.md",
+        "sentinance/docs__PORTFOLIO_CLAIMS.md",
+        "profile/rahul-khanke.md",
+        "curated/sentinance-at-a-glance.md"
+      ]
+    },
+    {
+      "q": "sentinance tech stack",
+      "expect": [
+        "sentinance/docs__TECH_STACK.md",
+        "sentinance/README.md",
+        "sentinance/docs__PORTFOLIO_CLAIMS.md",
+        "curated/sentinance-at-a-glance.md"
+      ]
+    },
+    {
+      "q": "Why did Sentinance choose LangGraph for the agent?",
+      "expect": [
+        "sentinance/docs__adr__002-langgraph-for-ai-agent.md"
+      ]
+    },
+    {
+      "q": "Why TimescaleDB for price history?",
+      "expect": [
+        "sentinance/docs__adr__001-timescaledb-for-price-history.md"
+      ]
+    },
+    {
+      "q": "durable kafka to postgres price ledger",
+      "expect": [
+        "sentinance/docs__P1_DURABLE_PRICE_LEDGER.md",
+        "sentinance/docs__P1_MARKET_EVIDENCE_GOLDEN_PATH.md"
+      ]
+    },
+    {
+      "q": "How accurate are the sentinance forecasts?",
+      "expect": [
+        "sentinance/docs__P2_FORECAST_QUALITY.md",
+        "sentinance/docs__P2_CHRONOLOGICAL_MODEL.md",
+        "sentinance/apps__ml__README.md",
+        "sentinance/docs__adr__009-lstm-price-prediction.md"
+      ]
+    },
+    {
+      "q": "sentinance RAG retrieval evaluation qdrant",
+      "expect": [
+        "sentinance/docs__RAG_RETRIEVAL_EVAL.md"
+      ]
+    },
+    {
+      "q": "how do websockets and redis pub sub work in sentinance",
+      "expect": [
+        "sentinance/docs__adr__006-websocket-redis-pubsub.md"
+      ]
+    },
+    {
+      "q": "sentinance api endpoints",
+      "expect": [
+        "sentinance/docs__API.md"
+      ]
+    },
+    {
+      "q": "How many tests pass in Sentinance CI?",
+      "expect": [
+        "sentinance/README.md",
+        "sentinance/docs__EVIDENCE_REGISTER.md",
+        "sentinance/docs__RELEASE_CANDIDATE_2026_11_20.md",
+        "sentinance/docs__PORTFOLIO_CLAIMS.md",
+        "curated/sentinance-at-a-glance.md"
+      ]
+    },
+    {
+      "q": "sentinance JWT authentication",
+      "expect": [
+        "sentinance/docs__adr__007-jwt-authentication.md",
+        "sentinance/docs__SECURITY_PROXY_DEPLOYMENT.md"
+      ]
+    },
+    {
+      "q": "binance aggregate trades source",
+      "expect": [
+        "sentinance/docs__P1_BINANCE_AGGTRADES_SOURCE.md"
+      ]
+    },
+    {
+      "q": "Who is Rahul?",
+      "expect": [
+        "profile/rahul-khanke.md"
+      ]
+    },
+    {
+      "q": "What did Rahul do at Accenture?",
+      "expect": [
+        "profile/rahul-khanke.md"
+      ]
+    },
+    {
+      "q": "his experience at sharp invesco",
+      "expect": [
+        "profile/rahul-khanke.md"
+      ]
+    },
+    {
+      "q": "What are your skills and tools?",
+      "expect": [
+        "profile/rahul-khanke.md"
+      ]
+    },
+    {
+      "q": "where did he study? masters degree",
+      "expect": [
+        "profile/rahul-khanke.md"
+      ]
+    },
+    {
+      "q": "How can I contact Rahul?",
+      "expect": [
+        "profile/rahul-khanke.md"
+      ]
+    },
+    {
+      "q": "what roles is he looking for",
+      "expect": [
+        "profile/rahul-khanke.md"
+      ]
+    },
+    {
+      "q": "MSc dissertation topic",
+      "expect": [
+        "profile/rahul-khanke.md"
+      ]
+    },
+    {
+      "q": "What other projects has Rahul built?",
+      "expect": [
+        "profile/rahul-khanke.md"
+      ]
+    },
+    {
+      "q": "How does this chatbot work?",
+      "expect": [
+        "profile/rahul-khanke.md"
+      ]
+    },
+    {
+      "q": "What's the weather in Paris tomorrow?",
+      "expect": "none"
+    },
+    {
+      "q": "Write me a poem about cats",
+      "expect": "none"
+    },
+    {
+      "q": "recipe for chocolate cake",
+      "expect": "none"
+    }
+  ],
+  "holdout": [
+    {
+      "q": "Which vehicle routing constraints does the FleetFlow solver model?",
+      "expect": [
+        "fleetflow/README.md",
+        "fleetflow/docs__P2_ROUTING_BENCHMARK.md",
+        "fleetflow/docs__P2_ROUTING_BASELINES.md",
+        "fleetflow/docs__P1_OPTIMIZER_PLANNED_ROUTES.md",
+        "fleetflow/docs__FLEETFLOW_ENGINEERING_CASE_STUDY_2026.md",
+        "curated/fleetflow-at-a-glance.md"
+      ]
+    },
+    {
+      "q": "does fleetflow have a real flink job",
+      "expect": [
+        "fleetflow/README.md",
+        "fleetflow/docs__EVIDENCE_REGISTER.md",
+        "fleetflow/docs__FLEETFLOW_ENGINEERING_CASE_STUDY_2026.md",
+        "curated/fleetflow-at-a-glance.md"
+      ]
+    },
+    {
+      "q": "bronze silver gold layers",
+      "expect": [
+        "fleetflow/data-engineering__lakehouse__README.md",
+        "fleetflow/docs__P2_DATABRICKS_SPARK_DBT_AZURE.md",
+        "fleetflow/docs__TELEMETRY_LAKEHOUSE_REPLAY.md"
+      ]
+    },
+    {
+      "q": "how are duplicate GPS events handled in fleetflow",
+      "expect": [
+        "fleetflow/docs__P1_AUTHENTICATED_GPS_END_TO_END.md",
+        "fleetflow/docs__P1_LIVE_GPS_TRACKING.md",
+        "fleetflow/docs__P1_DISPATCH_EVENT_RELIABILITY.md",
+        "fleetflow/docs__TELEMETRY_LAKEHOUSE_REPLAY.md",
+        "fleetflow/docs__FLEETFLOW_ENGINEERING_CASE_STUDY_2026.md"
+      ]
+    },
+    {
+      "q": "what does the fleetflow frontend use",
+      "expect": [
+        "fleetflow/frontend__README.md",
+        "fleetflow/README.md",
+        "curated/fleetflow-at-a-glance.md"
+      ]
+    },
+    {
+      "q": "fleetflow parquet replay of telemetry",
+      "expect": [
+        "fleetflow/docs__TELEMETRY_LAKEHOUSE_REPLAY.md",
+        "fleetflow/data-engineering__lakehouse__README.md"
+      ]
+    },
+    {
+      "q": "what Azure resources would fleetflow need and what would it cost",
+      "expect": [
+        "fleetflow/docs__AZURE_EXECUTION_GATE.md",
+        "fleetflow/docs__P2_DATABRICKS_SPARK_DBT_AZURE.md"
+      ]
+    },
+    {
+      "q": "Which features feed the GraphGuard XGBoost model?",
+      "expect": [
+        "graphguard/docs__MODEL_CARD.md",
+        "graphguard/docs__POINT_IN_TIME_FEATURES.md",
+        "graphguard/ml__README.md",
+        "graphguard/docs__VERIFIED_SYNTHETIC_SCORING.md"
+      ]
+    },
+    {
+      "q": "is graphguard trained on real fraud data",
+      "expect": [
+        "graphguard/docs__MODEL_CARD.md",
+        "graphguard/README.md",
+        "graphguard/docs__SYNTHETIC_BASELINES.md",
+        "graphguard/docs__VERIFIED_ARCHITECTURE.md",
+        "curated/graphguard-at-a-glance.md"
+      ]
+    },
+    {
+      "q": "graphguard mlflow release gate",
+      "expect": [
+        "graphguard/ml__README.md",
+        "graphguard/docs__MODEL_CARD.md",
+        "graphguard/docs__EVIDENCE_REGISTER.md",
+        "graphguard/README.md",
+        "graphguard/docs__VERIFIED_SYNTHETIC_SCORING.md",
+        "curated/graphguard-at-a-glance.md"
+      ]
+    },
+    {
+      "q": "graphguard kafka to chromium latency benchmark",
+      "expect": [
+        "graphguard/docs__P3_UNIFIED_BROKER_CHROMIUM.md",
+        "graphguard/README.md",
+        "curated/graphguard-at-a-glance.md"
+      ]
+    },
+    {
+      "q": "what is still missing before graphguard is 100/100",
+      "expect": [
+        "graphguard/README.md",
+        "graphguard/docs__PROGRESS_SCORECARD.md",
+        "curated/graphguard-at-a-glance.md"
+      ]
+    },
+    {
+      "q": "graphguard aws sandbox terraform",
+      "expect": [
+        "graphguard/infrastructure__terraform__research__README.md"
+      ]
+    },
+    {
+      "q": "is the graphguard hosted demo the real case service",
+      "expect": [
+        "graphguard/README.md",
+        "graphguard/docs__VERIFIED_ARCHITECTURE.md",
+        "graphguard/frontend__README.md",
+        "graphguard/docs__PRODUCTION_DEPLOYMENT.md",
+        "curated/graphguard-at-a-glance.md"
+      ]
+    },
+    {
+      "q": "Which exchanges does Sentinance pull prices from?",
+      "expect": [
+        "sentinance/README.md",
+        "sentinance/docs__data_lineage.md",
+        "sentinance/docs__P1_BINANCE_AGGTRADES_SOURCE.md",
+        "sentinance/docs__TECH_STACK.md",
+        "sentinance/docs__PORTFOLIO_CLAIMS.md",
+        "curated/sentinance-at-a-glance.md"
+      ]
+    },
+    {
+      "q": "does the sentinance agent call an LLM",
+      "expect": [
+        "sentinance/README.md",
+        "sentinance/docs__adr__002-langgraph-for-ai-agent.md",
+        "sentinance/docs__PORTFOLIO_CLAIMS.md",
+        "sentinance/docs__TECH_STACK.md",
+        "sentinance/docs__RELEASE_CANDIDATE_2026_11_20.md",
+        "curated/sentinance-at-a-glance.md"
+      ]
+    },
+    {
+      "q": "what happens when a market data provider is down",
+      "expect": [
+        "sentinance/docs__adr__005-graceful-degradation.md",
+        "sentinance/README.md",
+        "curated/sentinance-at-a-glance.md"
+      ]
+    },
+    {
+      "q": "sentinance lstm price model",
+      "expect": [
+        "sentinance/docs__adr__009-lstm-price-prediction.md",
+        "sentinance/apps__ml__README.md"
+      ]
+    },
+    {
+      "q": "how is sentinance deployed to vercel",
+      "expect": [
+        "sentinance/docs__DEPLOYMENT.md",
+        "sentinance/README.md",
+        "sentinance/docs__SECURITY_PROXY_DEPLOYMENT.md",
+        "curated/sentinance-at-a-glance.md"
+      ]
+    },
+    {
+      "q": "sentinance prometheus metrics",
+      "expect": [
+        "sentinance/docs__adr__008-prometheus-metrics.md"
+      ]
+    },
+    {
+      "q": "Has Rahul used Kafka professionally?",
+      "expect": [
+        "profile/rahul-khanke.md"
+      ]
+    },
+    {
+      "q": "what programming languages does rahul know",
+      "expect": [
+        "profile/rahul-khanke.md"
+      ]
+    },
+    {
+      "q": "Is Rahul available for a job in London?",
+      "expect": [
+        "profile/rahul-khanke.md"
+      ]
+    },
+    {
+      "q": "what did he do during the cognizant internship",
+      "expect": [
+        "profile/rahul-khanke.md"
+      ]
+    },
+    {
+      "q": "bachelor degree college",
+      "expect": [
+        "profile/rahul-khanke.md"
+      ]
+    },
+    {
+      "q": "Who is the president of France?",
+      "expect": "none"
+    },
+    {
+      "q": "translate hello into Spanish",
+      "expect": "none"
+    },
+    {
+      "q": "best pizza in Glasgow",
+      "expect": "none"
+    },
+    {
+      "q": "how tall is mount everest",
+      "expect": "none"
+    },
+    {
+      "q": "give me football scores",
+      "expect": "none"
+    },
+    {
+      "q": "write python code to reverse a string",
+      "expect": "none"
+    },
+    {
+      "q": "what is the capital of japan",
+      "expect": "none"
+    }
+  ]
+}
