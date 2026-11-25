@@ -1,0 +1,769 @@
+/* Project assistant widget. Class prefix rka- keeps it isolated from the host app. */
+
+.rka-root {
+  --rka-bg: #0d1a1e;
+  --rka-surface: #12252b;
+  --rka-surface-2: #173039;
+  --rka-ink: #e6f2ef;
+  --rka-muted: #93b5ad;
+  --rka-accent: #3ddc97;
+  --rka-accent-ink: #062018;
+  --rka-accent-2: #f6b545;
+  --rka-line: rgba(61, 220, 151, 0.22);
+  --rka-radius: 14px;
+  --rka-radius-sm: 9px;
+  --rka-font: var(--font-sans, var(--font-inter, Inter, ui-sans-serif, system-ui, sans-serif));
+  --rka-display: var(--rka-font);
+  --rka-mono: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace);
+  --rka-shadow: 0 24px 60px -18px rgba(0, 0, 0, 0.7), 0 0 0 1px var(--rka-line);
+  position: fixed;
+  right: max(16px, env(safe-area-inset-right));
+  bottom: max(16px, env(safe-area-inset-bottom));
+  z-index: 70;
+  font-family: var(--rka-font);
+  color: var(--rka-ink);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+.rka-root *,
+.rka-root *::before,
+.rka-root *::after {
+  box-sizing: border-box;
+}
+
+.rka-root[data-theme="graphguard"] {
+  --rka-bg: #0b0b0d;
+  --rka-surface: #141417;
+  --rka-surface-2: #1c1c21;
+  --rka-ink: #f4f4f5;
+  --rka-muted: #a1a1aa;
+  --rka-accent: #e7e5e4;
+  --rka-accent-ink: #111113;
+  --rka-accent-2: #fb7185;
+  --rka-line: rgba(231, 229, 228, 0.14);
+  --rka-radius: 6px;
+  --rka-radius-sm: 4px;
+  --rka-display: var(--font-display, "Instrument Serif", Georgia, serif);
+}
+
+.rka-root[data-theme="sentinance"] {
+  --rka-bg: #07101d;
+  --rka-surface: #0b1828;
+  --rka-surface-2: #102238;
+  --rka-ink: #eaf6ff;
+  --rka-muted: #8eaac6;
+  --rka-accent: #38bdf8;
+  --rka-accent-ink: #03141f;
+  --rka-accent-2: #a78bfa;
+  --rka-line: rgba(56, 189, 248, 0.2);
+  --rka-radius: 20px;
+  --rka-radius-sm: 12px;
+  --rka-display: var(--font-display, var(--rka-font));
+}
+
+.rka-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---------- Launcher ---------- */
+
+.rka-launcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 46px;
+  padding: 0 18px 0 6px;
+  border: 1px solid var(--rka-line);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--rka-surface) 88%, transparent);
+  color: var(--rka-ink);
+  font: 600 14px/1 var(--rka-font);
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  box-shadow: 0 12px 30px -12px rgba(0, 0, 0, 0.75);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.rka-launcher:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--rka-accent) 55%, transparent);
+  box-shadow: 0 14px 34px -12px rgba(0, 0, 0, 0.8), 0 0 0 4px color-mix(in srgb, var(--rka-accent) 12%, transparent);
+}
+
+.rka-launcher-icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  background: var(--rka-accent);
+  color: var(--rka-accent-ink);
+}
+
+.rka-root[data-theme="fleetflow"] .rka-launcher-label {
+  font-family: var(--rka-mono);
+  font-size: 12.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.rka-root[data-theme="graphguard"] .rka-launcher {
+  border-radius: 4px;
+  padding-left: 5px;
+}
+
+.rka-root[data-theme="graphguard"] .rka-launcher-icon {
+  border-radius: 3px;
+}
+
+.rka-root[data-theme="sentinance"] .rka-launcher-icon {
+  background: linear-gradient(135deg, var(--rka-accent), var(--rka-accent-2));
+}
+
+.rka-root :focus-visible {
+  outline: 2px solid var(--rka-accent);
+  outline-offset: 2px;
+}
+
+/* ---------- Panel ---------- */
+
+.rka-panel {
+  position: fixed;
+  right: max(16px, env(safe-area-inset-right));
+  bottom: calc(max(16px, env(safe-area-inset-bottom)) + 58px);
+  width: min(408px, calc(100vw - 32px));
+  height: min(640px, calc(100dvh - 120px));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: var(--rka-radius);
+  background: var(--rka-bg);
+  box-shadow: var(--rka-shadow);
+  animation: rka-rise 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes rka-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.rka-header {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 18px 14px 14px 18px;
+  border-bottom: 1px solid var(--rka-line);
+  background: var(--rka-surface);
+}
+
+.rka-header-motif {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  overflow: hidden;
+}
+
+/* FleetFlow: a dashed route with a vehicle travelling along it. */
+.rka-root[data-theme="fleetflow"] .rka-header-motif {
+  background: repeating-linear-gradient(90deg, var(--rka-accent) 0 10px, transparent 10px 18px);
+  opacity: 0.55;
+}
+
+.rka-root[data-theme="fleetflow"] .rka-header-motif::after {
+  content: "";
+  position: absolute;
+  top: -2px;
+  left: 0;
+  width: 26px;
+  height: 7px;
+  border-radius: 4px;
+  background: var(--rka-accent-2);
+  animation: rka-drive 4.5s linear infinite;
+}
+
+@keyframes rka-drive {
+  from {
+    transform: translateX(-30px);
+  }
+  to {
+    transform: translateX(420px);
+  }
+}
+
+/* GraphGuard: an evidence tab with a red case marker. */
+.rka-root[data-theme="graphguard"] .rka-header-motif {
+  height: 2px;
+  background: linear-gradient(90deg, var(--rka-accent-2) 0 56px, var(--rka-line) 56px);
+}
+
+/* Sentinance: a gradient signal sweep. */
+.rka-root[data-theme="sentinance"] .rka-header-motif {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--rka-accent), var(--rka-accent-2), transparent);
+  background-size: 200% 100%;
+  animation: rka-sweep 3.2s ease-in-out infinite;
+}
+
+@keyframes rka-sweep {
+  0%,
+  100% {
+    background-position: 100% 0;
+  }
+  50% {
+    background-position: 0 0;
+  }
+}
+
+.rka-header-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.rka-eyebrow {
+  margin: 0 0 4px;
+  color: var(--rka-accent);
+  font: 600 10.5px/1.2 var(--rka-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.rka-root[data-theme="graphguard"] .rka-eyebrow {
+  color: var(--rka-accent-2);
+}
+
+.rka-title {
+  margin: 0;
+  color: var(--rka-ink);
+  font: 650 19px/1.2 var(--rka-display);
+  letter-spacing: -0.01em;
+}
+
+.rka-root[data-theme="graphguard"] .rka-title {
+  font-size: 23px;
+  font-weight: 400;
+  font-style: italic;
+  letter-spacing: 0;
+}
+
+.rka-root[data-theme="sentinance"] .rka-title {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.rka-subtitle {
+  margin: 4px 0 0;
+  color: var(--rka-muted);
+  font-size: 12.5px;
+}
+
+.rka-header-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.rka-icon-btn {
+  display: inline-grid;
+  place-items: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid var(--rka-line);
+  border-radius: var(--rka-radius-sm);
+  background: transparent;
+  color: var(--rka-muted);
+  font: 500 12px/1 var(--rka-font);
+  cursor: pointer;
+}
+
+.rka-icon-btn:hover:not(:disabled) {
+  color: var(--rka-ink);
+  background: var(--rka-surface-2);
+}
+
+.rka-icon-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ---------- Conversation ---------- */
+
+.rka-log {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--rka-line) transparent;
+  overscroll-behavior: contain;
+}
+
+.rka-empty {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rka-greeting {
+  margin: 0;
+  padding: 14px;
+  border: 1px solid var(--rka-line);
+  border-radius: var(--rka-radius-sm);
+  background: var(--rka-surface);
+  color: var(--rka-ink);
+  font-size: 14px;
+}
+
+.rka-empty-label {
+  margin: 6px 0 0;
+  color: var(--rka-muted);
+  font: 600 10.5px/1 var(--rka-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.rka-suggestions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rka-chip {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--rka-line);
+  border-radius: var(--rka-radius-sm);
+  background: transparent;
+  color: var(--rka-ink);
+  font: 500 13.5px/1.35 var(--rka-font);
+  text-align: left;
+  cursor: pointer;
+  transition: background 140ms ease, border-color 140ms ease, transform 140ms ease;
+}
+
+.rka-chip::before {
+  content: "→";
+  margin-right: 8px;
+  color: var(--rka-accent);
+}
+
+.rka-root[data-theme="graphguard"] .rka-chip::before {
+  content: "§";
+  color: var(--rka-accent-2);
+}
+
+.rka-root[data-theme="sentinance"] .rka-chip::before {
+  content: "◆";
+  font-size: 10px;
+  vertical-align: 1px;
+}
+
+.rka-chip:hover {
+  background: var(--rka-surface);
+  border-color: color-mix(in srgb, var(--rka-accent) 45%, transparent);
+  transform: translateX(2px);
+}
+
+.rka-msg {
+  max-width: 100%;
+  font-size: 14px;
+}
+
+.rka-msg p {
+  margin: 0;
+}
+
+.rka-msg-user {
+  align-self: flex-end;
+  max-width: 86%;
+  padding: 9px 13px;
+  border-radius: var(--rka-radius-sm);
+  background: color-mix(in srgb, var(--rka-accent) 16%, var(--rka-surface));
+  border: 1px solid color-mix(in srgb, var(--rka-accent) 30%, transparent);
+  overflow-wrap: anywhere;
+}
+
+.rka-msg-assistant {
+  align-self: stretch;
+  padding: 12px 14px;
+  border: 1px solid var(--rka-line);
+  border-radius: var(--rka-radius-sm);
+  background: var(--rka-surface);
+}
+
+.rka-root[data-theme="graphguard"] .rka-msg-assistant {
+  border-left: 2px solid var(--rka-accent-2);
+}
+
+.rka-rich {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-wrap: anywhere;
+}
+
+.rka-rich ul,
+.rka-rich ol {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.rka-rich li::marker {
+  color: var(--rka-accent);
+}
+
+.rka-rich strong {
+  color: var(--rka-ink);
+  font-weight: 650;
+}
+
+.rka-rich code {
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--rka-surface-2);
+  font: 12.5px var(--rka-mono);
+}
+
+.rka-rich a {
+  color: var(--rka-accent);
+}
+
+.rka-subhead {
+  font-weight: 650;
+}
+
+.rka-cite {
+  display: inline-grid;
+  place-items: center;
+  min-width: 17px;
+  height: 17px;
+  margin: 0 1px;
+  padding: 0 4px;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--rka-accent) 18%, transparent);
+  color: var(--rka-accent) !important;
+  font: 600 10.5px/1 var(--rka-mono);
+  text-decoration: none;
+  vertical-align: 2px;
+}
+
+.rka-cite:hover {
+  background: var(--rka-accent);
+  color: var(--rka-accent-ink) !important;
+}
+
+.rka-mode {
+  margin-top: 8px !important;
+  color: var(--rka-muted);
+  font: 500 11px/1.3 var(--rka-mono);
+}
+
+.rka-sources {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--rka-line);
+}
+
+.rka-sources-toggle {
+  padding: 2px 0;
+  border: 0;
+  background: none;
+  color: var(--rka-muted);
+  font: 600 11.5px/1.2 var(--rka-mono);
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+
+.rka-sources-toggle:hover {
+  color: var(--rka-ink);
+}
+
+.rka-source-list {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rka-source-list a {
+  display: flex;
+  gap: 8px;
+  padding: 7px 8px;
+  border-radius: 6px;
+  color: inherit;
+  text-decoration: none;
+  background: var(--rka-bg);
+}
+
+.rka-source-list a:hover {
+  background: var(--rka-surface-2);
+}
+
+.rka-source-n {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--rka-accent) 18%, transparent);
+  color: var(--rka-accent);
+  font: 600 10.5px/1 var(--rka-mono);
+}
+
+.rka-source-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.rka-source-project {
+  color: var(--rka-accent);
+  font: 600 10px/1.3 var(--rka-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.rka-source-title {
+  color: var(--rka-ink);
+}
+
+.rka-source-heading {
+  color: var(--rka-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rka-msg-error {
+  border-color: color-mix(in srgb, #f87171 45%, transparent);
+  background: color-mix(in srgb, #f87171 8%, var(--rka-surface));
+}
+
+.rka-error {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.rka-retry {
+  padding: 6px 10px;
+  border: 1px solid var(--rka-line);
+  border-radius: var(--rka-radius-sm);
+  background: var(--rka-surface-2);
+  color: var(--rka-ink);
+  font: 600 12px/1 var(--rka-font);
+  cursor: pointer;
+}
+
+/* ---------- Thinking state (themed) ---------- */
+
+.rka-msg-assistant[role="status"] {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.rka-thinking {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 18px;
+}
+
+.rka-thinking span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--rka-accent);
+  opacity: 0.25;
+  animation: rka-stop 1.25s ease-in-out infinite;
+}
+
+.rka-thinking span:nth-child(2) { animation-delay: 0.12s; }
+.rka-thinking span:nth-child(3) { animation-delay: 0.24s; }
+.rka-thinking span:nth-child(4) { animation-delay: 0.36s; }
+.rka-thinking span:nth-child(5) { animation-delay: 0.48s; }
+
+@keyframes rka-stop {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: none;
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1.25);
+  }
+}
+
+/* GraphGuard: square evidence nodes. */
+.rka-root[data-theme="graphguard"] .rka-thinking span {
+  border-radius: 1px;
+  background: var(--rka-accent);
+}
+
+.rka-root[data-theme="graphguard"] .rka-thinking span:nth-child(3) {
+  background: var(--rka-accent-2);
+}
+
+/* Sentinance: a rising signal meter. */
+.rka-root[data-theme="sentinance"] .rka-thinking span {
+  width: 4px;
+  height: 18px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, var(--rka-accent-2), var(--rka-accent));
+  transform-origin: bottom;
+  animation-name: rka-bar;
+}
+
+@keyframes rka-bar {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scaleY(0.3);
+  }
+  45% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+
+.rka-thinking-label {
+  color: var(--rka-muted);
+  font: 500 12.5px/1.2 var(--rka-mono);
+}
+
+/* ---------- Composer ---------- */
+
+.rka-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 12px 12px 6px;
+  border-top: 1px solid var(--rka-line);
+  background: var(--rka-surface);
+}
+
+.rka-input {
+  flex: 1;
+  min-height: 42px;
+  max-height: 120px;
+  padding: 10px 12px;
+  border: 1px solid var(--rka-line);
+  border-radius: var(--rka-radius-sm);
+  background: var(--rka-bg);
+  color: var(--rka-ink);
+  font: 400 14px/1.4 var(--rka-font);
+  resize: none;
+  field-sizing: content;
+}
+
+.rka-input::placeholder {
+  color: var(--rka-muted);
+  opacity: 0.8;
+}
+
+.rka-input:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--rka-accent) 65%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--rka-accent) 15%, transparent);
+}
+
+.rka-send {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 0;
+  border-radius: var(--rka-radius-sm);
+  background: var(--rka-accent);
+  color: var(--rka-accent-ink);
+  cursor: pointer;
+  transition: opacity 140ms ease, transform 140ms ease;
+}
+
+.rka-root[data-theme="sentinance"] .rka-send {
+  background: linear-gradient(135deg, var(--rka-accent), var(--rka-accent-2));
+}
+
+.rka-send:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.rka-send:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.rka-footnote {
+  margin: 0;
+  padding: 0 14px 10px;
+  background: var(--rka-surface);
+  color: var(--rka-muted);
+  font-size: 10.5px;
+  line-height: 1.35;
+}
+
+/* ---------- Small screens: bottom sheet ---------- */
+
+@media (max-width: 560px) {
+  .rka-panel {
+    right: 0;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: min(88dvh, 720px);
+    border-radius: var(--rka-radius) var(--rka-radius) 0 0;
+  }
+
+  .rka-root[data-open="true"] .rka-launcher {
+    display: none;
+  }
+
+  .rka-launcher-label {
+    display: none;
+  }
+
+  .rka-launcher {
+    padding: 0 6px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rka-root *,
+  .rka-root *::before,
+  .rka-root *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

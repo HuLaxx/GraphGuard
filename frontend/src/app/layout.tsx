@@ -6,6 +6,7 @@ import { Providers } from "@/components/providers";
 import { Toaster } from "sonner";
 import { LoadingScreen } from "@/components/effects/loading-screen";
 import { DustBackground } from "@/components/ui/dust-background";
+import { ProjectGuide } from "@/components/project-guide/project-guide";
 
 const inter = Inter({
     subsets: ["latin"],
@@ -63,6 +64,7 @@ export default function RootLayout({
                         <Toaster position="top-right" theme="dark" richColors />
                     </Providers>
                 </div>
+                <ProjectGuide />
             </body>
         </html>
     );
